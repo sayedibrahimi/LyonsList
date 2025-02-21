@@ -6,9 +6,10 @@ import {
   getAllUsers,
   getUserById,
   updateUser,
+  deleteUser
 } from "../controllers/users.controller";
 
 router.route("/").post(createUser).get(getAllUsers);
-router.route("/:id").get(getUserById).patch(updateUser);
+router.route("/:id").get(getUserById).patch(updateUser).delete(deleteUser);
 
 export default router;

@@ -57,3 +57,18 @@ export async function updateUser(req: Request, res: Response) {
     res.status(500).json({ msg: error.message });
   }
 }
+
+export async function deleteUser(req: Request, res: Response) {
+  try {
+    const foundUser: UserModel | null = await User.findByIdAndDelete(
+      req.params.id
+    );
+    if (foundUser === null) {
+      res.status(404).json({ msg: "No user found" });
+      return;
+    }
+    res.status(200).json({ task: null, status: "Success" });
+  } catch (error: any) {
+    res.status(500).send(error.message);
+  }
+}
