@@ -31,9 +31,6 @@ Thumbs.db
 # npm package lock file (if using yarn, use yarn.lock instead)
 package-lock.json
 
-# typescript compiler configuration
-tsconfig.json
-
 # Coverage directory used by tools like istanbul
 coverage/
 
