@@ -40,3 +40,20 @@ export async function getUserById(req: Request, res: Response) {
     res.status(500).json({ msg: error.message });
   }
 }
+
+export async function updateUser(req: Request, res: Response) {
+  try {
+    const foundUser: UserModel | null = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (foundUser === null) {
+      res.status(404).json({ msg: "No item found" });
+      return;
+    }
+    res.status(201).json({ user: foundUser });
+  } catch (error: any) {
+    res.status(500).json({ msg: error.message });
+  }
+}
