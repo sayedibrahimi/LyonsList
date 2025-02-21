@@ -26,3 +26,17 @@ export async function getAllUsers(req: Request, res: Response) {
     res.status(500).json({ msg: error.message });
   }
 }
+
+export async function getUserById(req: Request, res: Response) {
+  try {
+    // find a user by id, if they dont exist, catch the null
+    const foundUser: UserModel | null = await User.findById(req.params.id);
+    if (foundUser === null) {
+      res.status(404).json({ msg: "No user found with given id" });
+      return;
+    }
+    res.status(200).json({ user: foundUser });
+  } catch (error: any) {
+    res.status(500).json({ msg: error.message });
+  }
+}
