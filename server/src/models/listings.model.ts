@@ -40,7 +40,8 @@ const ListingSchema = new Schema<ListingModel>(
       type: String,
       required: [true, "Please provide the condition"],
       enum: {
-        values: ["new", "lightly used", "refurbished", "moderately used"],
+        // TODO: Update these field names
+        values: ["new", "lightly used", "refurbished", "used"],
         message: "{VALUE} is not a valid condition",
       },
     },
