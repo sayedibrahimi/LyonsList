@@ -62,4 +62,5 @@ const ListingSchema = new Schema<ListingModel>(
   { timestamps: true }
 );
 
-export default ListingSchema;
+const Listing = model<ListingModel>("Listing", ListingSchema);
+export default Listing;

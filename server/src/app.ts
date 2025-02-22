@@ -9,6 +9,7 @@ const mongoURI: string = process.env.MONGO_URI!;
 
 // import routes
 import userRoutes from "./routes/users.route";
+import listingRoutes from "./routes/listings.route";
 
 // create express app
 const app = express();
@@ -19,6 +20,7 @@ app.use(express.json());
 
 // routes
 app.use("/users", userRoutes);
+app.use("/listings", listingRoutes);
 
 app.get("/helloWorld", (req, res) => {
   res.send("Hello World!");
