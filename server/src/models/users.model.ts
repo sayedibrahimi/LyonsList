@@ -12,6 +12,7 @@ export interface UserModel extends Document {
   totalListings: number;
 }
 
+// TODO: add false error fields
 const UserSchema = new Schema<UserModel>(
   {
     firstName: {
@@ -27,27 +28,27 @@ const UserSchema = new Schema<UserModel>(
       maxlength: [20, "Name cannot be more than 20 characters"],
     },
     email: {
-        type: String,
-        required: true,
-        trim: true,
-        unique: true
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
     },
     password: {
-        type: String,
-        required: true,
-        select: false
+      type: String,
+      required: true,
+      select: false,
     },
     classYear: {
-        type: Number,
-        required: false
+      type: Number,
+      required: false,
     },
     profilePicture: {
-        type: String,
-        required: false
+      type: String,
+      required: false,
     },
     totalListings: {
-        type: Number,
-    }
+      type: Number,
+    },
   },
   { timestamps: true }
 );
