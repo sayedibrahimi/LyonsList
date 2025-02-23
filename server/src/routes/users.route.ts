@@ -18,4 +18,5 @@ router.route("/").post(createUser).get(getAllUsers);
 // DELETE /users/:id - Delete a user by ID
 router.route("/:id").get(getUserById).patch(updateUser).delete(deleteUser);
 
+
 export default router;
