@@ -1,6 +1,6 @@
 // CONTROLLER
 import { Request, Response } from "express";
-import Listing, { ListingModel } from "../models/listings.model"; // Adjust the import path as needed
+import Listing, { ListingModel } from "../models/listings.model";
 import { handleError } from "../middlewares/handleError";
 
 // Create a new listing
