@@ -2,6 +2,16 @@
 import { Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
 
+// TODO: Response body
+/*
+success,
+auth token,
+user data {
+  id  
+  first
+  last
+}
+*/
 export async function createUser(req: Request, res: Response) {
   try {
     // create a new user with the schema constructor
@@ -52,6 +62,7 @@ export async function updateUser(req: Request, res: Response) {
       res.status(404).json({ msg: "No item found" });
       return;
     }
+    // TODO: success true
     res.status(201).json({ user: foundUser });
   } catch (error: any) {
     res.status(500).json({ msg: error.message });
