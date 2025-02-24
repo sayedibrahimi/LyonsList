@@ -10,7 +10,9 @@ import {
 
 // POST /listings - Create a new listing
 // GET /listings - Get all listings
-router.route("/").post(createListing).get(getAllListings);
+// router.route("/").post(createListing).get(getAllListings);
+router.get("/", getAllListings);
+router.post("/", createListing);
 
 // GET /listings/:id - Get a listing by ID
 // PATCH /listings/:id - Update a listing by ID

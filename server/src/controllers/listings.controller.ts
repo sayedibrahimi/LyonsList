@@ -7,8 +7,12 @@ export async function createListing(req: Request, res: Response) {
   try {
     const newListing: ListingModel = await Listing.create(req.body);
     res.status(201).json({ listing: newListing });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      res.status(500).json({ msg: error.message });
+    } else {
+      res.status(500).json({ msg: "An unknown error occurred" });
+    }
   }
 }
 

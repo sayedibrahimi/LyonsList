@@ -12,7 +12,7 @@ export interface UserModel extends Document {
   totalListings: number;
 }
 
-// TODO: add false error fields
+// TODO: add if false error fields
 const UserSchema = new Schema<UserModel>(
   {
     firstName: {
