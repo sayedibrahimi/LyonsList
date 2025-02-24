@@ -1,5 +1,9 @@
+// import dependencies
 import express from "express";
 import dotenv from "dotenv";
+
+// import custom middleware
+import { notFound } from "./middlewares/notFound";
 
 // configure dotenv
 dotenv.config();
@@ -17,6 +21,7 @@ const app = express();
 // app use
 app.use(express.json());
 // app.use(express.urlencoded({ extended: false }));
+app.use(express.static("public"));
 
 // routes
 app.use("/users", userRoutes);
@@ -25,6 +30,8 @@ app.use("/listings", listingRoutes);
 app.get("/helloWorld", (req, res) => {
   res.send("Hello World!");
 });
+
+app.use(notFound);
 
 // connect to the database
 const PORT = 5000;

@@ -1,6 +1,7 @@
 // CONTROLLER
 import { Request, Response } from "express";
 import Listing, { ListingModel } from "../models/listings.model"; // Adjust the import path as needed
+import { handleError } from "../middlewares/handleError";
 
 // Create a new listing
 export async function createListing(req: Request, res: Response) {
@@ -8,11 +9,7 @@ export async function createListing(req: Request, res: Response) {
     const newListing: ListingModel = await Listing.create(req.body);
     res.status(201).json({ listing: newListing });
   } catch (error: unknown) {
-    if (error instanceof Error) {
-      res.status(500).json({ msg: error.message });
-    } else {
-      res.status(500).json({ msg: "An unknown error occurred" });
-    }
+    handleError(res, error);
   }
 }
 
@@ -25,8 +22,8 @@ export async function getAllListings(req: Request, res: Response) {
       return;
     }
     res.status(200).json({ listings: allListings });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -41,8 +38,8 @@ export async function getListingById(req: Request, res: Response) {
       return;
     }
     res.status(200).json({ listing: foundListing });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -59,8 +56,8 @@ export async function updateListing(req: Request, res: Response) {
       return;
     }
     res.status(200).json({ listing: updatedListing });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -75,7 +72,7 @@ export async function deleteListing(req: Request, res: Response) {
       return;
     }
     res.status(200).json({ listing: null, status: "Successfully deleted" });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }

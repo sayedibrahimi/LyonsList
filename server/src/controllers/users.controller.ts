@@ -1,6 +1,7 @@
 // CONTROLLER
 import { Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
+import { handleError } from "../middlewares/handleError";
 
 // TODO: Response body
 /*
@@ -17,8 +18,8 @@ export async function createUser(req: Request, res: Response) {
     // create a new user with the schema constructor
     const newUser: UserModel = await User.create(req.body);
     res.status(201).json({ newUser });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -32,8 +33,8 @@ export async function getAllUsers(req: Request, res: Response) {
     }
     // TODO: it is possible that you need to mess with this json return naming wise
     res.status(200).json({ users: allUsers });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -46,8 +47,8 @@ export async function getUserById(req: Request, res: Response) {
       return;
     }
     res.status(200).json({ user: foundUser });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -64,8 +65,8 @@ export async function updateUser(req: Request, res: Response) {
     }
     // TODO: success true
     res.status(201).json({ user: foundUser });
-  } catch (error: any) {
-    res.status(500).json({ msg: error.message });
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
 
@@ -79,7 +80,7 @@ export async function deleteUser(req: Request, res: Response) {
       return;
     }
     res.status(200).json({ task: null, status: "Success" });
-  } catch (error: any) {
-    res.status(500).send(error.message);
+  } catch (error: unknown) {
+    handleError(res, error);
   }
 }
