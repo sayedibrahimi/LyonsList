@@ -1,15 +1,15 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface ListingModel extends Document {
-    _id: string;
-    title: string;
-    description: string;
-    picture: string;
-    price: number;
-    condition: string;
-    status: string;
-    sellerID: Schema.Types.ObjectId;
-    // TODO: add some sort of tags or category here?
+  _id: string;
+  title: string;
+  description: string;
+  picture: string;
+  price: number;
+  condition: string;
+  status: string;
+  sellerID: Schema.Types.ObjectId;
+  // TODO: add some sort of tags or category here?
 }
 
 const ListingSchema = new Schema<ListingModel>(
