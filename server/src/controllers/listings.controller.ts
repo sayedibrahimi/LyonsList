@@ -2,12 +2,13 @@
 import { Request, Response } from "express";
 import Listing, { ListingModel } from "../models/listings.model";
 import { handleError } from "../middlewares/handleError";
+import { StatusCodes } from "http-status-codes";
 
 // Create a new listing
 export async function createListing(req: Request, res: Response) {
   try {
     const newListing: ListingModel = await Listing.create(req.body);
-    res.status(201).json({ listing: newListing });
+    res.status(StatusCodes.CREATED).json({ listing: newListing });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -18,10 +19,10 @@ export async function getAllListings(req: Request, res: Response) {
   try {
     const allListings: ListingModel[] | null = await Listing.find({});
     if (allListings === null || allListings.length === 0) {
-      res.status(404).json({ msg: "No listings found" });
+      res.status(StatusCodes.NOT_FOUND).json({ msg: "No listings found" });
       return;
     }
-    res.status(200).json({ listings: allListings });
+    res.status(StatusCodes.OK).json({ listings: allListings });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -34,10 +35,12 @@ export async function getListingById(req: Request, res: Response) {
       req.params.id
     );
     if (foundListing === null) {
-      res.status(404).json({ msg: "No listing found with the given ID" });
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "No listing found with the given ID" });
       return;
     }
-    res.status(200).json({ listing: foundListing });
+    res.status(StatusCodes.OK).json({ listing: foundListing });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -52,10 +55,12 @@ export async function updateListing(req: Request, res: Response) {
       { new: true, runValidators: true }
     );
     if (updatedListing === null) {
-      res.status(404).json({ msg: "No listing found with the given ID" });
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "No listing found with the given ID" });
       return;
     }
-    res.status(200).json({ listing: updatedListing });
+    res.status(StatusCodes.OK).json({ listing: updatedListing });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -68,10 +73,14 @@ export async function deleteListing(req: Request, res: Response) {
       req.params.id
     );
     if (deletedListing === null) {
-      res.status(404).json({ msg: "No listing found with the given ID" });
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "No listing found with the given ID" });
       return;
     }
-    res.status(200).json({ listing: null, status: "Successfully deleted" });
+    res
+      .status(StatusCodes.OK)
+      .json({ listing: null, status: "Successfully deleted" });
   } catch (error: unknown) {
     handleError(res, error);
   }

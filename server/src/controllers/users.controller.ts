@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
 import { handleError } from "../middlewares/handleError";
+import { StatusCodes } from "http-status-codes";
 
 // TODO: Response body
 /*
@@ -18,10 +19,10 @@ export async function createUser(req: Request, res: Response) {
     // create a new user with the schema constructor
     const newUser: UserModel = await User.create(req.body);
     if (!newUser) {
-      res.status(400).json({ msg: "User creation failed" });
+      res.status(StatusCodes.BAD_REQUEST).json({ msg: "User creation failed" });
       return;
     }
-    res.status(201).json({ newUser });
+    res.status(StatusCodes.CREATED).json({ newUser });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -32,11 +33,13 @@ export async function getAllUsers(req: Request, res: Response) {
     // get all the users async, usermodel array or null
     const allUsers: UserModel[] | null = await User.find({});
     if (allUsers === null) {
-      res.status(404).json({ msg: "No Users have been created yet..." });
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "No Users have been created yet..." });
       return;
     }
     // TODO: it is possible that you need to mess with this json return naming wise
-    res.status(200).json({ users: allUsers });
+    res.status(StatusCodes.OK).json({ users: allUsers });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -47,10 +50,12 @@ export async function getUserById(req: Request, res: Response) {
     // find a user by id, if they dont exist, catch the null
     const foundUser: UserModel | null = await User.findById(req.params.id);
     if (foundUser === null) {
-      res.status(404).json({ msg: "No user found with given id" });
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ msg: "No user found with given id" });
       return;
     }
-    res.status(200).json({ user: foundUser });
+    res.status(StatusCodes.OK).json({ user: foundUser });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -64,11 +69,11 @@ export async function updateUser(req: Request, res: Response) {
       { new: true, runValidators: true }
     );
     if (foundUser === null) {
-      res.status(404).json({ msg: "No item found" });
+      res.status(StatusCodes.NOT_FOUND).json({ msg: "No item found" });
       return;
     }
     // TODO: success true
-    res.status(201).json({ user: foundUser });
+    res.status(StatusCodes.CREATED).json({ user: foundUser });
   } catch (error: unknown) {
     handleError(res, error);
   }
@@ -80,10 +85,10 @@ export async function deleteUser(req: Request, res: Response) {
       req.params.id
     );
     if (foundUser === null) {
-      res.status(404).json({ msg: "No user found" });
+      res.status(StatusCodes.NOT_FOUND).json({ msg: "No user found" });
       return;
     }
-    res.status(200).json({ task: null, status: "Success" });
+    res.status(StatusCodes.OK).json({ task: null, status: "Success" });
   } catch (error: unknown) {
     handleError(res, error);
   }

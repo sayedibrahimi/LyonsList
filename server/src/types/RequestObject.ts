@@ -1,4 +1,4 @@
-export interface returnObject {
+export default interface RequestObject {
   _id: string;
   firstName: string;
   lastName: string;
