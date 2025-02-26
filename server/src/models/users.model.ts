@@ -71,9 +71,9 @@ UserSchema.methods.createJWT = function (): string {
   }
 
   const current_time = Math.floor(Date.now() / 1000);
-  // TODO: check this math
+  // : check this math
   const expiration_time =
-    current_time + parseInt(process.env.JWT_LIFETIME_HOURS || "0");
+    current_time + parseInt(process.env.JWT_LIFETIME_HOURS || "0") * 3600;
 
   const claims = {
     sub: "public_key",
