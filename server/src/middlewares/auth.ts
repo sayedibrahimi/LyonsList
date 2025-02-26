@@ -37,7 +37,7 @@ const auth = async (
     };
     console.log(req.user);
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     res
       .status(StatusCodes.UNAUTHORIZED)
       .json({ msg: "Authentication invalid" });

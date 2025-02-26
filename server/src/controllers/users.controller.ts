@@ -14,7 +14,7 @@ user data {
   last
 }
 */
-export async function createUser(req: Request, res: Response) {
+export async function createUser(req: Request, res: Response): Promise<void> {
   try {
     // create a new user with the schema constructor
     const newUser: UserModel = await User.create(req.body);
@@ -24,11 +24,11 @@ export async function createUser(req: Request, res: Response) {
     }
     res.status(StatusCodes.CREATED).json({ newUser });
   } catch (error: unknown) {
-    handleError(res, error);
+    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
-export async function getAllUsers(req: Request, res: Response) {
+export async function getAllUsers(req: Request, res: Response): Promise<void> {
   try {
     // get all the users async, usermodel array or null
     const allUsers: UserModel[] | null = await User.find({});
@@ -41,13 +41,13 @@ export async function getAllUsers(req: Request, res: Response) {
     // TODO: it is possible that you need to mess with this json return naming wise
     res.status(StatusCodes.OK).json({ users: allUsers });
   } catch (error: unknown) {
-    handleError(res, error);
+    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
-export async function getUserById(req: Request, res: Response) {
+export async function getUserById(req: Request, res: Response): Promise<void> {
   try {
-    // find a user by id, if they dont exist, catch the null
+    // find a user by id, if they don't exist, catch the null
     const foundUser: UserModel | null = await User.findById(req.params.id);
     if (foundUser === null) {
       res
@@ -57,11 +57,11 @@ export async function getUserById(req: Request, res: Response) {
     }
     res.status(StatusCodes.OK).json({ user: foundUser });
   } catch (error: unknown) {
-    handleError(res, error);
+    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
-export async function updateUser(req: Request, res: Response) {
+export async function updateUser(req: Request, res: Response): Promise<void> {
   try {
     const foundUser: UserModel | null = await User.findByIdAndUpdate(
       req.params.id,
@@ -75,11 +75,11 @@ export async function updateUser(req: Request, res: Response) {
     // TODO: success true
     res.status(StatusCodes.CREATED).json({ user: foundUser });
   } catch (error: unknown) {
-    handleError(res, error);
+    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
-export async function deleteUser(req: Request, res: Response) {
+export async function deleteUser(req: Request, res: Response): Promise<void> {
   try {
     const foundUser: UserModel | null = await User.findByIdAndDelete(
       req.params.id
@@ -90,6 +90,6 @@ export async function deleteUser(req: Request, res: Response) {
     }
     res.status(StatusCodes.OK).json({ task: null, status: "Success" });
   } catch (error: unknown) {
-    handleError(res, error);
+    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 }
