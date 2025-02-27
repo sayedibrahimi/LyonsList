@@ -9,6 +9,8 @@ import {
   deleteUser,
 } from "../controllers/users.controller";
 
+//! Auth all routes
+
 // POST /users - Create a new user
 // GET /users - Get all users
 router.post("/", createUser);

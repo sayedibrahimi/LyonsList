@@ -37,3 +37,6 @@ coverage/
 # Temporary files
 *.swp
 *.swo
+
+# to do list
+todo.txt

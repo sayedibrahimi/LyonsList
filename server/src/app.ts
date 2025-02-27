@@ -28,8 +28,8 @@ app.use(express.static("public"));
 
 // routes
 app.use("/auth", authRoutes);
-// app.use("/users", userRoutes);
-// app.use("/listings", auth, listingRoutes);
+app.use("/users", userRoutes);
+app.use("/listings", auth, listingRoutes);
 
 app.get("/helloWorld", (req, res) => {
   res.send("Hello World!");

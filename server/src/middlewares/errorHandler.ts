@@ -2,7 +2,6 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendError } from "../utils/sendResponse";
-import ErrorMessages from "../config/errorMessages";
 
 interface CustomError extends Error {
   statusCode?: number;

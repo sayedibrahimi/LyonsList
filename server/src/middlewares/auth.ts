@@ -35,7 +35,6 @@ const auth = async (
       lastName: payload.lastName,
       email: payload.email,
     };
-    console.log(req.user);
     next();
   } catch (error: unknown) {
     res

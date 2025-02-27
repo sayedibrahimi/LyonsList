@@ -9,17 +9,17 @@ const ErrorMessages = {
   //   BOARD_NO_ACCESS: "User does not have access to this board.",
   //   BOARD_DELETE_NO_ACCESS: "User does not have permission to delete this board.",
 
-  //   // Task Lists
-  //   TASKLIST_CREATE_BAD_REQUEST:
-  //     "Bad request: Please provide a valid task list name and board ID.",
-  //   TASKLIST_NOT_FOUND: "Task list not found.",
-  //   TASKLIST_MISSING_BOARD: "Task list found but no board ID specified.",
+  // Listings
+  LISTING_NOT_FOUND: "Listing not found.", // controllers/listings.js
+  LISTING_NO_ACCESS: "User does.",
+  LISTING_CREATION_FAILED: "Listing creation failed.", // controllers/listings.js
+  LISTING_NOT_FOUND_BY_ID: "Listing not found by ID.", // controllers/listings.js
+  LISTING_NO_LISTINGS_CREATED: "No listings have been created yet.", // controllers/listings.js
+  LISTING_NO_LISTINGS_FOUND: "No listings found.", // controllers/listings.js
 
-  //   // Tasks
-  //   TASK_CREATE_BAD_REQUEST:
-  //     "Bad request: Please provide a valid task header, board ID, and task list ID.",
-  //   TASK_NOT_FOUND: "Task not found.",
-  //   TASK_MISSING_TASKLIST: "Task found but no task list ID specified.",
+  USER_LISTINGS_NOT_FOUND: "User listings not found.", // controllers/listings.js
+  USER_LISTINGS_NO_ACCESS: "User listings do not exist.", // controllers/listings.js
+  // controllers/listings.js
 
   // Users
   USER_MISSING_FIELDS:

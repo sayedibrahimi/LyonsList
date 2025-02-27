@@ -1,102 +1,198 @@
-// CONTROLLER
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Listing, { ListingModel } from "../models/listings.model";
-import { handleError } from "../middlewares/errorHandler";
 import { StatusCodes } from "http-status-codes";
+import { sendSuccess } from "../utils/sendResponse";
+import ErrorMessages from "../config/errorMessages";
+import SuccessMessages from "../config/successMessages";
 
 // Create a new listing
 export async function createListing(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const newListing: ListingModel = await Listing.create(req.body);
-    res.status(StatusCodes.CREATED).json({ listing: newListing });
+    if (!newListing) {
+      return next({
+        statusCode: StatusCodes.BAD_REQUEST,
+        message: ErrorMessages.LISTING_CREATION_FAILED,
+      });
+    }
+
+    sendSuccess(
+      res,
+      SuccessMessages.LISTING_SUCCESS_CREATED,
+      StatusCodes.CREATED,
+      { listing: newListing }
+    );
   } catch (error: unknown) {
-    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      errors: error,
+    });
   }
 }
 
 // Get all listings
 export async function getAllListings(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const allListings: ListingModel[] | null = await Listing.find({});
     if (allListings === null || allListings.length === 0) {
-      res.status(StatusCodes.NOT_FOUND).json({ msg: "No listings found" });
-      return;
+      return next({
+        statusCode: StatusCodes.NOT_FOUND,
+        message: ErrorMessages.LISTING_NO_LISTINGS_CREATED,
+      });
     }
-    res.status(StatusCodes.OK).json({ listings: allListings });
+
+    sendSuccess(res, SuccessMessages.LISTINGS_SUCCESS_FETCHED, StatusCodes.OK, {
+      listings: allListings,
+    });
   } catch (error: unknown) {
-    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      errors: error,
+    });
   }
 }
 
 // Get a listing by ID
 export async function getListingById(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
     const foundListing: ListingModel | null = await Listing.findById(
       req.params.id
     );
     if (foundListing === null) {
-      res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ msg: "No listing found with the given ID" });
-      return;
+      return next({
+        statusCode: StatusCodes.NOT_FOUND,
+        message: ErrorMessages.LISTING_NOT_FOUND_BY_ID,
+      });
     }
-    res.status(StatusCodes.OK).json({ listing: foundListing });
+
+    sendSuccess(res, SuccessMessages.LISTING_SUCCESS_FETCHED, StatusCodes.OK, {
+      listing: foundListing,
+    });
   } catch (error: unknown) {
-    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      errors: error,
+    });
   }
 }
 
 // Update a listing by ID
 export async function updateListing(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
+    // Check if user is authorized to update this listing
+    // This would need user info from the auth middleware
+    // if (req.user._id !== listing.userId) { throw new Error... }
+
     const updatedListing: ListingModel | null = await Listing.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
+
     if (updatedListing === null) {
-      res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ msg: "No listing found with the given ID" });
-      return;
+      return next({
+        statusCode: StatusCodes.NOT_FOUND,
+        message: ErrorMessages.LISTING_NOT_FOUND,
+      });
     }
-    res.status(StatusCodes.OK).json({ listing: updatedListing });
+
+    sendSuccess(res, SuccessMessages.LISTING_SUCCESS_UPDATED, StatusCodes.OK, {
+      listing: updatedListing,
+    });
   } catch (error: unknown) {
-    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      errors: error,
+    });
   }
 }
 
 // Delete a listing by ID
 export async function deleteListing(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
+    // Check if user is authorized to delete this listing
+    // This would need user info from the auth middleware
+    // if (req.user._id !== listing.userId) { throw new Error... }
+
     const deletedListing: ListingModel | null = await Listing.findByIdAndDelete(
       req.params.id
     );
+
     if (deletedListing === null) {
-      res
-        .status(StatusCodes.NOT_FOUND)
-        .json({ msg: "No listing found with the given ID" });
-      return;
+      return next({
+        statusCode: StatusCodes.NOT_FOUND,
+        message: ErrorMessages.LISTING_NOT_FOUND,
+      });
     }
-    res
-      .status(StatusCodes.OK)
-      .json({ listing: null, status: "Successfully deleted" });
+
+    sendSuccess(
+      res,
+      SuccessMessages.LISTING_SUCCESS_DELETED,
+      StatusCodes.OK,
+      null
+    );
   } catch (error: unknown) {
-    handleError(res, error, StatusCodes.INTERNAL_SERVER_ERROR);
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      errors: error,
+    });
+  }
+}
+
+// Get listings by user ID
+export async function getListingsByUserId(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userListings: ListingModel[] = await Listing.find({
+      userId: req.params.userId,
+    });
+
+    if (!userListings || userListings.length === 0) {
+      return next({
+        statusCode: StatusCodes.NOT_FOUND,
+        message: ErrorMessages.USER_LISTINGS_NOT_FOUND,
+      });
+    }
+
+    sendSuccess(
+      res,
+      SuccessMessages.USER_LISTINGS_SUCCESS_FETCHED,
+      StatusCodes.OK,
+      { listings: userListings }
+    );
+  } catch (error: unknown) {
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      errors: error,
+    });
   }
 }
