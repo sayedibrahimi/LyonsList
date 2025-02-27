@@ -28,7 +28,7 @@ app.use(express.static("public"));
 
 // routes
 app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
+// app.use("/users", userRoutes);
 // app.use("/listings", auth, listingRoutes);
 
 app.get("/helloWorld", (req, res) => {
@@ -37,7 +37,7 @@ app.get("/helloWorld", (req, res) => {
 
 // if none of the routes match, return a 404
 app.use(notFound);
-// app.use(errorHandlerMiddleware);
+app.use(errorHandlerMiddleware);
 
 // connect to the database
 const PORT = process.env.PORT || 3000;

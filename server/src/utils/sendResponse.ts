@@ -23,13 +23,13 @@ export const sendSuccess = <T>(
 
 export const sendError = (
   res: Response,
-  message: string,
   statusCode: number,
   errors?: any
 ): Response<ApiResponse> => {
   return res.status(statusCode).json({
     success: false,
-    message,
     errors: errors || null,
   });
 };
+
+// export default CustomError;

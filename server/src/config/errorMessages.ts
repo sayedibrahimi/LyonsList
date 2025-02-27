@@ -28,6 +28,9 @@ const ErrorMessages = {
   //   USER_NOT_ACTIVE: "User is inactive.", // controllers/auth.js
   //   USER_INVALID_SEARCH_CRITERIA: "Invalid search criteria.",
   USER_NOT_FOUND: "User not found.", // controllers/users.js
+  USER_CREATION_FAILED: "User creation failed.", // controllers/users.js
+  USER_NO_USERS_CREATED: "No users have been created yet.", // controllers/users.js
+  USER_NOT_FOUND_BY_ID: "User not found by ID.", // controllers/users.js
 
   // Authentication
   //   AUTH_BAD_REQUEST: "Bad request: Please enter valid email and password.", // controllers/auth.js
