@@ -86,9 +86,9 @@ UserSchema.methods.createJWT = function (): string {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  // const user = await this.model("User").findById(this._id).select("+password");
-  // const isMatch = await bcrypt.compare(candidatePassword, user.password);
-  const isMatch = await bcrypt.compare(candidatePassword, this.password);
+  const user = await this.model("User").findById(this._id).select("+password");
+  const isMatch = await bcrypt.compare(candidatePassword, user.password);
+  // const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
 

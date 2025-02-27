@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 
 // import custom middleware
 import { notFound } from "./middlewares/notFound";
+import { errorHandlerMiddleware } from "./middlewares/errorHandler";
 
 // configure dotenv
 dotenv.config();
@@ -36,6 +37,7 @@ app.get("/helloWorld", (req, res) => {
 
 // if none of the routes match, return a 404
 app.use(notFound);
+// app.use(errorHandlerMiddleware);
 
 // connect to the database
 const PORT = process.env.PORT || 3000;

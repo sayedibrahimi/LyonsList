@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import User from "../models/users.model";
+import { sendSuccess, sendError } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import ErrorMessages from "../config/errorMessages";
+import SuccessMessages from "../config/successMessages";
 
 // register function
 // input param: req body: first, last, email, password
@@ -9,16 +12,18 @@ export async function register(req: Request, res: Response): Promise<void> {
     // check if req body is full
     const { firstName, lastName, email, password } = req.body;
     if (!firstName || !lastName || !email || !password) {
-      res
-        .status(StatusCodes.BAD_REQUEST)
-        .json({ msg: "Please provide name, email, and password" });
+      sendError(
+        res,
+        ErrorMessages.USER_MISSING_FIELDS,
+        StatusCodes.BAD_REQUEST
+      );
       return;
     }
 
     // if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(StatusCodes.BAD_REQUEST).json({ msg: "Email already in use" });
+      sendError(res, ErrorMessages.USER_EMAIL_IN_USE, StatusCodes.BAD_REQUEST);
       return;
     }
 
@@ -33,16 +38,24 @@ export async function register(req: Request, res: Response): Promise<void> {
       email: user.email,
     };
 
-    res.status(StatusCodes.CREATED).json({
-      status: "success",
-      user: returnObject,
-      token,
-    });
+    sendSuccess(
+      res,
+      SuccessMessages.USER_SUCCESS_CREATED,
+      StatusCodes.CREATED,
+      {
+        user: returnObject,
+        token,
+      }
+    );
     return;
   } catch (error) {
-    res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({ msg: "Internal server error" });
+    sendError(
+      res,
+      ErrorMessages.INTERNAL_SERVER_ERROR,
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      error
+    );
+    return;
   }
 }
 
@@ -51,9 +64,11 @@ export async function login(req: Request, res: Response): Promise<void> {
 
   // check if req body is full
   if (!email || !password) {
-    res
-      .status(StatusCodes.BAD_REQUEST)
-      .json({ msg: "Please provide email and password" });
+    sendError(
+      res,
+      ErrorMessages.AUTH_INVALID_CREDENTIALS,
+      StatusCodes.BAD_REQUEST
+    );
     return;
   }
 
@@ -61,14 +76,18 @@ export async function login(req: Request, res: Response): Promise<void> {
   const user = await User.findOne({ email });
   // user is not providing valid credentials but user exists
   if (!user) {
-    res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid credentials" });
+    sendError(res, ErrorMessages.AUTH_NO_EMAIL_MATCH, StatusCodes.BAD_REQUEST);
     return;
   }
 
   // check password
   const isMatch = await user.comparePassword(password);
   if (!isMatch) {
-    res.status(StatusCodes.BAD_REQUEST).json({ msg: "Invalid credentials" });
+    sendError(
+      res,
+      ErrorMessages.AUTH_NO_PASSWORD_MATCH,
+      StatusCodes.BAD_REQUEST
+    );
     return;
   }
 
@@ -80,8 +99,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     lastName: user.lastName,
     email: user.email,
   };
-  res.status(StatusCodes.OK).json({
-    status: "success",
+  sendSuccess(res, SuccessMessages.USER_SUCCESS_LOGIN, StatusCodes.OK, {
     user: returnObject,
     token,
   });
