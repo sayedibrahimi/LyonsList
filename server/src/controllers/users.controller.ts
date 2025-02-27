@@ -1,7 +1,7 @@
 // CONTROLLER
 import { Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
-import { handleError } from "../middlewares/handleError";
+import { handleError } from "../utils/errorHandler";
 import { StatusCodes } from "http-status-codes";
 
 // TODO: Response body

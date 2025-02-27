@@ -1,7 +1,7 @@
 // CONTROLLER
 import { Request, Response } from "express";
 import Listing, { ListingModel } from "../models/listings.model";
-import { handleError } from "../middlewares/handleError";
+import { handleError } from "../utils/errorHandler";
 import { StatusCodes } from "http-status-codes";
 
 // Create a new listing
