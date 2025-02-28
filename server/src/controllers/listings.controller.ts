@@ -90,17 +90,6 @@ export async function getUserListingById(
       });
     }
 
-    // // check if the listing matches the seller ID
-    // const UserReq = req as UserRequest;
-    // const UserReqID = UserReq.user.userID;
-
-    // if (foundListing.sellerID.toString() !== UserReqID) {
-    //   return next({
-    //     statusCode: StatusCodes.UNAUTHORIZED,
-    //     message: ErrorMessages.LISTING_NOT_AUTHORIZED,
-    //   });
-    // }
-
     sendSuccess(res, SuccessMessages.LISTING_SUCCESS_FETCHED, StatusCodes.OK, {
       listing: foundListing,
     });
@@ -120,29 +109,6 @@ export async function updateListing(
   next: NextFunction
 ): Promise<void> {
   try {
-    const UserReq = req as UserRequest;
-    const UserReqID = UserReq.user.userID;
-
-    // query using rep.params.is (listing id) to check if the associated
-    // sellerID matches the userID
-    const foundListing: ListingModel | null = await Listing.findById(
-      req.params.id
-    );
-    if (foundListing === null) {
-      return next({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: ErrorMessages.LISTING_NOT_FOUND,
-      });
-    }
-
-    // if the id's dont match, return an error
-    if (foundListing.sellerID.toString() !== UserReqID) {
-      return next({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: ErrorMessages.LISTING_NOT_AUTHORIZED,
-      });
-    }
-
     // then now, you can update the item
     const updatedListing: ListingModel | null = await Listing.findByIdAndUpdate(
       req.params.id,
@@ -177,10 +143,6 @@ export async function deleteListing(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Check if user is authorized to delete this listing
-    // This would need user info from the auth middleware
-    // if (req.user._id !== listing.userId) { throw new Error... }
-
     const deletedListing: ListingModel | null = await Listing.findByIdAndDelete(
       req.params.id
     );
