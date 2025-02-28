@@ -2,6 +2,12 @@ const ErrorMessages = {
   INTERNAL_SERVER_ERROR: "Internal server error.",
   ROUTE_DOES_NOT_EXIST: "Route does not exist.",
 
+  // password
+  PASSWORD_RESET_NO_PASSWORD: "Please provide a new password.",
+  PASSWORD_RESET_NO_EMAIL: "Please provide an email address.",
+  PASSWORD_RESET_NO_USER: "No user found with this email address.",
+  PASSWORD_UNAUTHORIZED: "Unauthorized to reset this password.",
+
   // Listings
   LISTING_NOT_FOUND: "Listing not found.",
   LISTING_NO_ACCESS: "User does.",

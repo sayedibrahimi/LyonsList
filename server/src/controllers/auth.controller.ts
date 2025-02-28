@@ -92,6 +92,8 @@ export async function login(
   next: NextFunction
 ): Promise<void> {
   try {
+    console.log("here");
+
     const { email, password } = req.body;
 
     // check if req body is full
@@ -101,9 +103,11 @@ export async function login(
         message: ErrorMessages.AUTH_INVALID_CREDENTIALS,
       });
     }
+    console.log("here");
 
     // check for the user from dB by email
     const user = await User.findOne({ email });
+    console.log("here");
     // user is not providing valid credentials but user exists
     if (!user) {
       return next({
@@ -111,16 +115,19 @@ export async function login(
         message: ErrorMessages.AUTH_NO_EMAIL_MATCH,
       });
     }
+    console.log("here");
 
     /* The line `const isMatch = await user.comparePassword(password);` is checking whether the provided
  `password` matches the password stored for the user in the database. */
     const isMatch = await user.comparePassword(password);
+    console.log(isMatch);
     if (!isMatch) {
       return next({
         statusCode: StatusCodes.BAD_REQUEST,
         message: ErrorMessages.AUTH_NO_PASSWORD_MATCH,
       });
     }
+    console.log("here");
 
     // If user exists with valid credentials
     const token = user.createJWT();
