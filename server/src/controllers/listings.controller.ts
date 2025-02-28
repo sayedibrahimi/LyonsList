@@ -74,7 +74,7 @@ export async function getAllListings(
 }
 
 // Get a listing by ID
-export async function getUserListingById(
+export async function getListingById(
   req: Request,
   res: Response,
   next: NextFunction
@@ -168,37 +168,3 @@ export async function deleteListing(
     });
   }
 }
-
-// // Get listings by user ID
-// export async function getListingsByUserId(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     const userListings: ListingModel[] = await Listing.find({
-//       sellerID: req.params.id,
-//       //! be careful
-//     });
-
-//     if (!userListings || userListings.length === 0) {
-//       return next({
-//         statusCode: StatusCodes.NOT_FOUND,
-//         message: ErrorMessages.USER_LISTINGS_NOT_FOUND,
-//       });
-//     }
-
-//     sendSuccess(
-//       res,
-//       SuccessMessages.USER_LISTINGS_SUCCESS_FETCHED,
-//       StatusCodes.OK,
-//       { listings: userListings }
-//     );
-//   } catch (error: unknown) {
-//     return next({
-//       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-//       message: ErrorMessages.INTERNAL_SERVER_ERROR,
-//       errors: error,
-//     });
-//   }
-// }

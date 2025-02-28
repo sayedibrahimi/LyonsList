@@ -81,7 +81,7 @@ UserSchema.methods.createJWT = function (): string {
     firstName: this.firstName,
     lastName: this.lastName,
     email: this.email,
-  } as RequestObject;
+  };
 
   const claims = {
     sub: this._id.toString(),
