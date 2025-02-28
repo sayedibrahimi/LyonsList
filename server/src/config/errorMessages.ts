@@ -19,6 +19,8 @@ const ErrorMessages = {
 
   USER_LISTINGS_NOT_FOUND: "User listings not found.", // controllers/listings.js
   USER_LISTINGS_NO_ACCESS: "User listings do not exist.", // controllers/listings.js
+  USER_LISTINGS_NO_LISTINGS: "User has no listings.", // controllers/listings.js
+  LISTING_NOT_AUTHORIZED: "User is not authorized to access this listing.", // controllers/listings.js
   // controllers/listings.js
 
   // Users

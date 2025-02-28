@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import User from "../models/users.model";
 import RequestObject from "../types/RequestObject";
+import { UserRequest } from "../types/request";
 import { StatusCodes } from "http-status-codes";
 
 const auth = async (
@@ -14,7 +15,7 @@ const auth = async (
   if (!authHeader || !authHeader.startsWith("Bearer")) {
     res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Authentication invalid" });
+      .json({ msg: "Authentication invalid Bearer" });
     return;
   }
   const token = authHeader.split(" ")[1];
@@ -27,19 +28,20 @@ const auth = async (
       });
       return;
     }
-    const payload = jwt.verify(token, jwtSecret) as RequestObject;
-    // attach the user to the job routes
-    req.user = {
-      _id: payload._id,
-      firstName: payload.firstName,
-      lastName: payload.lastName,
-      email: payload.email,
+    const payload = jwt.verify(token, jwtSecret) as JwtPayload;
+
+    (req as UserRequest).user = {
+      userID: payload.userData.userID,
+      firstName: payload.userData.firstName,
+      lastName: payload.userData.lastName,
+      email: payload.userData.email,
     };
+    
     next();
   } catch (error: unknown) {
     res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Authentication invalid" });
+      .json({ msg: "Authentication invalid Error" });
     return;
   }
 };

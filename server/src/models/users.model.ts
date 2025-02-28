@@ -1,6 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import RequestObject from "../types/RequestObject";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -75,9 +76,18 @@ UserSchema.methods.createJWT = function (): string {
   const expiration_time =
     current_time + parseInt(process.env.JWT_LIFETIME_HOURS || "0") * 3600;
 
+  const userData = {
+    userID: this._id,
+    firstName: this.firstName,
+    lastName: this.lastName,
+    email: this.email,
+  } as RequestObject;
+
   const claims = {
-    sub: "public_key",
+    sub: this._id.toString(),
+    iat: current_time,
     exp: expiration_time,
+    userData: userData,
   };
 
   return jwt.sign(claims, jwtSecret, { algorithm: "HS256" });

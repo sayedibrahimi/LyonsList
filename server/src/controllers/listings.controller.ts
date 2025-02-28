@@ -4,6 +4,8 @@ import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
+import { UserRequest } from "../types/request";
+import User from "../models/users.model";
 
 // Create a new listing
 export async function createListing(
@@ -12,6 +14,10 @@ export async function createListing(
   next: NextFunction
 ): Promise<void> {
   try {
+    const UserReq = req as UserRequest;
+    req.body.sellerID = UserReq.user.userID;
+    console.log(req.body);
+
     const newListing: ListingModel = await Listing.create(req.body);
     if (!newListing) {
       return next({
@@ -42,7 +48,12 @@ export async function getAllListings(
   next: NextFunction
 ): Promise<void> {
   try {
-    const allListings: ListingModel[] | null = await Listing.find({});
+    const UserReq = req as UserRequest;
+    const UserReqID = UserReq.user.userID;
+
+    const allListings: ListingModel[] | null = await Listing.find({
+      sellerID: UserReqID,
+    });
     if (allListings === null || allListings.length === 0) {
       return next({
         statusCode: StatusCodes.NOT_FOUND,
@@ -63,7 +74,7 @@ export async function getAllListings(
 }
 
 // Get a listing by ID
-export async function getListingById(
+export async function getUserListingById(
   req: Request,
   res: Response,
   next: NextFunction
@@ -78,6 +89,17 @@ export async function getListingById(
         message: ErrorMessages.LISTING_NOT_FOUND_BY_ID,
       });
     }
+
+    // // check if the listing matches the seller ID
+    // const UserReq = req as UserRequest;
+    // const UserReqID = UserReq.user.userID;
+
+    // if (foundListing.sellerID.toString() !== UserReqID) {
+    //   return next({
+    //     statusCode: StatusCodes.UNAUTHORIZED,
+    //     message: ErrorMessages.LISTING_NOT_AUTHORIZED,
+    //   });
+    // }
 
     sendSuccess(res, SuccessMessages.LISTING_SUCCESS_FETCHED, StatusCodes.OK, {
       listing: foundListing,
@@ -98,16 +120,37 @@ export async function updateListing(
   next: NextFunction
 ): Promise<void> {
   try {
-    // Check if user is authorized to update this listing
-    // This would need user info from the auth middleware
-    // if (req.user._id !== listing.userId) { throw new Error... }
+    const UserReq = req as UserRequest;
+    const UserReqID = UserReq.user.userID;
 
+    // query using rep.params.is (listing id) to check if the associated
+    // sellerID matches the userID
+    const foundListing: ListingModel | null = await Listing.findById(
+      req.params.id
+    );
+    if (foundListing === null) {
+      return next({
+        statusCode: StatusCodes.NOT_FOUND,
+        message: ErrorMessages.LISTING_NOT_FOUND,
+      });
+    }
+
+    // if the id's dont match, return an error
+    if (foundListing.sellerID.toString() !== UserReqID) {
+      return next({
+        statusCode: StatusCodes.UNAUTHORIZED,
+        message: ErrorMessages.LISTING_NOT_AUTHORIZED,
+      });
+    }
+
+    // then now, you can update the item
     const updatedListing: ListingModel | null = await Listing.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, runValidators: true }
     );
 
+    // extraneous check
     if (updatedListing === null) {
       return next({
         statusCode: StatusCodes.NOT_FOUND,
@@ -164,35 +207,36 @@ export async function deleteListing(
   }
 }
 
-// Get listings by user ID
-export async function getListingsByUserId(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> {
-  try {
-    const userListings: ListingModel[] = await Listing.find({
-      userId: req.params.userId,
-    });
+// // Get listings by user ID
+// export async function getListingsByUserId(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     const userListings: ListingModel[] = await Listing.find({
+//       sellerID: req.params.id,
+//       //! be careful
+//     });
 
-    if (!userListings || userListings.length === 0) {
-      return next({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: ErrorMessages.USER_LISTINGS_NOT_FOUND,
-      });
-    }
+//     if (!userListings || userListings.length === 0) {
+//       return next({
+//         statusCode: StatusCodes.NOT_FOUND,
+//         message: ErrorMessages.USER_LISTINGS_NOT_FOUND,
+//       });
+//     }
 
-    sendSuccess(
-      res,
-      SuccessMessages.USER_LISTINGS_SUCCESS_FETCHED,
-      StatusCodes.OK,
-      { listings: userListings }
-    );
-  } catch (error: unknown) {
-    return next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: ErrorMessages.INTERNAL_SERVER_ERROR,
-      errors: error,
-    });
-  }
-}
+//     sendSuccess(
+//       res,
+//       SuccessMessages.USER_LISTINGS_SUCCESS_FETCHED,
+//       StatusCodes.OK,
+//       { listings: userListings }
+//     );
+//   } catch (error: unknown) {
+//     return next({
+//       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+//       message: ErrorMessages.INTERNAL_SERVER_ERROR,
+//       errors: error,
+//     });
+//   }
+// }

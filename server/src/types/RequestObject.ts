@@ -1,5 +1,5 @@
 export default interface RequestObject {
-  _id: string;
+  userID: string;
   firstName: string;
   lastName: string;
   email: string;
