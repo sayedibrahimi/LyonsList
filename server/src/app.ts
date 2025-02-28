@@ -45,6 +45,7 @@ const start = async () => {
   try {
     // async connect to db, then run on server
     await connectDB(mongoURI);
+    console.log("Connected to the database");
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });

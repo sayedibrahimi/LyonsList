@@ -1,5 +1,4 @@
 import { Response } from "express";
-import { StatusCodes } from "http-status-codes";
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -31,5 +30,3 @@ export const sendError = (
     errors: errors || null,
   });
 };
-
-// export default CustomError;

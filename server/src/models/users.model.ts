@@ -1,7 +1,6 @@
 import { Schema, model, Document } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import RequestObject from "../types/RequestObject";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {

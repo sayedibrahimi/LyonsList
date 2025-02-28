@@ -4,8 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-import { UserRequest } from "../types/request";
-import User from "../models/users.model";
+import { UserRequest } from "../types/UserRequest";
 
 // Create a new listing
 export async function createListing(
@@ -16,7 +15,6 @@ export async function createListing(
   try {
     const UserReq = req as UserRequest;
     req.body.sellerID = UserReq.user.userID;
-    console.log(req.body);
 
     const newListing: ListingModel = await Listing.create(req.body);
     if (!newListing) {

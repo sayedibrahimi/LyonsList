@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { UserRequest } from "../types/request";
+import { UserRequest } from "../types/UserRequest";
 import { StatusCodes } from "http-status-codes";
 import Listing, { ListingModel } from "../models/listings.model";
 import ErrorMessages from "../config/errorMessages";
