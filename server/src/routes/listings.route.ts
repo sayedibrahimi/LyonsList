@@ -1,5 +1,5 @@
 import express from "express";
-const router = express.Router();
+const router: express.Router = express.Router();
 import { sellerAuth } from "../middlewares/sellerAuth";
 import {
   createListing,

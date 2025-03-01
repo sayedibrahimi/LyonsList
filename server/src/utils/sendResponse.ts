@@ -1,32 +1,32 @@
 import { Response } from "express";
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T | null;
-  errors?: any;
+  errors?: unknown;
 }
 
-export const sendSuccess = <T>(
+export function sendSuccess<T = unknown>(
   res: Response,
   message: string,
   statusCode: number,
   data?: T
-): Response<ApiResponse<T>> => {
+): Response<ApiResponse<T>> {
   return res.status(statusCode).json({
     success: true,
     message,
     data: data || null,
   });
-};
+}
 
-export const sendError = (
+export function sendError(
   res: Response,
   statusCode: number,
-  errors?: any
-): Response<ApiResponse> => {
+  errors?: unknown
+): Response<ApiResponse> {
   return res.status(statusCode).json({
     success: false,
     errors: errors || null,
   });
-};
+}

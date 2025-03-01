@@ -1,4 +1,4 @@
-const SuccessMessages = {
+const SuccessMessages: Record<string, string> = {
   // Users
   USER_SUCCESS_CREATED: "User has been successfully created.",
   USER_SUCCESS_LOGIN: "User has successfully logged in.",

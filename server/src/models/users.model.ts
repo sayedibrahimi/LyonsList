@@ -1,6 +1,8 @@
-import { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, Model, Document } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import { UserRequestObject } from "../types/UserRequest";
+import { CustomClaims } from "../types/JwtSignClaims";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -14,11 +16,11 @@ export interface UserModel extends Document {
   totalListings: number;
   // methods
   createJWT(): string;
-  comparePassword: (password: string) => Promise<boolean>;
+  comparePassword(password: string): Promise<boolean>;
 }
 
 // TODO: add if false error fields
-const UserSchema = new Schema<UserModel>(
+const UserSchema: Schema<UserModel> = new Schema<UserModel>(
   {
     firstName: {
       type: String,
@@ -60,7 +62,7 @@ const UserSchema = new Schema<UserModel>(
 
 // user methods
 UserSchema.pre("save", async function () {
-  const salt = await bcrypt.genSalt(10);
+  const salt: string = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
@@ -70,19 +72,19 @@ UserSchema.methods.createJWT = function (): string {
     throw new Error("JWT_SECRET is not defined");
   }
 
-  const current_time = Math.floor(Date.now() / 1000);
+  const current_time: number = Math.floor(Date.now() / 1000);
   // : check this math
-  const expiration_time =
+  const expiration_time: number =
     current_time + parseInt(process.env.JWT_LIFETIME_HOURS || "0") * 3600;
 
-  const userData = {
+  const userData: UserRequestObject = {
     userID: this._id,
     firstName: this.firstName,
     lastName: this.lastName,
     email: this.email,
   };
 
-  const claims = {
+  const claims: CustomClaims = {
     sub: this._id.toString(),
     iat: current_time,
     exp: expiration_time,
@@ -95,12 +97,17 @@ UserSchema.methods.createJWT = function (): string {
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string
 ): Promise<boolean> {
-  const user = await this.model("User").findById(this._id).select("+password");
-  const isMatch = await bcrypt.compare(candidatePassword, user.password);
+  const user: UserModel = await this.model("User")
+    .findById(this._id)
+    .select("+password");
+  const isMatch: boolean = await bcrypt.compare(
+    candidatePassword,
+    user.password
+  );
   // const isMatch = await bcrypt.compare(candidatePassword, this.password);
   return isMatch;
 };
 
 // export the user model as 'User'
-const User = model<UserModel>("User", UserSchema);
+const User: Model<UserModel> = mongoose.model<UserModel>("User", UserSchema);
 export default User;

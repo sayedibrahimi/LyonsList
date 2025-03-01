@@ -2,9 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import Listing, { ListingModel } from "../models/listings.model";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
+import { requestAuth } from "../utils/requestAuth";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-import { UserRequest } from "../types/UserRequest";
+// import { UserRequest } from "../types/UserRequest";
 
 // Create a new listing
 export async function createListing(
@@ -13,8 +14,8 @@ export async function createListing(
   next: NextFunction
 ): Promise<void> {
   try {
-    const UserReq = req as UserRequest;
-    req.body.sellerID = UserReq.user.userID;
+    const UserReqID: string = requestAuth(req, next);
+    req.body.sellerID = UserReqID;
 
     const newListing: ListingModel = await Listing.create(req.body);
     if (!newListing) {
@@ -46,13 +47,13 @@ export async function getAllListings(
   next: NextFunction
 ): Promise<void> {
   try {
-    const UserReq = req as UserRequest;
-    const UserReqID = UserReq.user.userID;
+    const UserReqID: string = requestAuth(req, next);
 
-    const allListings: ListingModel[] | null = await Listing.find({
+    const allListings: ListingModel[] = await Listing.find({
       sellerID: UserReqID,
     });
-    if (allListings === null || allListings.length === 0) {
+    // if null, check if length is zero
+    if (allListings.length === 0) {
       return next({
         statusCode: StatusCodes.NOT_FOUND,
         message: ErrorMessages.LISTING_NO_LISTINGS_CREATED,

@@ -1,7 +1,8 @@
 // CONTROLLER
 import { NextFunction, Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
-import { UserRequest, UserRequestObject } from "../types/UserRequest";
+import { UserRequestObject } from "../types/UserRequest";
+import { requestAuth } from "../utils/requestAuth";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import ErrorMessages from "../config/errorMessages";
@@ -15,7 +16,7 @@ export async function getUserAccount(
 ): Promise<void> {
   try {
     // get user account by id
-    const userAccountID: string = (req as UserRequest).user.userID;
+    const userAccountID: string = requestAuth(req, next);
     const userAccount: UserModel | null = await User.findById(userAccountID);
     sendSuccess(
       res,
@@ -40,12 +41,12 @@ export async function updateUserAccount(
 ): Promise<void> {
   try {
     // get user account by id
-    const userAccountID: string = (req as UserRequest).user.userID;
+    const userAccountID: string = requestAuth(req, next);
 
     // update user account
     const updatedUserAccount: UserModel | null = await User.findByIdAndUpdate(
       userAccountID,
-      req.body,
+      req.body as UserRequestObject,
       { new: true }
     );
     if (!updatedUserAccount) {
@@ -78,7 +79,7 @@ export async function deleteUserAccount(
 ): Promise<void> {
   try {
     // get user account by id
-    const userAccountID: string = (req as UserRequest).user.userID;
+    const userAccountID: string = requestAuth(req, next);
     // delete user account
     const deletedUserAccount: UserModel | null = await User.findByIdAndDelete(
       userAccountID

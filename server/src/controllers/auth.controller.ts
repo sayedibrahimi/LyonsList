@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
-import User from "../models/users.model";
+import User, { UserModel } from "../models/users.model";
+import { LoginRequest } from "../types/LoginRequest";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
+import { RegisterRequestObject } from "../types/RegisterRequest";
+import { UserResponseObject } from "../types/UserResponse";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 
@@ -27,7 +30,8 @@ export async function register(
 ): Promise<void> {
   try {
     // check if req body is full
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } =
+      req.body as RegisterRequestObject;
     if (!firstName || !lastName || !email || !password) {
       return next({
         statusCode: StatusCodes.BAD_REQUEST,
@@ -36,8 +40,8 @@ export async function register(
     }
 
     // if email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    const existingUser: UserModel | null = await User.findOne({ email });
+    if (existingUser === null) {
       return next({
         statusCode: StatusCodes.BAD_REQUEST,
         message: ErrorMessages.USER_EMAIL_IN_USE,
@@ -45,10 +49,11 @@ export async function register(
     }
 
     // else, create user
-    const user = await User.create({ ...req.body });
-    const token = user.createJWT();
+    const user: UserModel = await User.create({ ...req.body });
+    //! Validation?
+    const token: string = user.createJWT();
 
-    const returnObject = {
+    const returnObject: UserResponseObject = {
       _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -65,7 +70,7 @@ export async function register(
       }
     );
     return;
-  } catch (error) {
+  } catch (error: unknown) {
     return next({
       statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
       message: ErrorMessages.INTERNAL_SERVER_ERROR,
@@ -92,7 +97,7 @@ export async function login(
   next: NextFunction
 ): Promise<void> {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body as LoginRequest;
 
     // check if req body is full
     if (!email || !password) {
@@ -103,7 +108,7 @@ export async function login(
     }
 
     // check for the user from dB by email
-    const user = await User.findOne({ email });
+    const user: UserModel | null = await User.findOne({ email });
     // user is not providing valid credentials but user exists
     if (!user) {
       return next({
@@ -114,7 +119,7 @@ export async function login(
 
     /* The line `const isMatch = await user.comparePassword(password);` is checking whether the provided
  `password` matches the password stored for the user in the database. */
-    const isMatch = await user.comparePassword(password);
+    const isMatch: boolean = await user.comparePassword(password);
     if (!isMatch) {
       return next({
         statusCode: StatusCodes.BAD_REQUEST,
@@ -123,8 +128,8 @@ export async function login(
     }
 
     // If user exists with valid credentials
-    const token = user.createJWT();
-    const returnObject = {
+    const token: string = user.createJWT();
+    const returnObject: UserResponseObject = {
       _id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -134,7 +139,7 @@ export async function login(
       user: returnObject,
       token,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     /* In the provided TypeScript code snippets, the `catch (error)` block is used to handle any errors
   that occur during the execution of the asynchronous functions `register` and `login`. */
     return next({

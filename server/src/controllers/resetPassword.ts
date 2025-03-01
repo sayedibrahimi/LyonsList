@@ -1,17 +1,19 @@
 import User, { UserModel } from "../models/users.model";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
+import { PasswordResetRequest } from "../types/PasswordResetRequest";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-import { UserRequest } from "../types/UserRequest";
+import { requestAuth } from "../utils/requestAuth";
 import { sendSuccess } from "../utils/sendResponse";
 
 export async function resetPassword(
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> {
   try {
-    const { email, newPassword } = req.body;
+    const { email, newPassword } = req.body as PasswordResetRequest;
     if (!email) {
       res.status(StatusCodes.BAD_REQUEST).json({
         msg: ErrorMessages.PASSWORD_RESET_NO_EMAIL,
@@ -33,7 +35,8 @@ export async function resetPassword(
       return;
     }
 
-    const UserReqID = (req as UserRequest).user.userID;
+    // get user account by id
+    const UserReqID: string = requestAuth(req, next);
 
     if (foundUser._id.toString() !== UserReqID) {
       res.status(StatusCodes.UNAUTHORIZED).json({

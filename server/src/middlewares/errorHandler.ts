@@ -1,22 +1,22 @@
 // src/middlewares/errorHandler.ts
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendError } from "../utils/sendResponse";
 
 interface CustomError extends Error {
   statusCode?: number;
-  errors?: any;
+  errors?: unknown;
 }
 
-export const errorHandlerMiddleware = (
+export function errorHandlerMiddleware(
   err: CustomError,
   req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+  res: Response
+): void {
   // Default error setup
-  const statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+  const statusCode: number =
+    err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
 
   // Send standardized error response
   sendError(res, statusCode, err.errors || err);
-};
+}

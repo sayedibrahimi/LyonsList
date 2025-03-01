@@ -1,4 +1,4 @@
-const ErrorMessages = {
+const ErrorMessages: Record<string, string> = {
   INTERNAL_SERVER_ERROR: "Internal server error.",
   ROUTE_DOES_NOT_EXIST: "Route does not exist.",
 
@@ -36,6 +36,11 @@ const ErrorMessages = {
     "No account exists with this email, check email was entered correctly.",
   AUTH_NO_PASSWORD_MATCH:
     "Password does not match, check it was entered correctly.",
+  AUTH_NO_TOKEN: "No token provided, authorization denied.",
+  AUTH_INVALID_TOKEN: "Invalid token bearer, authorization denied.",
+  AUTH_INVALID_JWT_SECRET: "Internal server error: JWT_SECRET is not defined.",
+  AUTH_CHECK_FAILED: "Authentication check failed.",
+  AUTH_UNKNOWN_ERROR: "An unknown error occurred during authentication.",
 };
 
 export default ErrorMessages;

@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, Model, Document } from "mongoose";
 
 export interface ListingModel extends Document {
   _id: string;
@@ -12,7 +12,7 @@ export interface ListingModel extends Document {
   // TODO: add some sort of tags or category here?
 }
 
-const ListingSchema = new Schema<ListingModel>(
+const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
   {
     title: {
       type: String,
@@ -63,5 +63,8 @@ const ListingSchema = new Schema<ListingModel>(
   { timestamps: true }
 );
 
-const Listing = model<ListingModel>("Listing", ListingSchema);
+const Listing: Model<ListingModel> = mongoose.model<ListingModel>(
+  "Listing",
+  ListingSchema
+);
 export default Listing;

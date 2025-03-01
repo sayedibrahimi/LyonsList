@@ -1,32 +1,37 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import { CustomJwtPayload } from "../types/CustomJwtPayload";
 import { UserRequest } from "../types/UserRequest";
 import { StatusCodes } from "http-status-codes";
+import ErrorMessages from "../config/errorMessages";
 
-const auth = async (
+export async function auth(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+): Promise<void> {
   // check header
-  const authHeader = req.headers.authorization;
+  const authHeader: string | undefined = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Authentication invalid Bearer" });
-    return;
+    return next({
+      statusCode: StatusCodes.UNAUTHORIZED,
+      message: ErrorMessages.AUTH_INVALID_TOKEN,
+    });
   }
-  const token = authHeader.split(" ")[1];
+  const token: string = authHeader.split(" ")[1];
 
   try {
     const jwtSecret: string | undefined = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        msg: "Internal server error: JWT_SECRET is not defined",
+      return next({
+        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+        message: ErrorMessages.AUTH_INVALID_JWT_SECRET,
       });
-      return;
     }
-    const payload = jwt.verify(token, jwtSecret) as JwtPayload;
+    const payload: CustomJwtPayload = jwt.verify(
+      token,
+      jwtSecret
+    ) as CustomJwtPayload;
 
     (req as UserRequest).user = {
       userID: payload.userData.userID,
@@ -39,9 +44,9 @@ const auth = async (
   } catch (error: unknown) {
     res
       .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Authentication invalid Error" });
+      .json({ msg: ErrorMessages.AUTH_CHECK_FAILED, error });
     return;
   }
-};
+}
 
 export default auth;

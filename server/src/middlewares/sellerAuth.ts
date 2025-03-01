@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { UserRequest } from "../types/UserRequest";
 import { StatusCodes } from "http-status-codes";
+import { requestAuth } from "../utils/requestAuth";
 import Listing, { ListingModel } from "../models/listings.model";
 import ErrorMessages from "../config/errorMessages";
 
@@ -10,8 +10,7 @@ export async function sellerAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    const UserReq = req as UserRequest;
-    const UserReqID = UserReq.user.userID;
+    const UserReqID: string = requestAuth(req, next);
 
     // query using rep.params.is (listing id) to check if the associated
     // sellerID matches the userID
@@ -35,9 +34,10 @@ export async function sellerAuth(
 
     next();
   } catch (error: unknown) {
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Authentication invalid Error" });
-    return;
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      error,
+    });
   }
 }

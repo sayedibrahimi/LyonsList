@@ -18,6 +18,7 @@ export async function userAccountAuth(
         message: ErrorMessages.USER_NOT_FOUND,
       });
     }
+
     const userAccountID: string = user.userID;
     const userAccount: UserModel | null = await User.findById(userAccountID);
     if (!userAccount) {
@@ -28,9 +29,10 @@ export async function userAccountAuth(
     }
     next();
   } catch (error: unknown) {
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: "Authentication invalid Error" });
-    return;
+    return next({
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: ErrorMessages.INTERNAL_SERVER_ERROR,
+      error,
+    });
   }
 }
