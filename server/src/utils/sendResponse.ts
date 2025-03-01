@@ -23,10 +23,21 @@ export function sendSuccess<T = unknown>(
 export function sendError(
   res: Response,
   statusCode: number,
-  errors?: unknown
+  error?: Error | unknown,
+  message?: string
 ): Response<ApiResponse> {
+  let formattedError: string | unknown;
+  if (error instanceof Error) {
+    formattedError = error.message;
+  } else if (typeof error === "object" && error !== null) {
+    // If it's an object, try to stringify it
+    formattedError = JSON.stringify(error, Object.getOwnPropertyNames(error));
+  } else {
+    formattedError = error;
+  }
   return res.status(statusCode).json({
     success: false,
-    errors: errors || null,
+    errors: formattedError,
+    message: message || "An error occurred",
   });
 }

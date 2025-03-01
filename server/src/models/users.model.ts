@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { UserRequestObject } from "../types/UserRequest";
 import { CustomClaims } from "../types/JwtSignClaims";
+// import { createJWTMethod, comparePasswordMethod } from "./users.methods";
+// import { hashPassword } from "./users.pre";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -16,6 +18,7 @@ export interface UserModel extends Document {
   totalListings: number;
   // methods
   createJWT(): string;
+  // eslint-disable-next-line no-unused-vars
   comparePassword(password: string): Promise<boolean>;
 }
 
@@ -111,3 +114,10 @@ UserSchema.methods.comparePassword = async function (
 // export the user model as 'User'
 const User: Model<UserModel> = mongoose.model<UserModel>("User", UserSchema);
 export default User;
+
+// // Attach pre-save hook for password hashing
+// UserSchema.pre("save", hashPassword);
+
+// // Attach methods: createJWT and comparePassword
+// UserSchema.methods.createJWT = createJWTMethod;
+// UserSchema.methods.comparePassword = comparePasswordMethod;

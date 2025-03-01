@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
 import { LoginRequest } from "../types/LoginRequest";
 import { sendSuccess } from "../utils/sendResponse";
+import { CustomError } from "../types/CustomError";
 import { StatusCodes } from "http-status-codes";
 import { RegisterRequestObject } from "../types/RegisterRequest";
 import { UserResponseObject } from "../types/UserResponse";
@@ -33,19 +34,23 @@ export async function register(
     const { firstName, lastName, email, password } =
       req.body as RegisterRequestObject;
     if (!firstName || !lastName || !email || !password) {
-      return next({
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: ErrorMessages.USER_MISSING_FIELDS,
-      });
+      return next(
+        new CustomError(
+          ErrorMessages.USER_MISSING_FIELDS,
+          StatusCodes.BAD_REQUEST
+        )
+      );
     }
 
     // if email already exists
     const existingUser: UserModel | null = await User.findOne({ email });
-    if (existingUser === null) {
-      return next({
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: ErrorMessages.USER_EMAIL_IN_USE,
-      });
+    if (existingUser !== null) {
+      return next(
+        new CustomError(
+          ErrorMessages.USER_EMAIL_IN_USE,
+          StatusCodes.BAD_REQUEST
+        )
+      );
     }
 
     // else, create user
@@ -71,11 +76,13 @@ export async function register(
     );
     return;
   } catch (error: unknown) {
-    return next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: ErrorMessages.INTERNAL_SERVER_ERROR,
-      errors: error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }
 
