@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { CustomJwtPayload } from "../types/CustomJwtPayload";
 import { UserRequest } from "../types/UserRequest";
 import { StatusCodes } from "http-status-codes";
+import { CustomError } from "../types/CustomError";
 import ErrorMessages from "../config/errorMessages";
 
 export async function auth(
@@ -13,21 +14,26 @@ export async function auth(
   // check header
   const authHeader: string | undefined = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return next({
-      statusCode: StatusCodes.UNAUTHORIZED,
-      message: ErrorMessages.AUTH_INVALID_TOKEN,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.AUTH_INVALID_TOKEN,
+        StatusCodes.UNAUTHORIZED
+      )
+    );
   }
   const token: string = authHeader.split(" ")[1];
 
   try {
     const jwtSecret: string | undefined = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      return next({
-        statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-        message: ErrorMessages.AUTH_INVALID_JWT_SECRET,
-      });
+      return next(
+        new CustomError(
+          ErrorMessages.AUTH_INVALID_JWT_SECRET,
+          StatusCodes.INTERNAL_SERVER_ERROR
+        )
+      );
     }
+
     const payload: CustomJwtPayload = jwt.verify(
       token,
       jwtSecret
@@ -42,10 +48,13 @@ export async function auth(
 
     next();
   } catch (error: unknown) {
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ msg: ErrorMessages.AUTH_CHECK_FAILED, error });
-    return;
+    return next(
+      new CustomError(
+        ErrorMessages.AUTH_CHECK_FAILED,
+        StatusCodes.UNAUTHORIZED,
+        error
+      )
+    );
   }
 }
 

@@ -108,30 +108,36 @@ export async function login(
 
     // check if req body is full
     if (!email || !password) {
-      return next({
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: ErrorMessages.AUTH_INVALID_CREDENTIALS,
-      });
+      return next(
+        new CustomError(
+          ErrorMessages.AUTH_INVALID_CREDENTIALS,
+          StatusCodes.BAD_REQUEST
+        )
+      );
     }
 
     // check for the user from dB by email
     const user: UserModel | null = await User.findOne({ email });
     // user is not providing valid credentials but user exists
     if (!user) {
-      return next({
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: ErrorMessages.AUTH_NO_EMAIL_MATCH,
-      });
+      return next(
+        new CustomError(
+          ErrorMessages.AUTH_NO_EMAIL_MATCH,
+          StatusCodes.BAD_REQUEST
+        )
+      );
     }
 
     /* The line `const isMatch = await user.comparePassword(password);` is checking whether the provided
  `password` matches the password stored for the user in the database. */
     const isMatch: boolean = await user.comparePassword(password);
     if (!isMatch) {
-      return next({
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: ErrorMessages.AUTH_NO_PASSWORD_MATCH,
-      });
+      return next(
+        new CustomError(
+          ErrorMessages.AUTH_NO_PASSWORD_MATCH,
+          StatusCodes.BAD_REQUEST
+        )
+      );
     }
 
     // If user exists with valid credentials
@@ -149,10 +155,12 @@ export async function login(
   } catch (error: unknown) {
     /* In the provided TypeScript code snippets, the `catch (error)` block is used to handle any errors
   that occur during the execution of the asynchronous functions `register` and `login`. */
-    return next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: ErrorMessages.INTERNAL_SERVER_ERROR,
-      errors: error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }

@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import { requestAuth } from "../utils/requestAuth";
 import Listing, { ListingModel } from "../models/listings.model";
 import ErrorMessages from "../config/errorMessages";
+import { CustomError } from "../types/CustomError";
 
 export async function sellerAuth(
   req: Request,
@@ -18,26 +19,29 @@ export async function sellerAuth(
       req.params.id
     );
     if (foundListing === null) {
-      return next({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: ErrorMessages.LISTING_NOT_FOUND,
-      });
+      return next(
+        new CustomError(ErrorMessages.LISTING_NOT_FOUND, StatusCodes.NOT_FOUND)
+      );
     }
 
     // if the id's dont match, return an error
     if (foundListing.sellerID.toString() !== UserReqID) {
-      return next({
-        statusCode: StatusCodes.UNAUTHORIZED,
-        message: ErrorMessages.LISTING_NOT_AUTHORIZED,
-      });
+      return next(
+        new CustomError(
+          ErrorMessages.LISTING_NOT_AUTHORIZED,
+          StatusCodes.UNAUTHORIZED
+        )
+      );
     }
 
     next();
   } catch (error: unknown) {
-    return next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: ErrorMessages.INTERNAL_SERVER_ERROR,
-      error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }

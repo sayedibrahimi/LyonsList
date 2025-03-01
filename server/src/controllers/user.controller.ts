@@ -5,6 +5,7 @@ import { UserRequestObject } from "../types/UserRequest";
 import { requestAuth } from "../utils/requestAuth";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
+import { CustomError } from "../types/CustomError";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 
@@ -26,10 +27,13 @@ export async function getUserAccount(
     );
   } catch (error: unknown) {
     // handle error
-    next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      errors: error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }
 
@@ -50,10 +54,9 @@ export async function updateUserAccount(
       { new: true }
     );
     if (!updatedUserAccount) {
-      return next({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: ErrorMessages.USER_NOT_FOUND,
-      });
+      return next(
+        new CustomError(ErrorMessages.USER_NOT_FOUND, StatusCodes.NOT_FOUND)
+      );
     }
 
     sendSuccess(
@@ -64,10 +67,13 @@ export async function updateUserAccount(
     );
   } catch (error: unknown) {
     // handle error
-    next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      errors: error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }
 
@@ -81,14 +87,12 @@ export async function deleteUserAccount(
     // get user account by id
     const userAccountID: string = requestAuth(req, next);
     // delete user account
-    const deletedUserAccount: UserModel | null = await User.findByIdAndDelete(
-      userAccountID
-    );
+    const deletedUserAccount: UserModel | null =
+      await User.findByIdAndDelete(userAccountID);
     if (!deletedUserAccount) {
-      return next({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: ErrorMessages.USER_NOT_FOUND,
-      });
+      return next(
+        new CustomError(ErrorMessages.USER_NOT_FOUND, StatusCodes.NOT_FOUND)
+      );
     }
     sendSuccess(
       res,
@@ -98,9 +102,12 @@ export async function deleteUserAccount(
     );
   } catch (error: unknown) {
     // handle error
-    next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      errors: error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }

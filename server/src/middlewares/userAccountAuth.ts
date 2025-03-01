@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes";
 import User, { UserModel } from "../models/users.model";
 import { UserRequest, UserRequestObject } from "../types/UserRequest";
 import ErrorMessages from "../config/errorMessages";
+import { CustomError } from "../types/CustomError";
 
 export async function userAccountAuth(
   req: Request,
@@ -13,26 +14,26 @@ export async function userAccountAuth(
     // get user account by id
     const user: UserRequestObject = (req as UserRequest).user;
     if (!user || !user.userID) {
-      return next({
-        statusCode: StatusCodes.BAD_REQUEST,
-        message: ErrorMessages.USER_NOT_FOUND,
-      });
+      return next(
+        new CustomError(ErrorMessages.USER_NOT_FOUND, StatusCodes.BAD_REQUEST)
+      );
     }
 
     const userAccountID: string = user.userID;
     const userAccount: UserModel | null = await User.findById(userAccountID);
     if (!userAccount) {
-      return next({
-        statusCode: StatusCodes.NOT_FOUND,
-        message: ErrorMessages.USER_NOT_FOUND,
-      });
+      return next(
+        new CustomError(ErrorMessages.USER_NOT_FOUND, StatusCodes.NOT_FOUND)
+      );
     }
     next();
   } catch (error: unknown) {
-    return next({
-      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-      message: ErrorMessages.INTERNAL_SERVER_ERROR,
-      error,
-    });
+    return next(
+      new CustomError(
+        ErrorMessages.INTERNAL_SERVER_ERROR,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        error
+      )
+    );
   }
 }

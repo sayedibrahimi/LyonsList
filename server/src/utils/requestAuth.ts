@@ -2,6 +2,7 @@
 import { Request, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import ErrorMessages from "../config/errorMessages";
+import { CustomError } from "../types/CustomError";
 
 /**
  * Gets the authenticated user ID from request or returns an error through next()
@@ -14,10 +15,10 @@ export function getUserId(
   next: NextFunction
 ): string | undefined {
   if (!req.user) {
-    next({
-      statusCode: StatusCodes.UNAUTHORIZED,
-      message: ErrorMessages.AUTH_NO_TOKEN,
-    });
+    next(
+      new CustomError(ErrorMessages.AUTH_NO_TOKEN, StatusCodes.UNAUTHORIZED)
+    );
+
     return undefined;
   }
   return req.user.userID;
@@ -33,7 +34,10 @@ export function requestAuth(req: Request, next: NextFunction): string | never {
 
   if (!userId) {
     // This prevents TypeScript from thinking execution continues
-    throw new Error(ErrorMessages.AUTH_CHECK_FAILED);
+    throw new CustomError(
+      ErrorMessages.AUTH_NO_TOKEN,
+      StatusCodes.UNAUTHORIZED
+    );
   }
 
   return userId;
