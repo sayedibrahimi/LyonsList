@@ -15,7 +15,8 @@ const mongoURI: string = process.env.MONGO_URI!;
 // import routes
 import auth from "./middlewares/auth";
 import authRoutes from "./routes/auth.route";
-import userRoutes from "./routes/users.route";
+// import userRoutes from "./routes/admin.users.route";
+import userAccountRoutes from "./routes/user.route";
 import listingRoutes from "./routes/listings.route";
 
 // create express app
@@ -28,7 +29,8 @@ app.use(express.static("public"));
 
 // routes
 app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
+// app.use("/users", userRoutes);
+app.use("/account", auth, userAccountRoutes);
 app.use("/listings", auth, listingRoutes);
 
 app.get("/helloWorld", (req, res) => {

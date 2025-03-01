@@ -33,7 +33,6 @@ export async function resetPassword(
       return;
     }
 
-    console.log((req as UserRequest).user);
     const UserReqID = (req as UserRequest).user.userID;
 
     if (foundUser._id.toString() !== UserReqID) {

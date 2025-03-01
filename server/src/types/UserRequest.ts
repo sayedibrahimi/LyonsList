@@ -1,12 +1,14 @@
 import { Request } from "express";
 
+export interface UserRequestObject {
+  userID: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 export interface UserRequest extends Request {
-  user: {
-    userID: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+  user: UserRequestObject;
 }
 
 declare global {

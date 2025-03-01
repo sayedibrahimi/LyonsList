@@ -7,7 +7,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
-} from "../controllers/users.controller";
+} from "../controllers/admin.users.controller";
 
 //! Auth all routes
 

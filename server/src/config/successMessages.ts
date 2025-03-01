@@ -9,6 +9,10 @@ const SuccessMessages = {
   USER_LISTINGS_SUCCESS_FETCHED:
     "User listings have been successfully fetched.",
 
+  USER_SUCCESS_ACCOUNT_FETCHED: "A user has been successfully fetched by id.",
+  USER_SUCCESS_ACCOUNT_UPDATED: "User has been successfully updated.",
+  USER_SUCCESS_ACCOUNT_DELETED: "User has been successfully deleted.",
+
   USER_PASSWORD_SUCCESS_RESET: "User password has been successfully reset.",
 
   // listings
