@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { UserModel } from "./users.model";
 import { UserRequestObject } from "../types/UserRequest";
 import { CustomClaims } from "../types/JwtSignClaims";
+import { CustomError } from "../errors/CustomError";
 
 export function createJWTMethod(this: UserModel): string {
   const jwtSecret: string | undefined = process.env.JWT_SECRET || "";
@@ -39,7 +40,7 @@ export async function comparePasswordMethod(
     .findById(this._id)
     .select("+password");
   if (!user) {
-    throw new Error("User not found during password comparison.");
+    throw new CustomError("User not found during password comparison.", 404);
   }
   return bcrypt.compare(candidatePassword, user.password);
 }

@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { StatusCodes } from "http-status-codes";
 import User, { UserModel } from "../models/users.model";
 import { UserRequest, UserRequestObject } from "../types/UserRequest";
 import ErrorMessages from "../config/errorMessages";
-import { CustomError } from "../types/CustomError";
+import {
+  BadRequestError,
+  InternalServerError,
+  NotFoundError,
+  CustomError,
+} from "../errors";
 
 export async function userAccountAuth(
   req: Request,
@@ -14,26 +18,20 @@ export async function userAccountAuth(
     // get user account by id
     const user: UserRequestObject = (req as UserRequest).user;
     if (!user || !user.userID) {
-      return next(
-        new CustomError(ErrorMessages.USER_NOT_FOUND, StatusCodes.BAD_REQUEST)
-      );
+      throw new BadRequestError(ErrorMessages.USER_NOT_FOUND);
     }
 
     const userAccountID: string = user.userID;
     const userAccount: UserModel | null = await User.findById(userAccountID);
     if (!userAccount) {
-      return next(
-        new CustomError(ErrorMessages.USER_NOT_FOUND, StatusCodes.NOT_FOUND)
-      );
+      throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
     }
     next();
   } catch (error: unknown) {
-    return next(
-      new CustomError(
-        ErrorMessages.INTERNAL_SERVER_ERROR,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        error
-      )
-    );
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+    }
   }
 }

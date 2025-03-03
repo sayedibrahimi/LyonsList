@@ -2,8 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { CustomJwtPayload } from "../types/CustomJwtPayload";
 import { UserRequest } from "../types/UserRequest";
-import { StatusCodes } from "http-status-codes";
-import { CustomError } from "../types/CustomError";
+import { InternalServerError, UnauthError, CustomError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 
 export async function auth(
@@ -14,24 +13,14 @@ export async function auth(
   // check header
   const authHeader: string | undefined = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
-    return next(
-      new CustomError(
-        ErrorMessages.AUTH_INVALID_TOKEN,
-        StatusCodes.UNAUTHORIZED
-      )
-    );
+    throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
   }
   const token: string = authHeader.split(" ")[1];
 
   try {
     const jwtSecret: string | undefined = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      return next(
-        new CustomError(
-          ErrorMessages.AUTH_INVALID_JWT_SECRET,
-          StatusCodes.INTERNAL_SERVER_ERROR
-        )
-      );
+      throw new UnauthError(ErrorMessages.AUTH_INVALID_JWT_SECRET);
     }
 
     const payload: CustomJwtPayload = jwt.verify(
@@ -48,14 +37,13 @@ export async function auth(
 
     next();
   } catch (error: unknown) {
-    return next(
-      new CustomError(
-        ErrorMessages.AUTH_CHECK_FAILED,
-        StatusCodes.UNAUTHORIZED,
-        error
-      )
-    );
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+    }
   }
 }
 
+//! todo
 export default auth;

@@ -1,6 +1,10 @@
+import { Request, Response, NextFunction } from "express";
+import { CustomError } from "./errors";
+
 // import dependencies
 import express from "express";
 import dotenv from "dotenv";
+// import bodyParser from "body-parser";
 
 // import custom middleware
 import { notFound } from "./middlewares/notFound";
@@ -24,7 +28,7 @@ const app: express.Application = express();
 
 // app use
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// app.use(express.urlencoded({ extended: false }));
 app.use(express.static("public"));
 
 // routes
@@ -32,9 +36,12 @@ app.use("/auth", authRoutes);
 // app.use("/users", userRoutes);
 app.use("/account", auth, userAccountRoutes);
 app.use("/listings", auth, listingRoutes);
-
+app.get("/", (req: Request, res: Response, next: NextFunction) => {
+  next(new CustomError("This is a test error", 500));
+});
 // if none of the routes match, return a 404
 app.use(notFound);
+// app.use(bodyParser.json());
 app.use(errorHandlerMiddleware);
 
 // connect to the database

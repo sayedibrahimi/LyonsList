@@ -1,10 +1,10 @@
 import mongoose, { Schema, Model, Document } from "mongoose";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import { UserRequestObject } from "../types/UserRequest";
-import { CustomClaims } from "../types/JwtSignClaims";
-// import { createJWTMethod, comparePasswordMethod } from "./users.methods";
-// import { hashPassword } from "./users.pre";
+// import jwt from "jsonwebtoken";
+// import bcrypt from "bcryptjs";
+// import { UserRequestObject } from "../types/UserRequest";
+// import { CustomClaims } from "../types/JwtSignClaims";
+import { createJWTMethod, comparePasswordMethod } from "./users.methods";
+import { hashPassword } from "./users.pre";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -63,61 +63,61 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
   { timestamps: true }
 );
 
-// user methods
-UserSchema.pre("save", async function () {
-  const salt: string = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
+// // user methods
+// UserSchema.pre("save", async function () {
+//   const salt: string = await bcrypt.genSalt(10);
+//   this.password = await bcrypt.hash(this.password, salt);
+// });
 
-UserSchema.methods.createJWT = function (): string {
-  const jwtSecret: string | undefined = process.env.JWT_SECRET || "";
-  if (!jwtSecret) {
-    throw new Error("JWT_SECRET is not defined");
-  }
+// UserSchema.methods.createJWT = function (): string {
+//   const jwtSecret: string | undefined = process.env.JWT_SECRET || "";
+//   if (!jwtSecret) {
+//     throw new Error("JWT_SECRET is not defined");
+//   }
 
-  const current_time: number = Math.floor(Date.now() / 1000);
-  // : check this math
-  const expiration_time: number =
-    current_time + parseInt(process.env.JWT_LIFETIME_HOURS || "0") * 3600;
+//   const current_time: number = Math.floor(Date.now() / 1000);
+//   // : check this math
+//   const expiration_time: number =
+//     current_time + parseInt(process.env.JWT_LIFETIME_HOURS || "0") * 3600;
 
-  const userData: UserRequestObject = {
-    userID: this._id,
-    firstName: this.firstName,
-    lastName: this.lastName,
-    email: this.email,
-  };
+//   const userData: UserRequestObject = {
+//     userID: this._id,
+//     firstName: this.firstName,
+//     lastName: this.lastName,
+//     email: this.email,
+//   };
 
-  const claims: CustomClaims = {
-    sub: this._id.toString(),
-    iat: current_time,
-    exp: expiration_time,
-    userData: userData,
-  };
+//   const claims: CustomClaims = {
+//     sub: this._id.toString(),
+//     iat: current_time,
+//     exp: expiration_time,
+//     userData: userData,
+//   };
 
-  return jwt.sign(claims, jwtSecret, { algorithm: "HS256" });
-};
+//   return jwt.sign(claims, jwtSecret, { algorithm: "HS256" });
+// };
 
-UserSchema.methods.comparePassword = async function (
-  candidatePassword: string
-): Promise<boolean> {
-  const user: UserModel = await this.model("User")
-    .findById(this._id)
-    .select("+password");
-  const isMatch: boolean = await bcrypt.compare(
-    candidatePassword,
-    user.password
-  );
-  // const isMatch = await bcrypt.compare(candidatePassword, this.password);
-  return isMatch;
-};
+// UserSchema.methods.comparePassword = async function (
+//   candidatePassword: string
+// ): Promise<boolean> {
+//   const user: UserModel = await this.model("User")
+//     .findById(this._id)
+//     .select("+password");
+//   const isMatch: boolean = await bcrypt.compare(
+//     candidatePassword,
+//     user.password
+//   );
+//   // const isMatch = await bcrypt.compare(candidatePassword, this.password);
+//   return isMatch;
+// };
+
+// Attach pre-save hook for password hashing
+UserSchema.pre("save", hashPassword);
+
+// Attach methods: createJWT and comparePassword
+UserSchema.methods.createJWT = createJWTMethod;
+UserSchema.methods.comparePassword = comparePasswordMethod;
 
 // export the user model as 'User'
 const User: Model<UserModel> = mongoose.model<UserModel>("User", UserSchema);
 export default User;
-
-// // Attach pre-save hook for password hashing
-// UserSchema.pre("save", hashPassword);
-
-// // Attach methods: createJWT and comparePassword
-// UserSchema.methods.createJWT = createJWTMethod;
-// UserSchema.methods.comparePassword = comparePasswordMethod;

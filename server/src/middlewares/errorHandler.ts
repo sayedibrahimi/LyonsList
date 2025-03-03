@@ -1,32 +1,27 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/middlewares/errorHandler.ts
-import { Request, Response } from "express";
-import { StatusCodes } from "http-status-codes";
-import { sendError } from "../utils/sendResponse";
-import ErrorMessages from "../config/errorMessages";
-import { CustomError } from "../types/CustomError";
+import { NextFunction, Request, Response } from "express";
+// import { StatusCodes } from "http-status-codes";
+// import { sendError } from "../utils/sendResponse";
+// import ErrorMessages from "../config/errorMessages";
+import { CustomError } from "../errors/CustomError";
 
 export function errorHandlerMiddleware(
   err: CustomError,
   req: Request,
-  res: Response
+  res: Response,
+  // eslint-disable-next-line no-unused-vars
+  next: NextFunction
 ): void {
-  // Default error setup
-  const statusCode: number =
-    err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
+  const statusCode: number = err instanceof CustomError ? err.statusCode : 500;
+  const message: string = err.message || "Internal Server Error";
 
-  const message: string = err.message || ErrorMessages.INTERNAL_SERVER_ERROR;
-
-  // console.log(err);
-  // console.error("Error: 3", err);
-  // if (err.stack) {
-  //   console.error(err.stack);
-  // }
-
-  // Send standardized error response
-  sendError(res, statusCode, err.errors || { message });
-  // res.status(statusCode).json({
-  //   success: false,
-  //   message: err.message,
-  //   errors: err.errors || err,
-  // });
+  res.setHeader("Content-Type", "application/json");
+  res.status(statusCode).json({
+    success: false,
+    error: {
+      message,
+      statusCode,
+    },
+  });
 }

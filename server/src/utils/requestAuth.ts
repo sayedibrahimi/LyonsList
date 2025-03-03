@@ -2,7 +2,7 @@
 import { Request, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import ErrorMessages from "../config/errorMessages";
-import { CustomError } from "../types/CustomError";
+import { CustomError } from "../errors";
 
 /**
  * Gets the authenticated user ID from request or returns an error through next()

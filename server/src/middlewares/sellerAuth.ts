@@ -1,9 +1,13 @@
 import { Request, Response, NextFunction } from "express";
-import { StatusCodes } from "http-status-codes";
 import { requestAuth } from "../utils/requestAuth";
 import Listing, { ListingModel } from "../models/listings.model";
 import ErrorMessages from "../config/errorMessages";
-import { CustomError } from "../types/CustomError";
+import {
+  InternalServerError,
+  UnauthError,
+  NotFoundError,
+  CustomError,
+} from "../errors";
 
 export async function sellerAuth(
   req: Request,
@@ -19,29 +23,20 @@ export async function sellerAuth(
       req.params.id
     );
     if (foundListing === null) {
-      return next(
-        new CustomError(ErrorMessages.LISTING_NOT_FOUND, StatusCodes.NOT_FOUND)
-      );
+      throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
     }
 
     // if the id's dont match, return an error
     if (foundListing.sellerID.toString() !== UserReqID) {
-      return next(
-        new CustomError(
-          ErrorMessages.LISTING_NOT_AUTHORIZED,
-          StatusCodes.UNAUTHORIZED
-        )
-      );
+      throw new UnauthError(ErrorMessages.LISTING_NOT_AUTHORIZED);
     }
 
     next();
   } catch (error: unknown) {
-    return next(
-      new CustomError(
-        ErrorMessages.INTERNAL_SERVER_ERROR,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        error
-      )
-    );
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+    }
   }
 }

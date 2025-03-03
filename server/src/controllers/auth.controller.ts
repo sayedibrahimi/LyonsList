@@ -2,12 +2,17 @@ import { NextFunction, Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
 import { LoginRequest } from "../types/LoginRequest";
 import { sendSuccess } from "../utils/sendResponse";
-import { CustomError } from "../types/CustomError";
 import { StatusCodes } from "http-status-codes";
-import { RegisterRequestObject } from "../types/RegisterRequest";
-import { UserResponseObject } from "../types/UserResponse";
+import { CustomError } from "../errors";
+import {
+  // CustomError,
+  RegisterRequestObject,
+  UserResponseObject,
+} from "../types";
+import { BadRequestError, InternalServerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
+// import { errorHandlerMiddleware } from "../middlewares/errorHandler";
 
 /**
  * This TypeScript function named `register` is an asynchronous function that handles registration
@@ -34,23 +39,13 @@ export async function register(
     const { firstName, lastName, email, password } =
       req.body as RegisterRequestObject;
     if (!firstName || !lastName || !email || !password) {
-      return next(
-        new CustomError(
-          ErrorMessages.USER_MISSING_FIELDS,
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new BadRequestError(ErrorMessages.USER_MISSING_FIELDS);
     }
 
     // if email already exists
     const existingUser: UserModel | null = await User.findOne({ email });
     if (existingUser !== null) {
-      return next(
-        new CustomError(
-          ErrorMessages.USER_EMAIL_IN_USE,
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
     }
 
     // else, create user
@@ -76,13 +71,11 @@ export async function register(
     );
     return;
   } catch (error: unknown) {
-    return next(
-      new CustomError(
-        ErrorMessages.INTERNAL_SERVER_ERROR,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        error
-      )
-    );
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+    }
   }
 }
 
@@ -108,36 +101,21 @@ export async function login(
 
     // check if req body is full
     if (!email || !password) {
-      return next(
-        new CustomError(
-          ErrorMessages.AUTH_INVALID_CREDENTIALS,
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new BadRequestError(ErrorMessages.AUTH_INVALID_CREDENTIALS);
     }
 
     // check for the user from dB by email
     const user: UserModel | null = await User.findOne({ email });
     // user is not providing valid credentials but user exists
     if (!user) {
-      return next(
-        new CustomError(
-          ErrorMessages.AUTH_NO_EMAIL_MATCH,
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new BadRequestError(ErrorMessages.AUTH_NO_EMAIL_MATCH);
     }
 
     /* The line `const isMatch = await user.comparePassword(password);` is checking whether the provided
  `password` matches the password stored for the user in the database. */
     const isMatch: boolean = await user.comparePassword(password);
     if (!isMatch) {
-      return next(
-        new CustomError(
-          ErrorMessages.AUTH_NO_PASSWORD_MATCH,
-          StatusCodes.BAD_REQUEST
-        )
-      );
+      throw new BadRequestError(ErrorMessages.AUTH_NO_PASSWORD_MATCH);
     }
 
     // If user exists with valid credentials
@@ -153,14 +131,10 @@ export async function login(
       token,
     });
   } catch (error: unknown) {
-    /* In the provided TypeScript code snippets, the `catch (error)` block is used to handle any errors
-  that occur during the execution of the asynchronous functions `register` and `login`. */
-    return next(
-      new CustomError(
-        ErrorMessages.INTERNAL_SERVER_ERROR,
-        StatusCodes.INTERNAL_SERVER_ERROR,
-        error
-      )
-    );
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+    }
   }
 }
