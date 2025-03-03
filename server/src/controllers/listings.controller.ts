@@ -38,7 +38,11 @@ export async function createListing(
     if (error instanceof CustomError) {
       return next(error);
     } else {
-      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+      return next(
+        new InternalServerError(
+          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+        )
+      );
     }
   }
 }
@@ -67,7 +71,11 @@ export async function getAllListings(
     if (error instanceof CustomError) {
       return next(error);
     } else {
-      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+      return next(
+        new InternalServerError(
+          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+        )
+      );
     }
   }
 }
@@ -93,7 +101,11 @@ export async function getListingById(
     if (error instanceof CustomError) {
       return next(error);
     } else {
-      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+      return next(
+        new InternalServerError(
+          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+        )
+      );
     }
   }
 }
@@ -124,7 +136,11 @@ export async function updateListing(
     if (error instanceof CustomError) {
       return next(error);
     } else {
-      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+      return next(
+        new InternalServerError(
+          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+        )
+      );
     }
   }
 }
@@ -154,7 +170,11 @@ export async function deleteListing(
     if (error instanceof CustomError) {
       return next(error);
     } else {
-      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+      return next(
+        new InternalServerError(
+          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+        )
+      );
     }
   }
 }

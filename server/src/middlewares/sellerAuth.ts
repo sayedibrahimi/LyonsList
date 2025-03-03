@@ -36,7 +36,11 @@ export async function sellerAuth(
     if (error instanceof CustomError) {
       return next(error);
     } else {
-      return next(new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR));
+      return next(
+        new InternalServerError(
+          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+        )
+      );
     }
   }
 }

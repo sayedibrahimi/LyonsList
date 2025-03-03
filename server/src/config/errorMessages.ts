@@ -1,5 +1,5 @@
 const ErrorMessages: Record<string, string> = {
-  INTERNAL_SERVER_ERROR: "Internal server error.",
+  INTERNAL_SERVER_ERROR: "Internal server error: ",
   ROUTE_DOES_NOT_EXIST: "Route does not exist.",
 
   // password
