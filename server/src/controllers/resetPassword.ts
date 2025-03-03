@@ -45,8 +45,8 @@ export async function resetPassword(
     sendSuccess(
       res,
       SuccessMessages.USER_PASSWORD_SUCCESS_RESET,
-      StatusCodes.OK
-      //   ,{ user: foundUser }
+      StatusCodes.OK,
+      { user: foundUser }
     );
   } catch (error: unknown) {
     if (error instanceof CustomError) {

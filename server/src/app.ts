@@ -1,6 +1,3 @@
-import { Request, Response, NextFunction } from "express";
-import { CustomError } from "./errors";
-
 // import dependencies
 import express from "express";
 import dotenv from "dotenv";
@@ -36,12 +33,8 @@ app.use("/auth", authRoutes);
 // app.use("/users", userRoutes);
 app.use("/account", auth, userAccountRoutes);
 app.use("/listings", auth, listingRoutes);
-app.get("/", (req: Request, res: Response, next: NextFunction) => {
-  next(new CustomError("This is a test error", 500));
-});
-// if none of the routes match, return a 404
+
 app.use(notFound);
-// app.use(bodyParser.json());
 app.use(errorHandlerMiddleware);
 
 // connect to the database

@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // src/middlewares/errorHandler.ts
 import { NextFunction, Request, Response } from "express";
-// import { StatusCodes } from "http-status-codes";
-// import { sendError } from "../utils/sendResponse";
-// import ErrorMessages from "../config/errorMessages";
 import { CustomError } from "../errors/CustomError";
 
 export function errorHandlerMiddleware(

@@ -11,7 +11,6 @@ import {
 } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-// import { UserRequest } from "../types/UserRequest";
 
 // Create a new listing
 export async function createListing(

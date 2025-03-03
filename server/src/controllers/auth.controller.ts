@@ -12,7 +12,6 @@ import {
 import { BadRequestError, InternalServerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-// import { errorHandlerMiddleware } from "../middlewares/errorHandler";
 
 /**
  * This TypeScript function named `register` is an asynchronous function that handles registration

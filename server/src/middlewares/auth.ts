@@ -5,7 +5,7 @@ import { UserRequest } from "../types/UserRequest";
 import { InternalServerError, UnauthError, CustomError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 
-export async function auth(
+export default async function auth(
   req: Request,
   res: Response,
   next: NextFunction
@@ -48,6 +48,3 @@ export async function auth(
     }
   }
 }
-
-//! todo
-export default auth;
