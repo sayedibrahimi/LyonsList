@@ -11,6 +11,8 @@ import {
 } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
+import { ListingObject } from "../types";
+import { validListingRequest } from "../utils/validListingRequest";
 
 // Create a new listing
 export async function createListing(
@@ -21,6 +23,11 @@ export async function createListing(
   try {
     const UserReqID: string = requestAuth(req, next);
     req.body.sellerID = UserReqID;
+
+    //TODO: Add validation for the request body and send bad request
+    if (!validListingRequest(req.body as ListingObject)) {
+      throw new BadRequestError(ErrorMessages.LISTING_INVALID_REQUEST);
+    }
 
     const newListing: ListingModel = await Listing.create(req.body);
     if (!newListing) {

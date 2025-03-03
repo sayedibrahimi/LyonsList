@@ -19,6 +19,7 @@ const ErrorMessages: Record<string, string> = {
   USER_LISTINGS_NO_ACCESS: "User listings do not exist.",
   USER_LISTINGS_NO_LISTINGS: "User has no listings.",
   LISTING_NOT_AUTHORIZED: "User is not authorized to access this listing.",
+  LISTING_INVALID_REQUEST: "Invalid request: please provide a valid listing.",
 
   // Users
   USER_MISSING_FIELDS:

@@ -4,6 +4,7 @@ import { LoginRequest } from "./LoginRequest";
 import { PasswordResetRequest } from "./PasswordResetRequest";
 import { RegisterRequestObject } from "./RegisterRequest";
 import { UserRequestObject } from "./UserRequest";
+import { ListingObject } from "./ListingObject";
 import { UserResponseObject } from "./UserResponse";
 
 export {
@@ -13,5 +14,6 @@ export {
   PasswordResetRequest,
   RegisterRequestObject,
   UserRequestObject,
+  ListingObject,
   UserResponseObject,
 };
