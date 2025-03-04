@@ -31,7 +31,7 @@ export async function getUserAccount(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
@@ -70,7 +70,7 @@ export async function updateUserAccount(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
@@ -104,7 +104,7 @@ export async function deleteUserAccount(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }

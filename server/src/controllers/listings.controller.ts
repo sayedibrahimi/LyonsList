@@ -46,7 +46,7 @@ export async function createListing(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
@@ -79,7 +79,7 @@ export async function getAllListings(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
@@ -109,7 +109,7 @@ export async function getListingById(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
@@ -144,7 +144,7 @@ export async function updateListing(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
@@ -178,7 +178,7 @@ export async function deleteListing(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }

@@ -54,6 +54,7 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
     },
     totalListings: {
       type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

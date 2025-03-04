@@ -12,7 +12,7 @@ export function createJWTMethod(this: UserModel): string {
   }
   const currentTime: number = Math.floor(Date.now() / 1000);
   const expirationTime: number =
-    currentTime + parseInt(process.env.JWT_LIFETIME_HOURS || "0") * 3600;
+    currentTime + parseInt(process.env.JWT_LIFETIME_HOURS || "24") * 3600;
 
   const userData: UserRequestObject = {
     userID: this._id,

@@ -33,7 +33,7 @@ export async function userAccountAuth(
     } else {
       return next(
         new InternalServerError(
-          (ErrorMessages.INTERNAL_SERVER_ERROR + error) as string
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
         )
       );
     }
