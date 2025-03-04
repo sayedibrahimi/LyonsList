@@ -20,6 +20,9 @@ import authRoutes from "./routes/auth.route";
 import userAccountRoutes from "./routes/user.route";
 import listingRoutes from "./routes/listings.route";
 
+// Create base API router
+const apiRouter: express.Router = express.Router();
+
 // create express app
 const app: express.Application = express();
 
@@ -29,10 +32,13 @@ app.use(express.json());
 app.use(express.static("public"));
 
 // routes
-app.use("/auth", authRoutes);
-// app.use("/users", userRoutes);
-app.use("/account", auth, userAccountRoutes);
-app.use("/listings", auth, listingRoutes);
+app.use("/api/v1", apiRouter);
+
+// Mount all routes to the API router
+apiRouter.use("/auth", authRoutes);
+// apiRouter.use("/users", userRoutes);
+apiRouter.use("/account", auth, userAccountRoutes);
+apiRouter.use("/listings", auth, listingRoutes);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);
