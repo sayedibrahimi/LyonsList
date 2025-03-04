@@ -1,4 +1,6 @@
-import { Schema, model, Document } from "mongoose";
+import mongoose, { Schema, Model, Document } from "mongoose";
+import { createJWTMethod, comparePasswordMethod } from "./users.methods";
+import { hashPassword } from "./users.pre";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -10,9 +12,14 @@ export interface UserModel extends Document {
   classYear: number;
   profilePicture: string;
   totalListings: number;
+  // methods
+  createJWT(): string;
+  // eslint-disable-next-line no-unused-vars
+  comparePassword(password: string): Promise<boolean>;
 }
 
-const UserSchema = new Schema<UserModel>(
+// TODO: add if false error fields
+const UserSchema: Schema<UserModel> = new Schema<UserModel>(
   {
     firstName: {
       type: String,
@@ -27,31 +34,39 @@ const UserSchema = new Schema<UserModel>(
       maxlength: [20, "Name cannot be more than 20 characters"],
     },
     email: {
-        type: String,
-        required: true,
-        trim: true,
-        unique: true
+      type: String,
+      required: true,
+      trim: true,
+      unique: true,
     },
     password: {
-        type: String,
-        required: true,
-        select: false
+      type: String,
+      required: true,
+      select: false,
     },
     classYear: {
-        type: Number,
-        required: false
+      type: Number,
+      required: false,
     },
     profilePicture: {
-        type: String,
-        required: false
+      type: String,
+      required: false,
     },
     totalListings: {
-        type: Number,
-    }
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
+// Attach pre-save hook for password hashing
+UserSchema.pre("save", hashPassword);
+
+// Attach methods: createJWT and comparePassword
+UserSchema.methods.createJWT = createJWTMethod;
+UserSchema.methods.comparePassword = comparePasswordMethod;
+
 // export the user model as 'User'
-const User = model<UserModel>("User", UserSchema);
+const User: Model<UserModel> = mongoose.model<UserModel>("User", UserSchema);
 export default User;
