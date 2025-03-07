@@ -9,6 +9,23 @@ import {
   CustomError,
 } from "../errors";
 
+/**
+ * The `sellerAuth` function in TypeScript ensures that the user making the request is authorized to
+ * access a specific listing based on the seller ID.
+ * @param {Request} req - The `req` parameter in the `sellerAuth` function stands for the request
+ * object, which contains information about the HTTP request made to the server. This object includes
+ * details such as the request headers, parameters, body, query parameters, and more. It is typically
+ * used to extract data sent by the
+ * @param {Response} res - The `res` parameter in the `sellerAuth` function stands for the response
+ * object in Express.js. This object represents the HTTP response that an Express app sends when it
+ * receives an HTTP request. It is used to send back the response to the client with data, status
+ * codes, headers, etc.
+ * @param {NextFunction} next - The `next` parameter in the `sellerAuth` function is a callback
+ * function that is used to pass control to the next middleware function in the stack. It is typically
+ * called within the middleware function to move to the next middleware or route handler. If an error
+ * occurs or the middleware function completes its task
+ * @returns The `sellerAuth` function is returning a Promise that resolves to `void`.
+ */
 export async function sellerAuth(
   req: Request,
   res: Response,

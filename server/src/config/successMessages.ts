@@ -21,6 +21,9 @@ const SuccessMessages: Record<string, string> = {
   LISTINGS_SUCCESS_FETCHED: "Listings have been successfully fetched.",
   LISTING_SUCCESS_UPDATED: "Listing has been successfully updated.",
   LISTING_SUCCESS_DELETED: "Listing has been successfully deleted.",
+
+  LISTING_SUCCESS_FAVORITED: "Listing has been successfully favorited.",
+  LISTING_SUCCESS_UNFAVORITED: "Listing has been successfully unfavorited.",
 };
 
 export default SuccessMessages;

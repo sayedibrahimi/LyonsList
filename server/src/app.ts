@@ -19,6 +19,7 @@ import authRoutes from "./routes/auth.route";
 // import userRoutes from "./routes/admin.users.route";
 import userAccountRoutes from "./routes/user.route";
 import listingRoutes from "./routes/listings.route";
+import favoriteRoutes from "./routes/favorites.route";
 
 // Create base API router
 const apiRouter: express.Router = express.Router();
@@ -39,6 +40,7 @@ apiRouter.use("/auth", authRoutes);
 // apiRouter.use("/users", userRoutes);
 apiRouter.use("/account", auth, userAccountRoutes);
 apiRouter.use("/listings", auth, listingRoutes);
+apiRouter.use("/favorites", auth, favoriteRoutes);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);

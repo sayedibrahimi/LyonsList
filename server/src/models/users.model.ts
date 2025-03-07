@@ -1,4 +1,4 @@
-import mongoose, { Schema, Model, Document } from "mongoose";
+import mongoose, { Schema, Model, Document, Types } from "mongoose";
 import { createJWTMethod, comparePasswordMethod } from "./users.methods";
 import { hashPassword } from "./users.pre";
 
@@ -12,6 +12,7 @@ export interface UserModel extends Document {
   classYear: number;
   profilePicture: string;
   totalListings: number;
+  favorites: Types.ObjectId[];
   // methods
   createJWT(): string;
   // eslint-disable-next-line no-unused-vars
@@ -25,13 +26,13 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
       type: String,
       required: [true, "Please provide a name"],
       trim: true,
-      maxlength: [20, "Name cannot be more than 20 characters"],
+      max_length: [20, "Name cannot be more than 20 characters"],
     },
     lastName: {
       type: String,
       required: [true, "Please provide a name"],
       trim: true,
-      maxlength: [20, "Name cannot be more than 20 characters"],
+      max_length: [20, "Name cannot be more than 20 characters"],
     },
     email: {
       type: String,
@@ -55,6 +56,10 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
     totalListings: {
       type: Number,
       default: 0,
+    },
+    favorites: {
+      type: [Types.ObjectId],
+      default: [],
     },
   },
   { timestamps: true }
