@@ -14,6 +14,44 @@ import {
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 
+export async function getAllFavorites(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const UserReqID: string = requestAuth(req, next);
+
+    const user: UserModel | null = await User.findById(UserReqID);
+    if (!user) {
+      throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
+    }
+
+    const favorites: ListingModel[] = await Listing.find({
+      _id: { $in: user.favorites },
+    });
+
+    sendSuccess(
+      res,
+      SuccessMessages.FAVORITES_SUCCESS_FETCHED,
+      StatusCodes.OK,
+      {
+        favorites,
+      }
+    );
+  } catch (error: unknown) {
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(
+        new InternalServerError(
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
+        )
+      );
+    }
+  }
+}
+
 export async function addFavorite(
   req: Request,
   res: Response,

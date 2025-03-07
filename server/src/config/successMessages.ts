@@ -24,6 +24,8 @@ const SuccessMessages: Record<string, string> = {
 
   LISTING_SUCCESS_FAVORITED: "Listing has been successfully favorited.",
   LISTING_SUCCESS_UNFAVORITED: "Listing has been successfully unfavorited.",
+
+  FAVORITES_SUCCESS_FETCHED: "Favorites have been successfully fetched.",
 };
 
 export default SuccessMessages;

@@ -10,14 +10,14 @@ export default async function auth(
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  // check header
-  const authHeader: string | undefined = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer")) {
-    throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
-  }
-  const token: string = authHeader.split(" ")[1];
-
   try {
+    // check header
+    const authHeader: string | undefined = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer")) {
+      throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
+    }
+    const token: string = authHeader.split(" ")[1];
+
     const jwtSecret: string | undefined = process.env.JWT_SECRET;
     if (!jwtSecret) {
       throw new UnauthError(ErrorMessages.AUTH_INVALID_JWT_SECRET);
