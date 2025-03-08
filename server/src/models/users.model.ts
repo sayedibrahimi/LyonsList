@@ -1,6 +1,9 @@
 import mongoose, { Schema, Model, Document, Types } from "mongoose";
-import { createJWTMethod, comparePasswordMethod } from "./users.methods";
-import { hashPassword } from "./users.pre";
+import {
+  createJWTMethod,
+  comparePasswordMethod,
+} from "./UsersUtils/users.methods";
+import { hashPassword } from "./UsersUtils/users.pre";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -13,6 +16,7 @@ export interface UserModel extends Document {
   profilePicture: string;
   totalListings: number;
   favorites: Types.ObjectId[];
+  verified: boolean;
   // methods
   createJWT(): string;
   // eslint-disable-next-line no-unused-vars
@@ -60,6 +64,10 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
     favorites: {
       type: [Types.ObjectId],
       default: [],
+    },
+    verified: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

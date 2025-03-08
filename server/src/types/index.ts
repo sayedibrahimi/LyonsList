@@ -6,6 +6,7 @@ import { RegisterRequestObject } from "./RegisterRequest";
 import { UserRequestObject } from "./UserRequest";
 import { ListingObject } from "./ListingObject";
 import { UserResponseObject } from "./UserResponse";
+import { MailOptions } from "./MailOptions";
 
 export {
   CustomJwtPayload,
@@ -16,4 +17,5 @@ export {
   UserRequestObject,
   ListingObject,
   UserResponseObject,
+  MailOptions,
 };

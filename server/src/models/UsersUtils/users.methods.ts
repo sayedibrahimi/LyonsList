@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { UserModel } from "./users.model";
-import { UserRequestObject } from "../types/UserRequest";
-import { CustomClaims } from "../types/JwtSignClaims";
-import { CustomError } from "../errors/CustomError";
+import { UserModel } from "./../users.model";
+import { UserRequestObject } from "../../types/UserRequest";
+import { CustomClaims } from "../../types/JwtSignClaims";
+import { CustomError } from "../../errors/CustomError";
 
 export function createJWTMethod(this: UserModel): string {
   const jwtSecret: string | undefined = process.env.JWT_SECRET || "";
