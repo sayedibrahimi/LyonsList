@@ -1,7 +1,7 @@
 import User, { UserModel } from "../models/users.model";
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import { PasswordResetRequest } from "../types/PasswordResetRequest";
+import { sendOTP } from "./otp.controller";
 import {
   BadRequestError,
   InternalServerError,
@@ -9,30 +9,30 @@ import {
   CustomError,
   NotFoundError,
 } from "../errors";
+import { SendOTPResponse } from "../types";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 import { requestAuth } from "../utils/requestAuth";
 import { sendSuccess } from "../utils/sendResponse";
 
-export async function resetPassword(
+export async function requestPasswordReset(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    const { email, newPassword } = req.body as PasswordResetRequest;
+    const { email } = req.body;
     if (!email) {
       throw new BadRequestError(ErrorMessages.PASSWORD_RESET_NO_EMAIL);
-    }
-    if (!newPassword) {
-      throw new BadRequestError(ErrorMessages.PASSWORD_RESET_NO_PASSWORD);
     }
 
     const foundUser: UserModel | null = await User.findOne({ email });
     if (!foundUser) {
       throw new NotFoundError(ErrorMessages.PASSWORD_RESET_NO_USER);
     }
-
+    if (foundUser.verified === false) {
+      throw new UnauthError(ErrorMessages.USER_UNVERIFIED);
+    }
     // get user account by id
     const UserReqID: string = requestAuth(req, next);
 
@@ -40,14 +40,24 @@ export async function resetPassword(
       throw new UnauthError(ErrorMessages.PASSWORD_UNAUTHORIZED);
     }
 
-    foundUser.password = newPassword;
-    await foundUser.save();
-    sendSuccess(
+    // send OTP for password reset
+    req.body.email = email;
+    const otpSuccess: SendOTPResponse | void = await sendOTP(
+      req,
       res,
-      SuccessMessages.USER_PASSWORD_SUCCESS_RESET,
-      StatusCodes.OK,
-      { user: foundUser }
+      next,
+      false
     );
+
+    if (otpSuccess === void 0) {
+      throw new BadRequestError(ErrorMessages.OTP_SEND_FAILED);
+    }
+
+    sendSuccess(res, SuccessMessages.PASSWORD_RESET_SENT, StatusCodes.OK, {
+      user: foundUser,
+      message: otpSuccess.message,
+      expires: otpSuccess.expiresAt,
+    });
   } catch (error: unknown) {
     if (error instanceof CustomError) {
       return next(error);

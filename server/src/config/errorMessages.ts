@@ -29,6 +29,9 @@ const ErrorMessages: Record<string, string> = {
   USER_CREATION_FAILED: "User creation failed.",
   USER_NO_USERS_CREATED: "No users have been created yet.",
   USER_NOT_FOUND_BY_ID: "User not found by ID.",
+  USER_UNVERIFIED: "User is not verified.",
+  OTP_SEND_FAILED: "Failed to send OTP.",
+  PASSWORD_RESET_SENT: "Password reset email sent.",
 
   // Authentication
   AUTH_INVALID_CREDENTIALS:

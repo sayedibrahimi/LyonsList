@@ -11,6 +11,7 @@ import {
 } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
+import User, { UserModel } from "../models/users.model";
 import { ListingObject } from "../types";
 import { validListingRequest } from "../utils/validListingRequest";
 
@@ -33,6 +34,13 @@ export async function createListing(
     if (!newListing) {
       throw new BadRequestError(ErrorMessages.LISTING_CREATION_FAILED);
     }
+
+    const postingUser: UserModel | null = await User.findById(UserReqID);
+    if (postingUser === null) {
+      throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
+    }
+    postingUser.totalListings += 1;
+    await postingUser.save();
 
     sendSuccess(
       res,
@@ -165,6 +173,13 @@ export async function deleteListing(
     if (deletedListing === null) {
       throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
     }
+
+    // const postingUser: UserModel | null = await User.findById(UserReqID);
+    // if (postingUser === null) {
+    //   throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
+    // }
+    // postingUser.totalListings -= 1;
+    // await postingUser.save();
 
     sendSuccess(
       res,

@@ -5,6 +5,7 @@ import sendOTPemail from "../utils/sendOTPemail";
 import { hashData, verifyHashedData } from "../models/otpUtils/hashData";
 import { updateUserAccount } from "./user.controller";
 import { MailOptions, SendOTPResponse } from "../types";
+import User, { UserModel } from "../models/users.model";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import ErrorMessages from "../config/errorMessages";
@@ -19,9 +20,18 @@ export async function sendOTP(
 ): Promise<void | SendOTPResponse> {
   try {
     const email: string = req.body.email;
+
     if (!email) {
       throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
+    const foundUser: UserModel | null = await User.findOne({ email });
+    if (foundUser === null) {
+      throw new BadRequestError(ErrorMessages.USER_NOT_FOUND);
+    }
+    // TODO remove?
+    // if (foundUser.verified) {
+    //   throw new BadRequestError(ErrorMessages.OTP_ALREADY_VERIFIED);
+    // }
 
     // delete any past OTP
     await OTP.deleteMany({ email });
@@ -59,12 +69,15 @@ export async function sendOTP(
 
     await newOTP.save();
     if (shouldSendResponse) {
+      console.log("true");
+
       sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
         message: "OTP sent successfully",
         email: email,
         expiresAt: Date.now() + 600000,
       });
     } else {
+      console.log("false");
       const otpResponse: SendOTPResponse = {
         message: "OTP sent successfully",
         expiresAt: Date.now() + 600000,
