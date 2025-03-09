@@ -4,7 +4,7 @@ import { generateOTP } from "../utils/generateOTP";
 import sendOTPemail from "../utils/sendOTPemail";
 import { hashData, verifyHashedData } from "../models/otpUtils/hashData";
 import { updateUserAccount } from "./user.controller";
-import { MailOptions } from "../types";
+import { MailOptions, SendOTPResponse } from "../types";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import ErrorMessages from "../config/errorMessages";
@@ -14,13 +14,11 @@ import { BadRequestError, InternalServerError, CustomError } from "../errors";
 export async function sendOTP(
   req: Request,
   res: Response,
-  next: NextFunction
-): Promise<void> {
+  next: NextFunction,
+  shouldSendResponse: boolean = true
+): Promise<void | SendOTPResponse> {
   try {
-    if (!req.user || !req.user.email) {
-      throw new BadRequestError(ErrorMessages.INVALID_INPUT);
-    }
-    const email: string = req.user.email;
+    const email: string = req.body.email;
     if (!email) {
       throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
@@ -60,12 +58,19 @@ export async function sendOTP(
     });
 
     await newOTP.save();
-
-    sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
-      message: "OTP sent successfully",
-      email: email,
-      expiresAt: Date.now() + 600000,
-    });
+    if (shouldSendResponse) {
+      sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
+        message: "OTP sent successfully",
+        email: email,
+        expiresAt: Date.now() + 600000,
+      });
+    } else {
+      const otpResponse: SendOTPResponse = {
+        message: "OTP sent successfully",
+        expiresAt: Date.now() + 600000,
+      };
+      return otpResponse;
+    }
   } catch (error: unknown) {
     if (error instanceof CustomError) {
       return next(error);
@@ -79,16 +84,25 @@ export async function sendOTP(
   }
 }
 
+export function sendOTPHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  return sendOTP(req, res, next, true) as Promise<void>;
+}
+
 export async function verifyOTP(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    if (!req.user || !req.user.email) {
+    // TODO: set check that if a user is already verified, return
+    const email: string = req.body.email;
+    if (!email) {
       throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
-    const email: string = req.user.email;
     if (!email) {
       throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
@@ -113,14 +127,13 @@ export async function verifyOTP(
       throw new BadRequestError(ErrorMessages.OTP_INVALID);
     }
 
-    await foundOTP.deleteOne();
-
     req.body.verified = true;
     await updateUserAccount(req, res, next);
 
-    sendSuccess(res, SuccessMessages.OTP_VERIFIED, StatusCodes.OK, {
-      message: "OTP verified successfully",
-    });
+    await foundOTP.deleteOne();
+    // sendSuccess(res, SuccessMessages.OTP_VERIFIED, StatusCodes.OK, {
+    //   message: "OTP verified successfully",
+    // });
   } catch (error: unknown) {
     if (error instanceof CustomError) {
       return next(error);

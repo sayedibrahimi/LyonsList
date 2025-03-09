@@ -5,14 +5,14 @@ import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import { CustomError } from "../errors";
 import {
-  // CustomError,
+  SendOTPResponse,
   RegisterRequestObject,
   UserResponseObject,
 } from "../types";
 import { BadRequestError, InternalServerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-
+import { sendOTP } from "./otp.controller";
 /**
  * This TypeScript function named `register` is an asynchronous function that handles registration
  * requests by taking in a request, response, and next function as parameters.
@@ -59,11 +59,29 @@ export async function register(
       email: user.email,
     };
 
+    req.user = {
+      userID: user._id.toString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    };
+
+    //TODO fix this
+    const otpSuccess: SendOTPResponse | void = await sendOTP(
+      req,
+      res,
+      next,
+      false
+    );
+    if (!otpSuccess) {
+      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    }
     sendSuccess(
       res,
       SuccessMessages.USER_SUCCESS_CREATED,
       StatusCodes.CREATED,
       {
+        message: otpSuccess.message,
         user: returnObject,
         token,
       }
@@ -119,6 +137,10 @@ export async function login(
     const isMatch: boolean = await user.comparePassword(password);
     if (!isMatch) {
       throw new BadRequestError(ErrorMessages.AUTH_NO_PASSWORD_MATCH);
+    }
+
+    if (user.verified === false) {
+      throw new BadRequestError(ErrorMessages.AUTH_NOT_VERIFIED);
     }
 
     // If user exists with valid credentials

@@ -42,6 +42,7 @@ const ErrorMessages: Record<string, string> = {
   AUTH_INVALID_JWT_SECRET: "Internal server error: JWT_SECRET is not defined.",
   AUTH_CHECK_FAILED: "Authentication check failed.",
   AUTH_UNKNOWN_ERROR: "An unknown error occurred during authentication.",
+  AUTH_NOT_VERIFIED: "User is not verified, check email",
 
   // favorites
   LISTING_ALREADY_FAVORITED: "Listing already favorited.",

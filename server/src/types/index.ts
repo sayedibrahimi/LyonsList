@@ -7,6 +7,7 @@ import { UserRequestObject } from "./UserRequest";
 import { ListingObject } from "./ListingObject";
 import { UserResponseObject } from "./UserResponse";
 import { MailOptions } from "./MailOptions";
+import { SendOTPResponse } from "./SendOTPResponse";
 
 export {
   CustomJwtPayload,
@@ -18,4 +19,5 @@ export {
   ListingObject,
   UserResponseObject,
   MailOptions,
+  SendOTPResponse,
 };
