@@ -2,6 +2,8 @@ import User, { UserModel } from "../models/users.model";
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendOTP } from "./otp.controller";
+import OTP, { OTPModel } from "../models/otp.model";
+import { verifyHashedData } from "../models/otpUtils/hashData";
 import {
   BadRequestError,
   InternalServerError,
@@ -57,6 +59,59 @@ export async function requestPasswordReset(
       user: foundUser,
       message: otpSuccess.message,
       expires: otpSuccess.expiresAt,
+    });
+  } catch (error: unknown) {
+    if (error instanceof CustomError) {
+      return next(error);
+    } else {
+      return next(
+        new InternalServerError(
+          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
+        )
+      );
+    }
+  }
+}
+
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { email, password, otp } = req.body;
+    if (!email || !password || !otp) {
+      throw new BadRequestError(ErrorMessages.INVALID_INPUT);
+    }
+
+    const foundUser: UserModel | null = await User.findOne({ email });
+    if (!foundUser) {
+      throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
+    }
+
+    const foundOTP: OTPModel | null = await OTP.findOne({ email });
+    if (!foundOTP) {
+      throw new NotFoundError(ErrorMessages.OTP_NOT_FOUND);
+    }
+
+    if (foundOTP.expiresAt.getTime() < Date.now()) {
+      await foundOTP.deleteOne();
+      throw new BadRequestError(ErrorMessages.OTP_EXPIRED);
+    }
+
+    const isMatch: boolean = await verifyHashedData(
+      otp.toString(),
+      foundOTP.otp.toString()
+    );
+    if (!isMatch) {
+      throw new BadRequestError(ErrorMessages.OTP_INVALID);
+    }
+
+    foundUser.password = password;
+    await foundUser.save();
+
+    sendSuccess(res, SuccessMessages.PASSWORD_RESET_SUCCESS, StatusCodes.OK, {
+      message: "Password reset successfully",
     });
   } catch (error: unknown) {
     if (error instanceof CustomError) {

@@ -69,15 +69,12 @@ export async function sendOTP(
 
     await newOTP.save();
     if (shouldSendResponse) {
-      console.log("true");
-
       sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
         message: "OTP sent successfully",
         email: email,
         expiresAt: Date.now() + 600000,
       });
     } else {
-      console.log("false");
       const otpResponse: SendOTPResponse = {
         message: "OTP sent successfully",
         expiresAt: Date.now() + 600000,
