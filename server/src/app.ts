@@ -42,7 +42,7 @@ apiRouter.use("/auth", authRoutes);
 apiRouter.use("/account", auth, userAccountRoutes);
 apiRouter.use("/listings", auth, listingRoutes);
 apiRouter.use("/favorites", auth, favoriteRoutes);
-apiRouter.use("/otp", auth, OTPRoutes);
+apiRouter.use("/otp", OTPRoutes);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);

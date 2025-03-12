@@ -7,6 +7,7 @@ import { ListingObject } from "./ListingObject";
 import { UserResponseObject } from "./UserResponse";
 import { MailOptions } from "./MailOptions";
 import { SendOTPResponse } from "./SendOTPResponse";
+import { JWTClaim } from "./JWTClaim";
 
 export {
   CustomJwtPayload,
@@ -18,4 +19,5 @@ export {
   UserResponseObject,
   MailOptions,
   SendOTPResponse,
+  JWTClaim,
 };

@@ -3,16 +3,18 @@ import User, { UserModel } from "../models/users.model";
 import { LoginRequest } from "../types/LoginRequest";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
-import { CustomError } from "../errors";
+import { CustomError, UnauthError } from "../errors";
+import jwt from "jsonwebtoken";
 import {
-  SendOTPResponse,
+  // SendOTPResponse,
   RegisterRequestObject,
   UserResponseObject,
+  CustomJwtPayload,
 } from "../types";
 import { BadRequestError, InternalServerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-import { sendOTP } from "./otp.controller";
+// import { sendOTP } from "./otp.controller";
 /**
  * This TypeScript function named `register` is an asynchronous function that handles registration
  * requests by taking in a request, response, and next function as parameters.
@@ -28,6 +30,78 @@ import { sendOTP } from "./otp.controller";
  * within the current middleware function to hand over control to the next middleware function. This
  * allows for sequential execution of middleware functions in an Express
  */
+// export async function register(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     // check if req body is full
+//     const { firstName, lastName, email, password } =
+//       req.body as RegisterRequestObject;
+//     if (!firstName || !lastName || !email || !password) {
+//       throw new BadRequestError(ErrorMessages.USER_MISSING_FIELDS);
+//     }
+
+//     // if email already exists
+//     const existingUser: UserModel | null = await User.findOne({ email });
+//     if (existingUser !== null) {
+//       throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
+//     }
+
+//     // else, create user
+//     const user: UserModel = await User.create({ ...req.body });
+//     //! Validation?
+//     const token: string = user.createJWT();
+
+//     const returnObject: UserResponseObject = {
+//       _id: user._id,
+//       firstName: user.firstName,
+//       lastName: user.lastName,
+//       email: user.email,
+//     };
+
+//     req.user = {
+//       userID: user._id.toString(),
+//       firstName: user.firstName,
+//       lastName: user.lastName,
+//       email: user.email,
+//     };
+
+//     //TODO fix this
+//     const otpSuccess: SendOTPResponse | void = await sendOTP(
+//       req,
+//       res,
+//       next,
+//       false
+//     );
+//     if (!otpSuccess) {
+//       throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+//     }
+//     sendSuccess(
+//       res,
+//       SuccessMessages.USER_SUCCESS_CREATED,
+//       StatusCodes.CREATED,
+//       {
+//         message: otpSuccess.message,
+//         user: returnObject,
+//         token,
+//       }
+//     );
+//     return;
+//   } catch (error: unknown) {
+//     if (error instanceof CustomError) {
+//       return next(error);
+//     } else {
+//       return next(
+//         new InternalServerError(
+//           `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
+//         )
+//       );
+//     }
+//   }
+// }
+
 export async function register(
   req: Request,
   res: Response,
@@ -35,10 +109,32 @@ export async function register(
 ): Promise<void> {
   try {
     // check if req body is full
-    const { firstName, lastName, email, password } =
-      req.body as RegisterRequestObject;
-    if (!firstName || !lastName || !email || !password) {
+    const { firstName, lastName, password } = req.body as RegisterRequestObject;
+    if (!firstName || !lastName || !password) {
       throw new BadRequestError(ErrorMessages.USER_MISSING_FIELDS);
+    }
+
+    // get email from token
+    const authHeader: string | undefined = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer")) {
+      throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
+    }
+    const cachedToken: string = authHeader.split(" ")[1];
+
+    const jwtSecret: string | undefined = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new UnauthError(ErrorMessages.AUTH_INVALID_JWT_SECRET);
+    }
+
+    const payload: CustomJwtPayload = jwt.verify(
+      cachedToken,
+      jwtSecret
+    ) as CustomJwtPayload;
+
+    const email: string | undefined = payload.sub;
+
+    if (!email) {
+      throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
 
     // if email already exists
@@ -48,7 +144,11 @@ export async function register(
     }
 
     // else, create user
-    const user: UserModel = await User.create({ ...req.body });
+    const user: UserModel = await User.create({
+      email: email,
+      ...req.body,
+      verified: true,
+    });
     //! Validation?
     const token: string = user.createJWT();
 
@@ -66,22 +166,21 @@ export async function register(
       email: user.email,
     };
 
-    //TODO fix this
-    const otpSuccess: SendOTPResponse | void = await sendOTP(
-      req,
-      res,
-      next,
-      false
-    );
-    if (!otpSuccess) {
-      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    }
+    // //TODO fix this
+    // const otpSuccess: SendOTPResponse | void = await sendOTP(
+    //   req,
+    //   res,
+    //   next,
+    //   false
+    // );
+    // if (!otpSuccess) {
+    //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    // }
     sendSuccess(
       res,
       SuccessMessages.USER_SUCCESS_CREATED,
       StatusCodes.CREATED,
       {
-        message: otpSuccess.message,
         user: returnObject,
         token,
       }

@@ -1,16 +1,23 @@
 import { NextFunction, Request, Response } from "express";
 import OTP, { OTPModel } from "../models/otp.model";
+// import User, { UserModel } from "../models/users.model";
 import { generateOTP } from "../utils/generateOTP";
 import sendOTPemail from "../utils/sendOTPemail";
 import { hashData, verifyHashedData } from "../models/otpUtils/hashData";
-import { updateUserAccount } from "./user.controller";
+// import { updateUserAccount } from "./user.controller";
 import { MailOptions, SendOTPResponse } from "../types";
-import User, { UserModel } from "../models/users.model";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
-import { BadRequestError, InternalServerError, CustomError } from "../errors";
+import {
+  BadRequestError,
+  InternalServerError,
+  CustomError,
+  // NotFoundError,
+} from "../errors";
+import { createJWT } from "../models/otpUtils/createJWT";
+// import { requestAuth } from "../utils/requestAuth";
 
 export async function sendOTP(
   req: Request,
@@ -24,17 +31,9 @@ export async function sendOTP(
     if (!email) {
       throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
-    const foundUser: UserModel | null = await User.findOne({ email });
-    if (foundUser === null) {
-      throw new BadRequestError(ErrorMessages.USER_NOT_FOUND);
-    }
-    // TODO remove?
-    // if (foundUser.verified) {
-    //   throw new BadRequestError(ErrorMessages.OTP_ALREADY_VERIFIED);
-    // }
 
     // delete any past OTP
-    await OTP.deleteMany({ email });
+    await OTP.deleteOne({ email });
 
     const generatedOTP: number = await generateOTP(next);
 
@@ -102,17 +101,14 @@ export function sendOTPHandler(
   return sendOTP(req, res, next, true) as Promise<void>;
 }
 
+// TODO: Cache the email
 export async function verifyOTP(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    // TODO: set check that if a user is already verified, return
     const email: string = req.body.email;
-    if (!email) {
-      throw new BadRequestError(ErrorMessages.INVALID_INPUT);
-    }
     if (!email) {
       throw new BadRequestError(ErrorMessages.INVALID_INPUT);
     }
@@ -137,13 +133,13 @@ export async function verifyOTP(
       throw new BadRequestError(ErrorMessages.OTP_INVALID);
     }
 
-    req.body.verified = true;
-    await updateUserAccount(req, res, next);
+    const token: string = createJWT(email);
 
     await foundOTP.deleteOne();
-    // sendSuccess(res, SuccessMessages.OTP_VERIFIED, StatusCodes.OK, {
-    //   message: "OTP verified successfully",
-    // });
+    sendSuccess(res, SuccessMessages.OTP_VERIFIED, StatusCodes.OK, {
+      message: "OTP verified successfully",
+      token: token,
+    });
   } catch (error: unknown) {
     if (error instanceof CustomError) {
       return next(error);
