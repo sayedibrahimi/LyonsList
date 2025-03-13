@@ -9,7 +9,7 @@ import {
   BadRequestError,
   InternalServerError,
   NotFoundError,
-  CustomError,
+  ControllerError,
 } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
@@ -40,15 +40,7 @@ export async function getAllFavorites(
       }
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -93,15 +85,7 @@ export async function addFavorite(
       }
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -142,14 +126,6 @@ export async function removeFavorite(
       }
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

@@ -2,12 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import User, { UserModel } from "../models/users.model";
 import { UserRequest, UserRequestObject } from "../types/UserRequest";
 import ErrorMessages from "../config/errorMessages";
-import {
-  BadRequestError,
-  InternalServerError,
-  NotFoundError,
-  CustomError,
-} from "../errors";
+import { BadRequestError, NotFoundError, ControllerError } from "../errors";
 
 export async function userAccountAuth(
   req: Request,
@@ -28,14 +23,6 @@ export async function userAccountAuth(
     }
     next();
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

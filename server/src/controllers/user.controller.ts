@@ -5,7 +5,7 @@ import { UserRequestObject } from "../types/UserRequest";
 import { requestAuth } from "../utils/requestAuth";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
-import { InternalServerError, NotFoundError, CustomError } from "../errors";
+import { NotFoundError, ControllerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 
@@ -26,15 +26,7 @@ export async function getUserAccount(
       userAccount
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -65,15 +57,7 @@ export async function updateUserAccount(
       updatedUserAccount
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -99,14 +83,6 @@ export async function deleteUserAccount(
       deletedUserAccount
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

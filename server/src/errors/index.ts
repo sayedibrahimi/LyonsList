@@ -3,6 +3,7 @@ import { NotFoundError } from "./NotFound";
 import { BadRequestError } from "./BadRequest";
 import { CustomError } from "./CustomError";
 import { InternalServerError } from "./InternalServer";
+import { ControllerError } from "./CatchError";
 
 export {
   UnauthError,
@@ -10,4 +11,5 @@ export {
   BadRequestError,
   CustomError,
   InternalServerError,
+  ControllerError,
 };

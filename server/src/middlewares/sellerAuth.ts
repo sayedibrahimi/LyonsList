@@ -2,12 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { requestAuth } from "../utils/requestAuth";
 import Listing, { ListingModel } from "../models/listings.model";
 import ErrorMessages from "../config/errorMessages";
-import {
-  InternalServerError,
-  UnauthError,
-  NotFoundError,
-  CustomError,
-} from "../errors";
+import { ControllerError, UnauthError, NotFoundError } from "../errors";
 
 /**
  * The `sellerAuth` function in TypeScript ensures that the user making the request is authorized to
@@ -50,14 +45,6 @@ export async function sellerAuth(
 
     next();
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

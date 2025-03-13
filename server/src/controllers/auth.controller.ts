@@ -11,7 +11,7 @@ import {
   UserResponseObject,
   CustomJwtPayload,
 } from "../types";
-import { BadRequestError, InternalServerError } from "../errors";
+import { BadRequestError, ControllerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 // import { sendOTP } from "./otp.controller";
@@ -187,15 +187,7 @@ export async function register(
     );
     return;
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -255,14 +247,6 @@ export async function login(
       token,
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

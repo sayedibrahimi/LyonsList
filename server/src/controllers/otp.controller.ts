@@ -13,7 +13,7 @@ import SuccessMessages from "../config/successMessages";
 import {
   BadRequestError,
   InternalServerError,
-  CustomError,
+  ControllerError,
   // NotFoundError,
 } from "../errors";
 import { createJWT } from "../models/otpUtils/createJWT";
@@ -81,15 +81,7 @@ export async function sendOTP(
       return otpResponse;
     }
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -141,14 +133,6 @@ export async function verifyOTP(
       token: token,
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

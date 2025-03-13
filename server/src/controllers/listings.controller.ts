@@ -3,12 +3,7 @@ import Listing, { ListingModel } from "../models/listings.model";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import { requestAuth } from "../utils/requestAuth";
-import {
-  BadRequestError,
-  InternalServerError,
-  NotFoundError,
-  CustomError,
-} from "../errors";
+import { BadRequestError, NotFoundError, ControllerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 import SuccessMessages from "../config/successMessages";
 import User, { UserModel } from "../models/users.model";
@@ -49,15 +44,7 @@ export async function createListing(
       { listing: newListing }
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -82,15 +69,7 @@ export async function getAllListings(
       listings: allListings,
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -112,15 +91,7 @@ export async function getListingById(
       listing: foundListing,
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -147,15 +118,7 @@ export async function updateListing(
       listing: updatedListing,
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -188,14 +151,6 @@ export async function deleteListing(
       null
     );
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

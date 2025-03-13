@@ -6,9 +6,8 @@ import OTP, { OTPModel } from "../models/otp.model";
 import { verifyHashedData } from "../models/otpUtils/hashData";
 import {
   BadRequestError,
-  InternalServerError,
+  ControllerError,
   UnauthError,
-  CustomError,
   NotFoundError,
 } from "../errors";
 import { SendOTPResponse } from "../types";
@@ -61,15 +60,7 @@ export async function requestPasswordReset(
       expires: otpSuccess.expiresAt,
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }
 
@@ -114,14 +105,6 @@ export async function resetPassword(
       message: "Password reset successfully",
     });
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

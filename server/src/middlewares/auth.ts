@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { CustomJwtPayload } from "../types/CustomJwtPayload";
 import { UserRequest } from "../types/UserRequest";
-import { InternalServerError, UnauthError, CustomError } from "../errors";
+import { UnauthError, ControllerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
 
 export default async function auth(
@@ -37,14 +37,6 @@ export default async function auth(
 
     next();
   } catch (error: unknown) {
-    if (error instanceof CustomError) {
-      return next(error);
-    } else {
-      return next(
-        new InternalServerError(
-          `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-        )
-      );
-    }
+    ControllerError(error, next);
   }
 }

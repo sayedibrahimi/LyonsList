@@ -34,7 +34,11 @@ app.use(express.json());
 app.use(express.static("public"));
 
 // routes
-app.use("/api/v1", apiRouter);
+const API_BASE_PATH: string | undefined = process.env.API_BASE_PATH;
+if (!API_BASE_PATH) {
+  throw new Error("API_BASE_PATH is not defined");
+}
+app.use(API_BASE_PATH, apiRouter);
 
 // Mount all routes to the API router
 apiRouter.use("/auth", authRoutes);
