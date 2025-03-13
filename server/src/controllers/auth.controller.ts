@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
-import { LoginRequest } from "../types/LoginRequest";
+import { LoginRequest } from "../types";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import { CustomError, UnauthError } from "../errors";

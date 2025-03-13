@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { CustomJwtPayload } from "../types/CustomJwtPayload";
+import { CustomJwtPayload } from "../types";
 import { UserRequest } from "../types/UserRequest";
 import { UnauthError, ControllerError } from "../errors";
 import ErrorMessages from "../config/errorMessages";
