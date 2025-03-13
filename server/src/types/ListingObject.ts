@@ -1,4 +1,4 @@
-export interface ListingObject {
+export default interface ListingObject {
   title: string;
   description: string;
   picture: string;

@@ -1,4 +1,3 @@
-// In types/dto/auth.dto.ts
 export interface RegisterRequestObject {
   firstName: string;
   lastName: string;

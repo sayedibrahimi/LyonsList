@@ -7,6 +7,6 @@ interface UserData {
   email: string;
 }
 
-export interface CustomJwtPayload extends JwtPayload {
+export default interface CustomJwtPayload extends JwtPayload {
   userData: UserData;
 }
