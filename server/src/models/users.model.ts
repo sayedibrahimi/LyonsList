@@ -2,7 +2,7 @@ import mongoose, { Schema, Model, Document, Types } from "mongoose";
 import {
   createJWTMethod,
   comparePasswordMethod,
-  hashPassword,
+  // hashPassword,
 } from "../utils/usersUtils";
 
 // get an interface object to refer to types in the schema
@@ -74,7 +74,7 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
 );
 
 // Attach pre-save hook for password hashing
-UserSchema.pre("save", hashPassword);
+// UserSchema.pre("save", hashPassword);
 
 // Attach methods: createJWT and comparePassword
 UserSchema.methods.createJWT = createJWTMethod;

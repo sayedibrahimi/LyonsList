@@ -3,7 +3,7 @@ import User, { UserModel } from "../models/users.model";
 import { LoginRequest } from "../types";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
-// import { hashData } from "../utils/hashData";
+import { hashData } from "../utils/hashData";
 import { CustomError /*UnauthError*/, InternalServerError } from "../errors";
 // import jwt from "jsonwebtoken";
 import {
@@ -66,18 +66,18 @@ export async function register(
       throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
     }
 
-    // const hashedPassword: string = await hashData(password);
-    // if (!hashedPassword) {
-    //   throw new CustomError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    // }
+    const hashedPassword: string = await hashData(password);
+    if (!hashedPassword) {
+      throw new CustomError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    }
 
     // cache data using regis
     const userData: RegisterRequestObject = {
       firstName,
       lastName,
       email,
-      // password: hashedPassword,
-      password,
+      password: hashedPassword,
+      // password,
     };
     otpCache.set(`user:${email}`, userData);
 
