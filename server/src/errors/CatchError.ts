@@ -1,6 +1,6 @@
 import { NextFunction } from "express";
 import { CustomError, InternalServerError } from "../errors";
-import ErrorMessages from "../config/errorMessages";
+import ErrorMessages from "../constants/errorMessages";
 
 /**
  * Handles controller errors uniformly across the application

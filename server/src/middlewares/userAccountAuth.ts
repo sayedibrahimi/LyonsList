@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import User, { UserModel } from "../models/users.model";
 import { UserRequest, UserRequestObject } from "../types/UserRequest";
-import ErrorMessages from "../config/errorMessages";
+import ErrorMessages from "../constants/errorMessages";
 import { BadRequestError, NotFoundError, ControllerError } from "../errors";
 
 export async function userAccountAuth(

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { requestAuth } from "../utils/requestAuth";
 import Listing, { ListingModel } from "../models/listings.model";
-import ErrorMessages from "../config/errorMessages";
+import ErrorMessages from "../constants/errorMessages";
 import { ControllerError, UnauthError, NotFoundError } from "../errors";
 
 /**

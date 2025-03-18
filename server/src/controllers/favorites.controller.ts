@@ -11,8 +11,8 @@ import {
   NotFoundError,
   ControllerError,
 } from "../errors";
-import ErrorMessages from "../config/errorMessages";
-import SuccessMessages from "../config/successMessages";
+import ErrorMessages from "../constants/errorMessages";
+import SuccessMessages from "../constants/successMessages";
 
 export async function getAllFavorites(
   req: Request,

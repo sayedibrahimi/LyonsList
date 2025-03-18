@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { CustomJwtPayload } from "../types";
 import { UserRequest } from "../types/UserRequest";
 import { UnauthError, ControllerError } from "../errors";
-import ErrorMessages from "../config/errorMessages";
+import ErrorMessages from "../constants/errorMessages";
 
 export default async function auth(
   req: Request,

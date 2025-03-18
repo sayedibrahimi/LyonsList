@@ -6,8 +6,8 @@ import { requestAuth } from "../utils/requestAuth";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
 import { NotFoundError, ControllerError } from "../errors";
-import ErrorMessages from "../config/errorMessages";
-import SuccessMessages from "../config/successMessages";
+import ErrorMessages from "../constants/errorMessages";
+import SuccessMessages from "../constants/successMessages";
 
 // get user account data
 export async function getUserAccount(

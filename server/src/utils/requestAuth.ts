@@ -1,7 +1,7 @@
 // src/utils/authUtils.ts
 import { Request, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import ErrorMessages from "../config/errorMessages";
+import ErrorMessages from "../constants/errorMessages";
 import { CustomError } from "../errors";
 
 /**

@@ -11,8 +11,8 @@ import {
   NotFoundError,
 } from "../errors";
 import { SendOTPResponse } from "../types";
-import ErrorMessages from "../config/errorMessages";
-import SuccessMessages from "../config/successMessages";
+import ErrorMessages from "../constants/errorMessages";
+import SuccessMessages from "../constants/successMessages";
 import { requestAuth } from "../utils/requestAuth";
 import { sendSuccess } from "../utils/sendResponse";
 

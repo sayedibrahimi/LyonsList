@@ -12,6 +12,8 @@ dotenv.config();
 // get the mongo uri
 import { connectDB } from "./db/connect";
 const mongoURI: string = process.env.MONGO_URI!;
+// import redis connection
+import { initRedisClient, closeRedisConnection } from "./db/redis";
 
 // import routes
 import auth from "./middlewares/auth";
@@ -55,9 +57,14 @@ app.use(errorHandlerMiddleware);
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 const start: () => Promise<void> = async () => {
   try {
+    // connect client
+    await initRedisClient();
+
     // async connect to db, then run on server
     await connectDB(mongoURI);
     console.log("Connected to the database");
+
+    // start server
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
@@ -67,4 +74,18 @@ const start: () => Promise<void> = async () => {
   }
 };
 
+// Graceful shutdown handling
+process.on("SIGTERM", async () => {
+  console.log("SIGTERM received, shutting down gracefully");
+  await closeRedisConnection();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  console.log("SIGINT received, shutting down gracefully");
+  await closeRedisConnection();
+  process.exit(0);
+});
+
+// start the server
 start();

@@ -8,8 +8,8 @@ import { hashData, verifyHashedData } from "../utils/hashData";
 import { MailOptions, SendOTPResponse } from "../types";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
-import ErrorMessages from "../config/errorMessages";
-import SuccessMessages from "../config/successMessages";
+import ErrorMessages from "../constants/errorMessages";
+import SuccessMessages from "../constants/successMessages";
 import {
   BadRequestError,
   InternalServerError,
