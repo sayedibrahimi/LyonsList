@@ -6,7 +6,7 @@ import { CustomClaims } from "../types";
 import { CustomError } from "../errors/CustomError";
 import { Document } from "mongoose";
 
-export function createJWTMethod(user: UserModel): string {
+export function createJWTMethod(this: UserModel): string {
   const jwtSecret: string | undefined = process.env.JWT_SECRET || "";
   if (!jwtSecret) {
     throw new Error("JWT_SECRET is not defined");
@@ -16,14 +16,14 @@ export function createJWTMethod(user: UserModel): string {
     currentTime + parseInt(process.env.JWT_LIFETIME_HOURS || "24") * 3600;
 
   const userData: UserRequestObject = {
-    userID: user._id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
+    userID: this._id,
+    firstName: this.firstName,
+    lastName: this.lastName,
+    email: this.email,
   };
 
   const claims: CustomClaims = {
-    sub: user._id.toString(),
+    sub: this._id.toString(),
     iat: currentTime,
     exp: expirationTime,
     userData: userData,

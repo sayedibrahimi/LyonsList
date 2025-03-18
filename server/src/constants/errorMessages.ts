@@ -1,6 +1,7 @@
 const ErrorMessages: Record<string, string> = {
   INTERNAL_SERVER_ERROR: "Internal server error: ",
   ROUTE_DOES_NOT_EXIST: "Route does not exist.",
+  OTP_INVALID: "Invalid OTP provided.",
 
   // password
   PASSWORD_RESET_NO_PASSWORD: "Please provide a new password.",

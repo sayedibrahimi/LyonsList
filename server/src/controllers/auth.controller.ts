@@ -3,104 +3,22 @@ import User, { UserModel } from "../models/users.model";
 import { LoginRequest } from "../types";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
-import { CustomError, UnauthError } from "../errors";
-import jwt from "jsonwebtoken";
+import { hashData } from "../utils/hashData";
+import { CustomError /*UnauthError*/, InternalServerError } from "../errors";
+// import jwt from "jsonwebtoken";
 import {
   // SendOTPResponse,
   RegisterRequestObject,
   UserResponseObject,
-  CustomJwtPayload,
+  // CustomJwtPayload,
 } from "../types";
 import { BadRequestError, ControllerError } from "../errors";
 import ErrorMessages from "../constants/errorMessages";
 import SuccessMessages from "../constants/successMessages";
-// import { sendOTP } from "./otp.controller";
-/**
- * This TypeScript function named `register` is an asynchronous function that handles registration
- * requests by taking in a request, response, and next function as parameters.
- * @param {Request} req - The `req` parameter in the `register` function represents the incoming
- * request object. It contains information about the HTTP request made by the client, such as headers,
- * parameters, body content, and more. This object is typically used to extract data sent by the client
- * to the server.
- * @param {Response} res - The `res` parameter in the `register` function refers to the response object
- * that will be sent back to the client making the request. This object allows you to send data, set
- * headers, and manage the response to the client's request.
- * @param {NextFunction} next - The `next` parameter in the `register` function is a callback function
- * that is used to pass control to the next middleware function in the stack. It is typically called
- * within the current middleware function to hand over control to the next middleware function. This
- * allows for sequential execution of middleware functions in an Express
- */
-// export async function register(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     // check if req body is full
-//     const { firstName, lastName, email, password } =
-//       req.body as RegisterRequestObject;
-//     if (!firstName || !lastName || !email || !password) {
-//       throw new BadRequestError(ErrorMessages.USER_MISSING_FIELDS);
-//     }
-
-//     // if email already exists
-//     const existingUser: UserModel | null = await User.findOne({ email });
-//     if (existingUser !== null) {
-//       throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
-//     }
-
-//     // else, create user
-//     const user: UserModel = await User.create({ ...req.body });
-//     //! Validation?
-//     const token: string = user.createJWT();
-
-//     const returnObject: UserResponseObject = {
-//       _id: user._id,
-//       firstName: user.firstName,
-//       lastName: user.lastName,
-//       email: user.email,
-//     };
-
-//     req.user = {
-//       userID: user._id.toString(),
-//       firstName: user.firstName,
-//       lastName: user.lastName,
-//       email: user.email,
-//     };
-
-//     //TODO fix this
-//     const otpSuccess: SendOTPResponse | void = await sendOTP(
-//       req,
-//       res,
-//       next,
-//       false
-//     );
-//     if (!otpSuccess) {
-//       throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-//     }
-//     sendSuccess(
-//       res,
-//       SuccessMessages.USER_SUCCESS_CREATED,
-//       StatusCodes.CREATED,
-//       {
-//         message: otpSuccess.message,
-//         user: returnObject,
-//         token,
-//       }
-//     );
-//     return;
-//   } catch (error: unknown) {
-//     if (error instanceof CustomError) {
-//       return next(error);
-//     } else {
-//       return next(
-//         new InternalServerError(
-//           `${ErrorMessages.INTERNAL_SERVER_ERROR} ${error}`
-//         )
-//       );
-//     }
-//   }
-// }
+import { generateOTP } from "../utils/generateOTP";
+import { MailOptions } from "../types";
+import sendOTPemail from "../utils/sendOTPemail";
+import otpCache from "../constants/cache";
 
 export async function register(
   req: Request,
@@ -109,62 +27,112 @@ export async function register(
 ): Promise<void> {
   try {
     // check if req body is full
-    const { firstName, lastName, password } = req.body as RegisterRequestObject;
-    if (!firstName || !lastName || !password) {
+    const { firstName, lastName, email, password } =
+      req.body as RegisterRequestObject;
+    if (!email || !firstName || !lastName || !password) {
       throw new BadRequestError(ErrorMessages.USER_MISSING_FIELDS);
     }
 
-    // get email from token
-    const authHeader: string | undefined = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer")) {
-      throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
-    }
-    const cachedToken: string = authHeader.split(" ")[1];
+    // // get email from token
+    // const authHeader: string | undefined = req.headers.authorization;
+    // if (!authHeader || !authHeader.startsWith("Bearer")) {
+    //   throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
+    // }
+    // const cachedToken: string = authHeader.split(" ")[1];
 
-    const jwtSecret: string | undefined = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      throw new UnauthError(ErrorMessages.AUTH_INVALID_JWT_SECRET);
-    }
+    // const jwtSecret: string | undefined = process.env.JWT_SECRET;
+    // if (!jwtSecret) {
+    //   throw new UnauthError(ErrorMessages.AUTH_INVALID_JWT_SECRET);
+    // }
 
-    const payload: CustomJwtPayload = jwt.verify(
-      cachedToken,
-      jwtSecret
-    ) as CustomJwtPayload;
+    // const payload: CustomJwtPayload = jwt.verify(
+    //   cachedToken,
+    //   jwtSecret
+    // ) as CustomJwtPayload;
 
-    const email: string | undefined = payload.sub;
+    // const email: string | undefined = payload.sub;
 
-    if (!email) {
-      throw new BadRequestError(ErrorMessages.INVALID_INPUT);
-    }
+    // if (!email) {
+    //   throw new BadRequestError(ErrorMessages.INVALID_INPUT);
+    // }
 
     // if email already exists
+
     const existingUser: UserModel | null = await User.findOne({ email });
     if (existingUser !== null) {
       throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
     }
+    if (otpCache.get(`user:${email}`)) {
+      throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
+    }
 
-    // else, create user
-    const user: UserModel = await User.create({
-      email: email,
-      ...req.body,
-      verified: true,
+    const hashedPassword: string = await hashData(password);
+    if (!hashedPassword) {
+      throw new CustomError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    }
+
+    // cache data using regis
+    const userData: RegisterRequestObject = {
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+    };
+    otpCache.set(`user:${email}`, userData);
+
+    const generatedOTP: number = await generateOTP(next);
+    otpCache.set(`otp:${email}`, generatedOTP.toString(), 300);
+
+    const emailSender: string | undefined = process.env.EMAIL;
+    if (!emailSender) {
+      throw new InternalServerError(ErrorMessages.EMAIL_NOT_FOUND);
+    }
+
+    const mailOptions: MailOptions = {
+      from: emailSender,
+      to: email,
+      subject: "OTP for password reset",
+      html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        <p style="font-size: 16px; color: #555;">Your One-Time Password (OTP) is:</p>
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #4285f4; margin: 20px 0;">
+        ${generatedOTP}
+        </div>
+        <p style="font-size: 14px; color: #777;">This OTP will expire in 10 minutes.</p>
+      </div>
+      `,
+    };
+    await sendOTPemail(mailOptions);
+
+    sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
+      user: userData.email,
+      message: "OTP sent successfully",
     });
-    //! Validation?
-    const token: string = user.createJWT();
+    return;
 
-    const returnObject: UserResponseObject = {
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-    };
+    // // else, create user
+    // const user: UserModel = await User.create({
+    //   email: email,
+    //   ...req.body,
+    //   verified: true,
+    // });
+    // //! Validation?
+    // const token: string = user.createJWT();
 
-    req.user = {
-      userID: user._id.toString(),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-    };
+    // const returnObject: UserResponseObject = {
+    //   _id: user._id,
+    //   firstName: user.firstName,
+    //   lastName: user.lastName,
+    //   email: user.email,
+    // };
+
+    // req.user = {
+    //   userID: user._id.toString(),
+    //   firstName: user.firstName,
+    //   lastName: user.lastName,
+    //   email: user.email,
+    // };
 
     // //TODO fix this
     // const otpSuccess: SendOTPResponse | void = await sendOTP(
@@ -176,16 +144,69 @@ export async function register(
     // if (!otpSuccess) {
     //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
     // }
-    sendSuccess(
-      res,
-      SuccessMessages.USER_SUCCESS_CREATED,
-      StatusCodes.CREATED,
-      {
-        user: returnObject,
-        token,
-      }
+    // sendSuccess(
+    //   res,
+    //   SuccessMessages.USER_SUCCESS_CREATED,
+    //   StatusCodes.CREATED,
+    //   {
+    //     user: returnObject,
+    //     token,
+    //   }
+    // );
+    // return;
+  } catch (error: unknown) {
+    ControllerError(error, next);
+  }
+}
+
+export async function verifyOTP(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    // check if req body is full
+    const { email, otp } = req.body as { email: string; otp: string };
+    if (!email || !otp) {
+      throw new BadRequestError(ErrorMessages.INVALID_INPUT);
+    }
+
+    const storedOTP: string | undefined = otpCache.get(`otp:${email}`);
+    const userData: RegisterRequestObject | undefined = otpCache.get(
+      `user:${email}`
     );
-    return;
+
+    if (!storedOTP || storedOTP !== otp.toString() || !userData) {
+      throw new BadRequestError(ErrorMessages.INVALID_OTP);
+    }
+
+    const user: UserModel = await User.create({
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      password: userData.password,
+      verified: true,
+    });
+    if (!user) {
+      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    }
+
+    otpCache.del(`otp:${email}`);
+    otpCache.del(`user:${email}`);
+
+    const userResponse: UserResponseObject = {
+      _id: user._id.toString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+    };
+
+    console.log("User created successfully:", userResponse);
+
+    sendSuccess(res, SuccessMessages.OTP_VERIFIED, StatusCodes.OK, {
+      user: userResponse,
+      token: user.createJWT(),
+    });
   } catch (error: unknown) {
     ControllerError(error, next);
   }
