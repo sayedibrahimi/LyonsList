@@ -27,14 +27,34 @@ export async function getAllFavorites(
       throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
     }
 
+    // get all favorites data that still exist
     const favorites: ListingModel[] = await Listing.find({
       _id: { $in: user.favorites },
-    });
+    }).populate("sellerID", "firstName lastName profilePicture");
 
-    // TODO: get all favorites data
-    // const favorites: ListingModel[] = await Listing.find({
-    //   _id: { $in: user.favorites },
-    // }).populate("owner", "firstName lastName profilePicture");
+    // Get the IDs of listings that still exist
+    const existingListingIds: string[] = favorites.map((listing) =>
+      listing._id.toString()
+    );
+
+    // Find IDs in user.favorites that don't exist in the database anymore
+    const deletedListingIds: string[] = user.favorites
+      .map((id) => id.toString())
+      .filter((id) => !existingListingIds.includes(id));
+
+    // If there are any deleted listings, clean up the user's favorites array
+    if (deletedListingIds.length > 0) {
+      await User.findByIdAndUpdate(UserReqID, {
+        $pull: {
+          favorites: {
+            $in: deletedListingIds.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+        },
+      });
+      console.log(
+        `Removed ${deletedListingIds.length} deleted listings from user ${UserReqID}'s favorites`
+      );
+    }
 
     sendSuccess(
       res,
@@ -42,6 +62,7 @@ export async function getAllFavorites(
       StatusCodes.OK,
       {
         favorites,
+        deletedCount: deletedListingIds.length,
       }
     );
   } catch (error: unknown) {

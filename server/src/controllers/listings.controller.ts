@@ -129,6 +129,12 @@ export async function deleteListing(
   next: NextFunction
 ): Promise<void> {
   try {
+    const UserReqID: string = requestAuth(req, next);
+    const postingUser: UserModel | null = await User.findById(UserReqID);
+    if (postingUser === null) {
+      throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
+    }
+    
     const deletedListing: ListingModel | null = await Listing.findByIdAndDelete(
       req.params.id
     );
@@ -137,12 +143,8 @@ export async function deleteListing(
       throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
     }
 
-    // const postingUser: UserModel | null = await User.findById(UserReqID);
-    // if (postingUser === null) {
-    //   throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
-    // }
-    // postingUser.totalListings -= 1;
-    // await postingUser.save();
+    postingUser.totalListings -= 1;
+    await postingUser.save();
 
     sendSuccess(
       res,

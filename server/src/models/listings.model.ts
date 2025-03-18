@@ -4,7 +4,7 @@ export interface ListingModel extends Document {
   _id: string;
   title: string;
   description: string;
-  picture: string;
+  pictures: string[]; // Changed from picture: string to pictures: string[]
   price: number;
   condition: string;
   status: string;
@@ -26,10 +26,16 @@ const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
       trim: true,
       maxlength: [500, "Description cannot be more than 500 characters"],
     },
-    picture: {
-      type: String,
-      required: [true, "Please provide a picture URL"],
-      trim: true,
+    pictures: {
+      // Changed from picture to pictures
+      type: [String], // Array of strings
+      required: [true, "Please provide at least one picture URL"],
+      validate: {
+        validator: function (v: string[]) {
+          return v.length > 0; // Ensure at least one picture is provided
+        },
+        message: "At least one picture URL is required",
+      },
     },
     price: {
       type: Number,

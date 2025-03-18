@@ -1,7 +1,7 @@
 export default interface ListingObject {
   title: string;
   description: string;
-  picture: string;
+  pictures: string[];
   price: number;
   condition: string;
   status: string;

@@ -33,13 +33,12 @@ export function createJWTMethod(this: UserModel): string {
 }
 
 export async function comparePasswordMethod(
-  user: UserModel,
+  this: UserModel,
   candidatePassword: string
 ): Promise<boolean> {
   // Include the password field (even if it's set to select: false)
-  const userAccount: UserModel | null = await user
-    .model("User")
-    .findById(user._id)
+  const userAccount: UserModel | null = await this.model("User")
+    .findById(this._id)
     .select("+password");
   if (!userAccount) {
     throw new CustomError("User not found during password comparison.", 404);
