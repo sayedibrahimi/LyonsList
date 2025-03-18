@@ -3,7 +3,7 @@ import OTP, { OTPModel } from "../models/otp.model";
 // import User, { UserModel } from "../models/users.model";
 import { generateOTP } from "../utils/generateOTP";
 import sendOTPemail from "../utils/sendOTPemail";
-import { hashData, verifyHashedData } from "../models/otpUtils/hashData";
+import { hashData, verifyHashedData } from "../utils/hashData";
 // import { updateUserAccount } from "./user.controller";
 import { MailOptions, SendOTPResponse } from "../types";
 import { StatusCodes } from "http-status-codes";
@@ -16,7 +16,7 @@ import {
   ControllerError,
   // NotFoundError,
 } from "../errors";
-import { createJWT } from "../models/otpUtils/createJWT";
+import { createJWT } from "../utils/createJWT";
 // import { requestAuth } from "../utils/requestAuth";
 
 export async function sendOTP(

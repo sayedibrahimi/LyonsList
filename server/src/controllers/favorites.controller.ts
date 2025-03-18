@@ -31,6 +31,11 @@ export async function getAllFavorites(
       _id: { $in: user.favorites },
     });
 
+    // TODO: get all favorites data
+    // const favorites: ListingModel[] = await Listing.find({
+    //   _id: { $in: user.favorites },
+    // }).populate("owner", "firstName lastName profilePicture");
+
     sendSuccess(
       res,
       SuccessMessages.FAVORITES_SUCCESS_FETCHED,

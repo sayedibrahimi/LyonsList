@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { sendOTP } from "./otp.controller";
 import OTP, { OTPModel } from "../models/otp.model";
-import { verifyHashedData } from "../models/otpUtils/hashData";
+import { verifyHashedData } from "../utils/hashData";
 import {
   BadRequestError,
   ControllerError,

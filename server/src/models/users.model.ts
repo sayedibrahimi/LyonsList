@@ -2,8 +2,8 @@ import mongoose, { Schema, Model, Document, Types } from "mongoose";
 import {
   createJWTMethod,
   comparePasswordMethod,
-} from "./UsersUtils/users.methods";
-import { hashPassword } from "./UsersUtils/users.pre";
+  hashPassword,
+} from "../utils/usersUtils";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
