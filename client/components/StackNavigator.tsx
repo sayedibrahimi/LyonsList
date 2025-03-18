@@ -10,7 +10,7 @@ export default function StackNavigator() {
   if (loading) return null;
 
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       {user ? ( 
         <>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
