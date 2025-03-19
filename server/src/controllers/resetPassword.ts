@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import User, { UserModel } from "../models/users.model";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
-import { hashData } from "../utils/hashData";
+import { hashData, verifyHashedData } from "../utils/hashData";
 import { InternalServerError } from "../errors";
 // import jwt from "jsonwebtoken";
 import { ResetPasswordRequestObject } from "../types";
@@ -54,7 +54,14 @@ export async function resetPasswordRequest(
     otpCache.set(`user:${email}`, userData);
     // generate OTP
     const generatedOTP: number = await generateOTP(next);
-    otpCache.set(`otp:${email}`, generatedOTP.toString(), 300);
+    const hashedOTP: string = await hashData(generatedOTP.toString());
+
+    if (!hashedOTP) {
+      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    }
+    // console.log(hashedOTP);
+
+    otpCache.set(`otp:${email}`, hashedOTP, 600);
 
     // send OTP email
     const emailSender: string | undefined = process.env.EMAIL;
@@ -105,12 +112,18 @@ export async function verifyReset(
     }
 
     // check if OTP is valid
+    // console.log(otpCache.get(`otp:${email}`));
+
     const cachedOTP: string | undefined = otpCache.get(`otp:${email}`);
-    console.log(`cachedOTP: ${cachedOTP}, otp: ${otp}`);
-    if (!cachedOTP || cachedOTP !== otp.toString()) {
+    // console.log(`cachedOTP: ${cachedOTP}`);
+
+    if (!cachedOTP || cachedOTP === undefined) {
+      throw new BadRequestError(ErrorMessages.OTP_NOT_FOUND);
+    }
+    const isValid: boolean = await verifyHashedData(otp.toString(), cachedOTP);
+    if (!isValid) {
       throw new BadRequestError(ErrorMessages.OTP_INVALID);
     }
-
     // update user password
     const userData: ResetPasswordRequestObject | undefined = otpCache.get(
       `user:${email}`
