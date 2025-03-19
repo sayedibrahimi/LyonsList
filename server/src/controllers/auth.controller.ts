@@ -202,3 +202,17 @@ export async function login(
     ControllerError(error, next);
   }
 }
+
+// export async function logout(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     // clear the cookie
+//     res.clearCookie("token");
+//     sendSuccess(res, SuccessMessages.USER_SUCCESS_LOGOUT, StatusCodes.OK);
+//   } catch (error: unknown) {
+//     ControllerError(error, next);
+//   }
+// }

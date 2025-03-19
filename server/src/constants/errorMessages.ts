@@ -8,6 +8,9 @@ const ErrorMessages: Record<string, string> = {
   PASSWORD_RESET_NO_EMAIL: "Please provide an email address.",
   PASSWORD_RESET_NO_USER: "No user found with this email address.",
   PASSWORD_UNAUTHORIZED: "Unauthorized to reset this password.",
+  PASSWORD_RESET_NO_FIELDS:
+    "Please provide an email, password1, and password2.",
+  PASSWORD_RESET_NO_MATCH: "Passwords do not match.",
 
   // Listings
   LISTING_NOT_FOUND: "Listing not found.",

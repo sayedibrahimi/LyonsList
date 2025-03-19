@@ -8,6 +8,7 @@ import UserResponseObject from "./UserResponse";
 import MailOptions from "./MailOptions";
 import SendOTPResponse from "./SendOTPResponse";
 import JWTClaim from "./JWTClaim";
+import ResetPasswordRequestObject from "./ResetPasswordRequest";
 
 export {
   CustomJwtPayload,
@@ -20,4 +21,5 @@ export {
   MailOptions,
   SendOTPResponse,
   JWTClaim,
+  ResetPasswordRequestObject,
 };
