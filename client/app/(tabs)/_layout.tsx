@@ -4,7 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout(): React.ReactElement {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs screenOptions={{ 
+        headerShown: false,
+        tabBarHideOnKeyboard: true,
+      }}
+>
       <Tabs.Screen
         name="search"
         options={{
