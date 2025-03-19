@@ -3,7 +3,7 @@ import User, { UserModel } from "../models/users.model";
 import { LoginRequest } from "../types";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
-import { hashData } from "../utils/hashData";
+import { hashData, verifyHashedData } from "../utils/hashData";
 import { CustomError /*UnauthError*/, InternalServerError } from "../errors";
 // import jwt from "jsonwebtoken";
 import {
@@ -58,7 +58,11 @@ export async function register(
     otpCache.set(`user:${email}`, userData);
 
     const generatedOTP: number = await generateOTP(next);
-    otpCache.set(`otp:${email}`, generatedOTP.toString(), 300);
+    const hashedOTP: string = await hashData(generatedOTP.toString());
+    if (!hashedOTP) {
+      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    }
+    otpCache.set(`otp:${email}`, hashedOTP, 600);
 
     const emailSender: string | undefined = process.env.EMAIL;
     if (!emailSender) {
@@ -105,14 +109,21 @@ export async function verifyRegistration(
     }
 
     const storedOTP: string | undefined = otpCache.get(`otp:${email}`);
-    const userData: RegisterRequestObject | undefined = otpCache.get(
-      `user:${email}`
-    );
-
-    if (!storedOTP || storedOTP !== otp.toString() || !userData) {
+    if (!storedOTP || storedOTP === undefined) {
       throw new BadRequestError(ErrorMessages.INVALID_OTP);
     }
 
+    const isValid: boolean = await verifyHashedData(otp.toString(), storedOTP);
+    if (!isValid) {
+      throw new BadRequestError(ErrorMessages.OTP_INVALID);
+    }
+
+    const userData: RegisterRequestObject | undefined = otpCache.get(
+      `user:${email}`
+    );
+    if (!userData || userData === undefined) {
+      throw new BadRequestError(ErrorMessages.OTP_NOT_FOUND);
+    }
     const user: UserModel = await User.create({
       firstName: userData.firstName,
       lastName: userData.lastName,

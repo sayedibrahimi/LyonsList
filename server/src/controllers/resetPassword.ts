@@ -59,7 +59,6 @@ export async function resetPasswordRequest(
     if (!hashedOTP) {
       throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
     }
-    // console.log(hashedOTP);
 
     otpCache.set(`otp:${email}`, hashedOTP, 600);
 
@@ -112,10 +111,7 @@ export async function verifyReset(
     }
 
     // check if OTP is valid
-    // console.log(otpCache.get(`otp:${email}`));
-
     const cachedOTP: string | undefined = otpCache.get(`otp:${email}`);
-    // console.log(`cachedOTP: ${cachedOTP}`);
 
     if (!cachedOTP || cachedOTP === undefined) {
       throw new BadRequestError(ErrorMessages.OTP_NOT_FOUND);
