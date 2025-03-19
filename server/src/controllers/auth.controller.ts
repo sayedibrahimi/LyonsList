@@ -33,31 +33,7 @@ export async function register(
       throw new BadRequestError(ErrorMessages.USER_MISSING_FIELDS);
     }
 
-    // // get email from token
-    // const authHeader: string | undefined = req.headers.authorization;
-    // if (!authHeader || !authHeader.startsWith("Bearer")) {
-    //   throw new UnauthError(ErrorMessages.AUTH_NO_TOKEN);
-    // }
-    // const cachedToken: string = authHeader.split(" ")[1];
-
-    // const jwtSecret: string | undefined = process.env.JWT_SECRET;
-    // if (!jwtSecret) {
-    //   throw new UnauthError(ErrorMessages.AUTH_INVALID_JWT_SECRET);
-    // }
-
-    // const payload: CustomJwtPayload = jwt.verify(
-    //   cachedToken,
-    //   jwtSecret
-    // ) as CustomJwtPayload;
-
-    // const email: string | undefined = payload.sub;
-
-    // if (!email) {
-    //   throw new BadRequestError(ErrorMessages.INVALID_INPUT);
-    // }
-
     // if email already exists
-
     const existingUser: UserModel | null = await User.findOne({ email });
     if (existingUser !== null) {
       throw new CustomError(ErrorMessages.USER_EMAIL_IN_USE);
@@ -111,56 +87,12 @@ export async function register(
       message: "OTP sent successfully",
     });
     return;
-
-    // // else, create user
-    // const user: UserModel = await User.create({
-    //   email: email,
-    //   ...req.body,
-    //   verified: true,
-    // });
-    // //! Validation?
-    // const token: string = user.createJWT();
-
-    // const returnObject: UserResponseObject = {
-    //   _id: user._id,
-    //   firstName: user.firstName,
-    //   lastName: user.lastName,
-    //   email: user.email,
-    // };
-
-    // req.user = {
-    //   userID: user._id.toString(),
-    //   firstName: user.firstName,
-    //   lastName: user.lastName,
-    //   email: user.email,
-    // };
-
-    // //TODO fix this
-    // const otpSuccess: SendOTPResponse | void = await sendOTP(
-    //   req,
-    //   res,
-    //   next,
-    //   false
-    // );
-    // if (!otpSuccess) {
-    //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    // }
-    // sendSuccess(
-    //   res,
-    //   SuccessMessages.USER_SUCCESS_CREATED,
-    //   StatusCodes.CREATED,
-    //   {
-    //     user: returnObject,
-    //     token,
-    //   }
-    // );
-    // return;
   } catch (error: unknown) {
     ControllerError(error, next);
   }
 }
 
-export async function verifyOTP(
+export async function verifyRegistration(
   req: Request,
   res: Response,
   next: NextFunction
