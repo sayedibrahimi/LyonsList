@@ -18,7 +18,7 @@ import SuccessMessages from "../constants/successMessages";
 import { generateOTP } from "../utils/generateOTP";
 import { MailOptions } from "../types";
 import sendOTPemail from "../utils/sendOTPemail";
-import otpCache from "../constants/cache";
+import otpCache from "../db/cache";
 
 export async function register(
   req: Request,

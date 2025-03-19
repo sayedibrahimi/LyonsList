@@ -4,6 +4,7 @@ import {
   comparePasswordMethod,
   // hashPassword,
 } from "../utils/usersUtils";
+import ErrorMessages from "../constants/errorMessages";
 
 // get an interface object to refer to types in the schema
 export interface UserModel extends Document {
@@ -28,15 +29,15 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
   {
     firstName: {
       type: String,
-      required: [true, "Please provide a name"],
+      required: [true, ErrorMessages.USER_NO_NAME],
       trim: true,
-      max_length: [20, "Name cannot be more than 20 characters"],
+      max_length: [20, ErrorMessages.USER_CHAR_LIMIT],
     },
     lastName: {
       type: String,
-      required: [true, "Please provide a name"],
+      required: [true, ErrorMessages.USER_NO_NAME],
       trim: true,
-      max_length: [20, "Name cannot be more than 20 characters"],
+      max_length: [20, ErrorMessages.USER_CHAR_LIMIT],
     },
     email: {
       type: String,

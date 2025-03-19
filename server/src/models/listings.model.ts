@@ -1,4 +1,5 @@
 import mongoose, { Schema, Model, Document } from "mongoose";
+import ListingMessages from "../constants/listingsModelMessages";
 
 export interface ListingModel extends Document {
   _id: string;
@@ -16,54 +17,54 @@ const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
   {
     title: {
       type: String,
-      required: [true, "Please provide a title"],
+      required: [true, ListingMessages.MISSING_TITLE],
       trim: true,
-      maxlength: [100, "Title cannot be more than 100 characters"],
+      maxlength: [100, ListingMessages.TITLE_TOO_LONG], // Ensure title is not more than 100 characters
     },
     description: {
       type: String,
-      required: [true, "Please provide a description"],
+      required: [true, ListingMessages.MISSING_DESCRIPTION],
       trim: true,
-      maxlength: [500, "Description cannot be more than 500 characters"],
+      maxlength: [500, ListingMessages.DESCRIPTION_TOO_LONG], // Ensure description is not more than 500 characters
     },
     pictures: {
       // Changed from picture to pictures
       type: [String], // Array of strings
-      required: [true, "Please provide at least one picture URL"],
+      required: [true, ListingMessages.MISSING_PICTURES],
       validate: {
         validator: function (v: string[]) {
           return v.length > 0; // Ensure at least one picture is provided
         },
-        message: "At least one picture URL is required",
+        message: ListingMessages.INVALID_PICTURES, // Custom error message if validation fails
       },
     },
     price: {
       type: Number,
-      required: [true, "Please provide a price"],
-      min: [0, "Price cannot be negative"],
+      required: [true, ListingMessages.MISSING_PRICE],
+      min: [0, ListingMessages.INVALID_PRICE], // Ensure price is not negative
     },
     condition: {
       type: String,
-      required: [true, "Please provide the condition"],
+      required: [true, ListingMessages.MISSING_CONDITION],
       enum: {
         // TODO: Update these field names
-        values: ["new", "used"],
-        message: "{VALUE} is not a valid condition",
+        values: [ListingMessages.NEW, ListingMessages.USED], // Valid conditions
+        message: ListingMessages.INVALID_CONDITION, // Custom error message for invalid condition
       },
     },
     status: {
       type: String,
-      required: [true, "Please provide the status"],
+      required: [true, ListingMessages.MISSING_STATUS],
       enum: {
-        values: ["available", "unavailable"],
-        message: "{VALUE} is not a valid status",
+        values: [ListingMessages.AVAILABLE, ListingMessages.UNAVAILABLE],
+        message: ListingMessages.INVALID_STATUS, // Custom error message for invalid status
       },
-      default: "available",
+      default: ListingMessages.AVAILABLE, // Default status to available
     },
     sellerID: {
       type: Schema.Types.ObjectId,
       ref: "User", // Assuming the seller is referenced from a User model
-      required: [true, "Please provide a seller ID"],
+      required: [true, ListingMessages.PROVIDE_SELLER_ID], // Ensure sellerID is provided
     },
   },
   { timestamps: true }

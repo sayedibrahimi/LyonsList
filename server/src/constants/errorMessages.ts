@@ -33,6 +33,8 @@ const ErrorMessages: Record<string, string> = {
   USER_UNVERIFIED: "User is not verified.",
   OTP_SEND_FAILED: "Failed to send OTP.",
   PASSWORD_RESET_SENT: "Password reset email sent.",
+  USER_NO_NAME: "Please provide a name.",
+  USER_CHAR_LIMIT: "Name cannot be more than 20 characters.",
 
   // Authentication
   AUTH_INVALID_CREDENTIALS:
