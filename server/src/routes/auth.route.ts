@@ -7,7 +7,7 @@ import {
 import {
   resetPasswordRequest,
   verifyReset,
-} from "../controllers/resetPassword";
+} from "../controllers/resetPassword.controller";
 const router: express.Router = express.Router();
 
 router.post("/register", register);
