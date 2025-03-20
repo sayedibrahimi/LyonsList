@@ -1,5 +1,6 @@
 import mongoose, { Schema, Model, Document } from "mongoose";
 import ListingMessages from "../constants/listingsModelMessages";
+import { Categories } from "../constants/listingCategories";
 
 export interface ListingModel extends Document {
   _id: string;
@@ -8,9 +9,9 @@ export interface ListingModel extends Document {
   pictures: string[]; // Changed from picture: string to pictures: string[]
   price: number;
   condition: string;
+  category: string;
   status: string;
   sellerID: Schema.Types.ObjectId;
-  // TODO: add some sort of tags or category here?
 }
 
 const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
@@ -60,6 +61,14 @@ const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
         message: ListingMessages.INVALID_STATUS, // Custom error message for invalid status
       },
       default: ListingMessages.AVAILABLE, // Default status to available
+    },
+    category: {
+      type: String,
+      required: [true, ListingMessages.MISSING_CATEGORY],
+      enum: {
+        values: Object.values(Categories),
+        message: ListingMessages.INVALID_CATEGORY, // Custom error message for invalid category
+      },
     },
     sellerID: {
       type: Schema.Types.ObjectId,

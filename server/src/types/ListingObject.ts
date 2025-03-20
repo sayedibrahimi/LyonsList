@@ -4,6 +4,7 @@ export default interface ListingObject {
   pictures: string[];
   price: number;
   condition: string;
+  category: string;
   status: string;
   sellerID: string;
 }
