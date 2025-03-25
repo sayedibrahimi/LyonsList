@@ -72,16 +72,7 @@ export async function resetPasswordRequest(
       from: emailSender,
       to: email,
       subject: "OTP for password reset",
-      html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <h2 style="color: #333;">Password Reset Request</h2>
-        <p style="font-size: 16px; color: #555;">Your One-Time Password (OTP) is:</p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #4285f4; margin: 20px 0;">
-        ${generatedOTP}
-        </div>
-        <p style="font-size: 14px; color: #777;">This OTP will expire in 10 minutes.</p>
-      </div>
-      `,
+      data: generatedOTP.toString(),
     };
     await sendOTPemail(mailOptions);
     sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {

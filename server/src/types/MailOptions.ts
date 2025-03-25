@@ -2,5 +2,6 @@ export default interface MailOptions {
   from: string;
   to: string;
   subject: string;
-  html: string;
+  data: string;
+  html?: string;
 }
