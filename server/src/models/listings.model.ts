@@ -48,7 +48,6 @@ const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
       type: String,
       required: [true, ListingMessages.MISSING_CONDITION],
       enum: {
-        // TODO: Update these field names
         values: [ListingMessages.NEW, ListingMessages.USED], // Valid conditions
         message: ListingMessages.INVALID_CONDITION, // Custom error message for invalid condition
       },

@@ -24,7 +24,6 @@ export interface UserModel extends Document {
   comparePassword(password: string): Promise<boolean>;
 }
 
-// TODO: add if false error fields
 const UserSchema: Schema<UserModel> = new Schema<UserModel>(
   {
     firstName: {

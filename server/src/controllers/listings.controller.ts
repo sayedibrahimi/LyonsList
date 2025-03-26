@@ -20,7 +20,6 @@ export async function createListing(
     const UserReqID: string = requestAuth(req, next);
     req.body.sellerID = UserReqID;
 
-    //TODO: Add validation for the request body and send bad request
     if (!validListingRequest(req.body as ListingObject)) {
       throw new BadRequestError(ErrorMessages.LISTING_INVALID_REQUEST);
     }
@@ -134,7 +133,7 @@ export async function deleteListing(
     if (postingUser === null) {
       throw new NotFoundError(ErrorMessages.USER_NOT_FOUND);
     }
-    
+
     const deletedListing: ListingModel | null = await Listing.findByIdAndDelete(
       req.params.id
     );

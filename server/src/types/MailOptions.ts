@@ -1,7 +1,7 @@
-export default interface MailOptions {
+export default interface MailOptions<T> {
   from: string;
   to: string;
   subject: string;
-  data: string;
+  data: T;
   html?: string;
 }

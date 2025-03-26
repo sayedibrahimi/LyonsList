@@ -8,6 +8,7 @@ import {
   updateListing,
   deleteListing,
 } from "../controllers/listings.controller";
+import { reportListing } from "../controllers/report.controller";
 
 // POST /listings - Create a new listing
 // GET /listings - Get all listings
@@ -20,5 +21,7 @@ router.post("/", createListing);
 router.get("/:id", sellerAuth, getListingById);
 router.patch("/:id", sellerAuth, updateListing);
 router.delete("/:id", sellerAuth, deleteListing);
+
+router.post("/report/:id", reportListing);
 
 export default router;

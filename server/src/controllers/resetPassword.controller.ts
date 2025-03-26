@@ -11,7 +11,7 @@ import ErrorMessages from "../constants/errorMessages";
 import SuccessMessages from "../constants/successMessages";
 import { generateOTP } from "../utils/generateOTP";
 import { MailOptions } from "../types";
-import sendOTPemail from "../utils/sendOTPemail";
+import { sendEmailOTP } from "../utils/sendEmail";
 import otpCache from "../db/cache";
 
 export async function resetPasswordRequest(
@@ -68,18 +68,17 @@ export async function resetPasswordRequest(
       throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
     }
 
-    const mailOptions: MailOptions = {
+    const mailOptions: MailOptions<string> = {
       from: emailSender,
       to: email,
       subject: "OTP for password reset",
       data: generatedOTP.toString(),
     };
-    await sendOTPemail(mailOptions);
+    await sendEmailOTP(mailOptions, next);
     sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
       user: userData.email,
       message: "OTP sent successfully",
     });
-    //! TODO return;
   } catch (error: unknown) {
     ControllerError(error, next);
   }

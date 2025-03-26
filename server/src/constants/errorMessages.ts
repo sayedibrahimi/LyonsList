@@ -57,6 +57,10 @@ const ErrorMessages: Record<string, string> = {
   // favorites
   LISTING_ALREADY_FAVORITED: "Listing already favorited.",
   LISTING_NOT_FAVORITED: "Listing not favorited.",
+
+  // report
+  REPORT_MESSAGE_EMPTY: "Report message cannot be empty.",
+  REPORT_INVALID_CATEGORY: "Invalid report category.",
 };
 
 export default ErrorMessages;
