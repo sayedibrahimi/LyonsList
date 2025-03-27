@@ -20,6 +20,7 @@ import authRoutes from "./routes/auth.route";
 import userAccountRoutes from "./routes/user.route";
 import listingRoutes from "./routes/listings.route";
 import favoriteRoutes from "./routes/favorites.route";
+import uploadRoutes from "./routes/upload.route";
 // import OTPRoutes from "./routes/otp.route";
 
 // Create base API router
@@ -46,6 +47,7 @@ apiRouter.use("/auth", authRoutes);
 apiRouter.use("/account", auth, userAccountRoutes);
 apiRouter.use("/listings", auth, listingRoutes);
 apiRouter.use("/favorites", auth, favoriteRoutes);
+apiRouter.use("/upload", uploadRoutes);
 // apiRouter.use("/otp", OTPRoutes);
 
 app.use(notFound);
