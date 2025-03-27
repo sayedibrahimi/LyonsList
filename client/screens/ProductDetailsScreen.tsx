@@ -1,65 +1,103 @@
-// app/productDetails.tsx
+// client/screens/ProductDetailsScreen.tsx
+// Purpose: Display the details of a single product
+// Description: This screen fetches the details of a single product by its ID and displays the product title, price, condition, description, and seller information. It also allows the user to favorite the product, reply to the seller, and navigate back to the previous screen.
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, StyleSheet } from 'react-native';
+import { 
+  View, 
+  Text, 
+  Image, 
+  TouchableOpacity, 
+  ScrollView, 
+  SafeAreaView, 
+  ActivityIndicator, 
+  StyleSheet,
+  Alert
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-
-// Define product interface based on your data structure
-interface Product {
-  _id: { $oid: string };
-  title: string;
-  description: string;
-  picture: string;
-  price: { $numberInt: string };
-  condition: string;
-  status: string;
-  sellerID: { $oid: string };
-  createdAt: { $date: { $numberLong: string } };
-  updatedAt: { $date: { $numberLong: string } };
-  __v: { $numberInt: string };
-}
+import { listingsService, Listing } from '../services/listingsService';
+import { favoritesService } from '../services/favoritesService';
+import { useAuth } from '../hooks/useAuth';
 
 export default function ProductDetailsScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams();
   const productId = params.productId as string;
   
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchProductDetails();
-  }, [productId]);
+    if (user) {
+      checkIfFavorite();
+    }
+  }, [productId, user]);
 
   const fetchProductDetails = async () => {
     try {
       setLoading(true);
-      // Replace with your actual API endpoint for getting a single product
-      const response = await fetch(`http://172.20.6.184:3001/products/${productId}`);
-      
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      
-      const data = await response.json();
+      const data = await listingsService.getListingById(productId);
       setProduct(data);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to fetch product details. Please try again later.');
-      setLoading(false);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to fetch product details';
+      setError(errorMessage);
       console.error('Error fetching product details:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatPrice = (price: string) => {
-    return `$${parseInt(price).toFixed(2)}`;
+  const checkIfFavorite = async () => {
+    if (!user) return;
+    
+    try {
+      const favorites = await favoritesService.getAllFavorites();
+      const isInFavorites = favorites.some(fav => fav._id === productId);
+      setIsFavorite(isInFavorites);
+    } catch (err) {
+      console.error('Error checking favorites:', err);
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login to add items to favorites',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => router.push('/auth/login') }
+        ]
+      );
+      return;
+    }
+    
+    try {
+      if (isFavorite) {
+        await favoritesService.removeFavorite(productId);
+        setIsFavorite(false);
+      } else {
+        await favoritesService.addFavorite(productId);
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      Alert.alert('Error', 'Failed to update favorites');
+    }
+  };
+
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
   };
 
   const getTimeAgo = (timestamp: string) => {
-    const postTime = new Date(parseInt(timestamp));
+    const postTime = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - postTime.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -77,15 +115,30 @@ export default function ProductDetailsScreen(): React.ReactElement {
     }
   };
 
-  const handleFavoriteToggle = () => {
-    setIsFavorite(!isFavorite);
-    // In a full implementation, you would also update this in your backend or local storage
-  };
-
   const handleReply = () => {
-    // This is a dummy function for now
-    console.log('Reply to seller for product:', productId);
-    // In a full implementation, this would navigate to a chat screen or form
+    if (!user) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login to contact the seller',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => router.push('/auth/login') }
+        ]
+      );
+      return;
+    }
+    
+    // Navigate to chat screen with the seller info
+    if (product && product.sellerID) {
+      router.push({
+        pathname: '/(tabs)/chat',
+        params: { 
+          sellerId: product.sellerID,
+          productId: product._id,
+          productTitle: product.title
+        }
+      });
+    }
   };
 
   if (loading) {
@@ -134,7 +187,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
           <Image 
-            source={imageError ? require('../assets/images/placeholder.png') : { uri: product.picture }} 
+            source={imageError ? require('../assets/images/placeholder.png') : { uri: product.pictures[0] }} 
             style={styles.productImage}
             onError={() => setImageError(true)}
             resizeMode="cover"
@@ -148,12 +201,12 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
         <View style={styles.detailsContainer}>
           <Text style={styles.productTitle}>{product.title}</Text>
-          <Text style={styles.productPrice}>{formatPrice(product.price.$numberInt)}</Text>
+          <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
           
           <View style={styles.infoRow}>
             <View style={styles.infoItem}>
               <Ionicons name="time-outline" size={16} color="#666" />
-              <Text style={styles.infoText}>Posted {getTimeAgo(product.createdAt.$date.$numberLong)}</Text>
+              <Text style={styles.infoText}>Posted {getTimeAgo(product.createdAt)}</Text>
             </View>
             <View style={styles.infoItem}>
               <Ionicons name="pricetag-outline" size={16} color="#666" />
