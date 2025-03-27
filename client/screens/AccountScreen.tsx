@@ -1,4 +1,6 @@
-// src/screens/AccountScreen.tsx
+// client/screens/AccountScreen.tsx
+// Purpose: Implement the AccountScreen component
+// Description: This component displays the user's account information and provides options to view listings, purchase history, settings, and help & support. It also allows the user to log out of the app.
 import React from 'react';
 import { 
   View, 
@@ -6,14 +8,13 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ScrollView,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { tabStyles } from '../styles/tabStyles';
-
-interface AccountScreenProps {
-  // Define props if needed
-}
+import { useAuth } from '../hooks/useAuth';
+import { useRouter } from 'expo-router';
 
 interface MenuItem {
   id: string;
@@ -22,13 +23,9 @@ interface MenuItem {
   onPress: () => void;
 }
 
-export default function AccountScreen({}: AccountScreenProps): React.ReactElement {
-  // Mock user data - replace with actual auth state
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@university.edu',
-    profileImage: null
-  };
+export default function AccountScreen(): React.ReactElement {
+  const { user, logout, loading } = useAuth();
+  const router = useRouter();
   
   const menuItems: MenuItem[] = [
     { 
@@ -69,11 +66,51 @@ export default function AccountScreen({}: AccountScreenProps): React.ReactElemen
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => console.log('Logout pressed')
+          onPress: async () => {
+            try {
+              // First logout - since logout() returns void, we don't need to check its result
+              await logout();
+              
+              // Then navigate with a slight delay to ensure state is updated
+              setTimeout(() => {
+                router.replace('/auth/login');
+              }, 100);
+            } catch (error) {
+              console.error('Error during logout:', error);
+            }
+          }
         }
       ]
     );
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007BFF" />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={tabStyles.container}>
+        <View style={tabStyles.header}>
+          <Text style={tabStyles.headerTitle}>My Account</Text>
+        </View>
+        <View style={styles.notLoggedInContainer}>
+          <Ionicons name="lock-closed-outline" size={50} color="#999" />
+          <Text style={styles.notLoggedInText}>Please log in to view your account</Text>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={() => router.push('/auth/login')}
+          >
+            <Text style={styles.loginButtonText}>Log In</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={tabStyles.container}>
@@ -84,14 +121,10 @@ export default function AccountScreen({}: AccountScreenProps): React.ReactElemen
       <ScrollView style={tabStyles.content}>
         <View style={styles.profileSection}>
           <View style={styles.profileImagePlaceholder}>
-            {user.profileImage ? (
-              <Text>Profile Image</Text>
-            ) : (
-              <Ionicons name="person" size={50} color="#666" />
-            )}
+            <Ionicons name="person" size={50} color="#666" />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userName}>{user.firstName} {user.lastName}</Text>
             <Text style={styles.userEmail}>{user.email}</Text>
             <TouchableOpacity style={styles.editButton}>
               <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -127,6 +160,36 @@ export default function AccountScreen({}: AccountScreenProps): React.ReactElemen
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  notLoggedInContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  notLoggedInText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  loginButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
