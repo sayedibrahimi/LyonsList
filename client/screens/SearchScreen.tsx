@@ -1,57 +1,68 @@
-// src/screens/SearchScreen.tsx
+// client/screens/SearchScreen.tsx
+// Purpose: Search for products in the marketplace
+// Description: This screen allows users to search for products in the marketplace. Users can search by product title or description. The screen displays a list of products that match the search query. Users can click on a product to view more details.
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  FlatList, 
+  Image, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  StyleSheet,
+  Alert
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { tabStyles } from '../styles/tabStyles';
-
-// Define product interface based on your data structure
-interface Product {
-  id: string;
-  title: string;
-  description: string;
-  picture: string;
-  price: { $numberInt: string };
-  condition: string;
-  status: string;
-  sellerID: { $oid: string };
-  createdAt: { $date: { $numberLong: string } };
-  updatedAt: { $date: { $numberLong: string } };
-  __v: { $numberInt: string };
-}
+import { listingsService, Listing } from '../services/listingsService';
+import { favoritesService } from '../services/favoritesService';
+import { useAuth } from '../hooks/useAuth';
 
 export default function SearchScreen(): React.ReactElement {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Listing[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Listing[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState<Record<string, boolean>>({});
+  const [favorites, setFavorites] = useState<Listing[]>([]);
   const router = useRouter();
-  // Fetch products from your JSON server
-  // Fetch products from your JSON server
+  const { user } = useAuth();
+  
+  // Fetch products from the API
   useEffect(() => {
     fetchProducts();
-  }, []);
+    if (user) {
+      fetchFavorites();
+    }
+  }, [user]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Replace with your actual API endpoint
-      const response = await fetch('http://172.20.6.184:3001/products');
-      
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      
-      const data = await response.json();
+      const data = await listingsService.getAllListings();
       setProducts(data);
       setFilteredProducts(data);
-      setLoading(false);
-    } catch (err) {
-      setError('Failed to fetch products. Please try again later.');
-      setLoading(false);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to fetch products';
+      setError(errorMessage);
       console.error('Error fetching products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    if (!user) return;
+    
+    try {
+      const data = await favoritesService.getAllFavorites();
+      setFavorites(data);
+    } catch (err) {
+      console.error('Error fetching favorites:', err);
     }
   };
 
@@ -73,13 +84,13 @@ export default function SearchScreen(): React.ReactElement {
   };
 
   // Format price for display
-  const formatPrice = (price: string) => {
-    return `$${parseInt(price).toFixed(2)}`;
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
   };
 
   // Calculate how long ago the item was posted
   const getTimeAgo = (timestamp: string) => {
-    const postTime = new Date(parseInt(timestamp));
+    const postTime = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - postTime.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -97,37 +108,95 @@ export default function SearchScreen(): React.ReactElement {
     }
   };
 
-  // Render each product item
-  const renderProductItem = ({ item }: { item: Product }) => (
-    <TouchableOpacity style={styles.productCard}
-    onPress={() => router.push({
-        pathname: '/productDetails',
-        params: { productId: item.id }
-      })}>
-      <View style={styles.productImageContainer}>
-        <Image 
-        source={imageError ? require('../assets/images/placeholder.png') : { uri: item.picture }} 
-        style={styles.productImage}
-        onError={() => setImageError(true)} // If image fails to load, show placeholder
-      />
-        {item.condition === 'new' && (
-          <View style={styles.badgeNew}>
-            <Text style={styles.badgeText}>NEW</Text>
-          </View>
-        )}
-      </View>
+  const handleFavoriteToggle = async (item: Listing) => {
+    if (!user) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login to add items to favorites',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => router.push('/auth/login') }
+        ]
+      );
+      return;
+    }
+    
+    try {
+      const isCurrentlyFavorited = favorites.some(fav => fav._id === item._id);
       
-      <View style={styles.productInfo}>
-        <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.productDescription} numberOfLines={2}>{item.description}</Text>
-        
-        <View style={styles.productFooter}>
-          <Text style={styles.timeAgo}>{getTimeAgo(item.createdAt.$date.$numberLong)}</Text>
-          <Text style={styles.productPrice}>{formatPrice(item.price.$numberInt)}</Text>
+      if (isCurrentlyFavorited) {
+        await favoritesService.removeFavorite(item._id);
+        setFavorites(favorites.filter(fav => fav._id !== item._id));
+      } else {
+        await favoritesService.addFavorite(item._id);
+        setFavorites([...favorites, item]);
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      Alert.alert('Error', 'Failed to update favorites');
+    }
+  };
+
+  // Render each product item
+  const renderProductItem = ({ item }: { item: Listing }) => {
+    const isFavorited = favorites.some(fav => fav._id === item._id);
+    const itemImageError = imageError[item._id] || false;
+    
+    return (
+      <TouchableOpacity 
+        style={styles.productCard}
+        onPress={() => router.push({
+          pathname: '/productDetails',
+          params: { productId: item._id }
+        })}
+      >
+        <View style={styles.productImageContainer}>
+          <Image 
+            source={
+              itemImageError 
+                ? require('../assets/images/placeholder.png') 
+                : { uri: item.pictures[0] }
+            } 
+            style={styles.productImage}
+            onError={() => {
+              setImageError(prev => ({
+                ...prev,
+                [item._id]: true
+              }));
+            }}
+          />
+          {item.condition === 'new' && (
+            <View style={styles.badgeNew}>
+              <Text style={styles.badgeText}>NEW</Text>
+            </View>
+          )}
         </View>
-      </View>
-    </TouchableOpacity>
-  );
+        
+        <View style={styles.productInfo}>
+          <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
+          <Text style={styles.productDescription} numberOfLines={2}>{item.description}</Text>
+          
+          <View style={styles.productFooter}>
+            <Text style={styles.timeAgo}>{getTimeAgo(item.createdAt)}</Text>
+            <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
+          </View>
+        </View>
+        
+        {user && (
+          <TouchableOpacity 
+            style={styles.favoriteButton}
+            onPress={() => handleFavoriteToggle(item)}
+          >
+            <Ionicons 
+              name={isFavorited ? "heart" : "heart-outline"} 
+              color={isFavorited ? "#ff6b6b" : "#ccc"}
+              size={24} 
+            />
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={tabStyles.container}>
@@ -151,7 +220,7 @@ export default function SearchScreen(): React.ReactElement {
           )}
         </View>
         
-        <TouchableOpacity style={styles.searchButton}>
+        <TouchableOpacity style={styles.searchButton} onPress={() => handleSearch(searchQuery)}>
           <Text style={styles.searchButtonText}>Search</Text>
         </TouchableOpacity>
       </View>
@@ -181,11 +250,13 @@ export default function SearchScreen(): React.ReactElement {
         <FlatList
           data={filteredProducts}
           renderItem={renderProductItem}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item._id}
           style={styles.productList}
           contentContainerStyle={styles.productListContent}
-          numColumns={1} // Set to 2 for a 2-column grid
+          numColumns={1}
           showsVerticalScrollIndicator={false}
+          refreshing={loading}
+          onRefresh={fetchProducts}
         />
       )}
     </View>
@@ -200,8 +271,6 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     backgroundColor: '#fff',
   },
-  
-  // Search bar styles
   searchBarContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -245,16 +314,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
-  
-  // Section titles
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginVertical: 12,
-    marginHorizontal: 16,
-  },
-  
-  // Product list styles
   productList: {
     flex: 1,
   },
@@ -263,8 +322,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 24,
   },
-  
-  // Product card styles
   productCard: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -276,6 +333,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     overflow: 'hidden',
+    position: 'relative',
   },
   productImageContainer: {
     width: 120,
@@ -330,8 +388,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
-  
-  // Loading, error, empty states
+  favoriteButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
