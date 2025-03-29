@@ -1,9 +1,14 @@
+/* eslint-disable @typescript-eslint/typedef */
 import { Request, Response, NextFunction } from "express";
 import { ControllerError, BadRequestError } from "../errors";
+import { sendSuccess } from "../utils/sendResponse";
+import { StatusCodes } from "http-status-codes";
 import multer from "multer";
 // import axios from "axios";
-import fs from "fs";
+// import fs from "fs";
+// import { GoogleGenAI } from "@google/genai";
 
+import { GoogleGenerativeAI } from "@google/generative-ai";
 export const upload: multer.Multer = multer();
 
 export async function uploadImage(
@@ -24,21 +29,81 @@ export async function uploadImage(
     // Convert the image to Base64
     const imageBase64: string = req.file.buffer.toString("base64");
 
-    // const apiResponse: string = await geminiResponse(imageBase64);
+    const output: string = await geminiResponse(imageBase64);
 
     // Optional: Save the file temporarily for debugging
-    fs.writeFileSync("debug_image.jpg", req.file.buffer);
+    // fs.writeFileSync("debug_image.jpg", req.file.buffer);
 
-    // Respond with image details (including Base64 preview)
-    // res.json({
-    //   description: apiResponse,
-    // });
-    res.json({
-      message: "Image received successfully",
-      base64Preview: imageBase64.substring(0, 100) + "...", // Show first 100 chars of Base64
+    sendSuccess(res, "Image response successfully generated", StatusCodes.OK, {
+      description: output,
     });
   } catch (error: unknown) {
     ControllerError(error, next);
+  }
+}
+
+async function geminiResponse(input: string): Promise<string> {
+  try {
+    const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
+    const model = ai.getGenerativeModel({ model: "models/gemini-1.5-flash" });
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          mimeType: "image/jpg",
+          data: input,
+        },
+      },
+      "What is in this image?",
+    ]);
+
+    console.log(result);
+    const object = JSON.stringify(
+      result,
+      (key, value) => {
+        if (typeof value === "function") return "[Function]";
+        return value;
+      },
+      2
+    );
+    console.log(object);
+
+    const ret = JSON.parse(object).response.candidates[0].content.parts[0].text;
+    // const ret = object.response.candidates[0].content.parts[0].text;
+
+    console.log("Extracted text:", ret);
+    return ret;
+
+    // try {
+    //   const responseText = result.response.text();
+    //   console.log("Generated description:", responseText);
+    //   return responseText;
+    // } catch (textError) {
+    //   console.error("Error extracting text from response:", textError);
+
+    //   // Fallback to your JSON parsing approach
+    //   console.log("Falling back to JSON parsing method");
+    //   const object = JSON.stringify(
+    //     result,
+    //     (key, value) => {
+    //       if (typeof value === "function") return "[Function]";
+    //       return value;
+    //     },
+    //     2
+    //   );
+
+    //   try {
+    //     const parsed = JSON.parse(object);
+    //     const text = parsed.response.candidates[0]?.content?.parts[0]?.text;
+    //     return text || "No descriptive text found in the response";
+    //   } catch (parseError) {
+    //     console.error("Error parsing response:", parseError);
+    //     return "Failed to parse API response";
+    //   }
+    // }
+  } catch (error: unknown) {
+    return `error: ${error}`;
   }
 }
 
