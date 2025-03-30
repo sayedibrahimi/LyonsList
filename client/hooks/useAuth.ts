@@ -1,6 +1,6 @@
-// hooks/useAuth.ts
-// Purpose: Custom hook to use the AuthContext
-// Description: This file contains the custom hook useAuth which is used to access the AuthContext. It throws an error if the hook is used outside the AuthProvider.
+// client/hooks/useAuth.ts
+// Purpose: This file contains a custom hook that provides access to the authentication context.
+// Description: The useAuth hook uses the useContext hook to access the AuthContext. It returns the authentication state and functions, allowing components to easily access authentication-related data and actions. The hook also throws an error if used outside of an AuthProvider, ensuring that it is only used in the correct context.
 import { useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 
@@ -27,10 +27,18 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
   login: (data: LoginData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   verifyOTP: (email: string, otp: string) => Promise<void>;
+  sendOTP: (email: string, mode: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: {
+    sendOTP: (email: string) => Promise<void>;
+    verifyOTP: (email: string, otp: string) => Promise<void>;
+    setNewPassword: (email: string, password1: string, password2: string) => Promise<void>;
+  };
   clearError: () => void;
 }
 
