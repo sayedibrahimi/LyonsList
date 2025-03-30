@@ -4,6 +4,7 @@ import { ControllerError, BadRequestError } from "../errors";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import multer from "multer";
+import { GEMINI_PROMPT } from "../constants/geminiPrompt";
 // import axios from "axios";
 // import fs from "fs";
 // import { GoogleGenAI } from "@google/genai";
@@ -29,14 +30,27 @@ export async function uploadImage(
     // Convert the image to Base64
     const imageBase64: string = req.file.buffer.toString("base64");
 
-    const output: string = await geminiResponse(imageBase64);
+    let output: string = await geminiResponse(imageBase64);
 
     // Optional: Save the file temporarily for debugging
     // fs.writeFileSync("debug_image.jpg", req.file.buffer);
 
-    sendSuccess(res, "Image response successfully generated", StatusCodes.OK, {
-      description: output,
-    });
+    output = output.replace(/```json\n|\n```/g, ""); // Replace escaped newlines with actual newlines
+
+    try {
+      const parsedOutput = JSON.parse(output);
+      sendSuccess(
+        res,
+        "Image response successfully generated",
+        StatusCodes.OK,
+        {
+          description: parsedOutput,
+        }
+      );
+    } catch (jsonError) {
+      console.error("Error parsing JSON:", jsonError);
+      throw new BadRequestError("Failed to parse JSON response from Gemini.");
+    }
   } catch (error: unknown) {
     ControllerError(error, next);
   }
@@ -46,7 +60,7 @@ async function geminiResponse(input: string): Promise<string> {
   try {
     const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-    const model = ai.getGenerativeModel({ model: "models/gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "models/gemini-2.0-flash" });
 
     const result = await model.generateContent([
       {
@@ -55,10 +69,9 @@ async function geminiResponse(input: string): Promise<string> {
           data: input,
         },
       },
-      "What is in this image?",
+      GEMINI_PROMPT,
     ]);
 
-    console.log(result);
     const object = JSON.stringify(
       result,
       (key, value) => {
@@ -67,12 +80,10 @@ async function geminiResponse(input: string): Promise<string> {
       },
       2
     );
-    console.log(object);
 
     const ret = JSON.parse(object).response.candidates[0].content.parts[0].text;
     // const ret = object.response.candidates[0].content.parts[0].text;
 
-    console.log("Extracted text:", ret);
     return ret;
 
     // try {
