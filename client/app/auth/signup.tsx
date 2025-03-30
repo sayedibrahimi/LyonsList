@@ -1,6 +1,6 @@
 // client/app/auth/signup.tsx
-// Purpose: Signup screen component
-// Description: This file contains the SignupScreen component which allows users to create an account by entering their first name, last name, email, and password. The component also includes validation logic to ensure that all fields are filled out and that the email is in the correct format. If the user successfully signs up, they are redirected to the OTP verification screen.
+// Purpose: This file contains the SignupScreen component, which is used for user registration.
+// Description: The SignupScreen component allows users to create a new account by providing their first name, last name, email, and password. It includes form validation and error handling. Upon successful registration, the user is redirected to the OTP verification screen.
 import React, { useState } from 'react';
 import { 
   View, 
@@ -12,76 +12,10 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
-  Alert
+  ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
-
-interface OTPProps {
-  email: string;
-}
-
-const OTPVerification = ({ email }: OTPProps) => {
-  const [otp, setOtp] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [verificationError, setVerificationError] = useState('');
-  const { verifyOTP, error: authError, clearError } = useAuth();
-  const router = useRouter();
-
-  const handleVerify = async () => {
-    setVerificationError('');
-    clearError();
-    
-    if (!otp) {
-      setVerificationError('Please enter the OTP sent to your email');
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      await verifyOTP(email, otp);
-      // Navigate to home on success
-      router.replace('/(tabs)/search');
-    } catch (error) {
-      console.error('OTP verification error:', error);
-      // Error will be handled by the AuthContext
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Verify Your Email</Text>
-      <Text style={styles.subtitle}>Enter the code sent to {email}</Text>
-      
-      {verificationError ? <Text style={styles.errorText}>{verificationError}</Text> : null}
-      {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Verification Code"
-        keyboardType="number-pad"
-        value={otp}
-        onChangeText={setOtp}
-        maxLength={6}
-      />
-      
-      <TouchableOpacity 
-        style={[styles.button, isSubmitting ? styles.buttonDisabled : null]}
-        onPress={handleVerify}
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" size="small" />
-        ) : (
-          <Text style={styles.buttonText}>Verify</Text>
-        )}
-      </TouchableOpacity>
-    </View>
-  );
-};
 
 const SignupScreen = () => {
   const [firstName, setFirstName] = useState('');
@@ -91,8 +25,7 @@ const SignupScreen = () => {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showOtpScreen, setShowOtpScreen] = useState(false);
-  
+
   const router = useRouter();
   const { register, error: authError, clearError } = useAuth();
 
@@ -128,8 +61,15 @@ const SignupScreen = () => {
     
     try {
       setIsSubmitting(true);
-      await register({ firstName, lastName, email, password });
-      setShowOtpScreen(true);
+      await register({ firstName, lastName, email, password });      
+      // Add a small delay before navigation
+      setTimeout(() => {
+        // Navigate to OTP verification screen 
+        router.push({
+          pathname: '/auth/otp-verification',
+          params: { email, mode: 'signup' }
+      });
+      }, 100);
     } catch (error) {
       console.error('Registration error:', error);
       // Error will be handled by the AuthContext
@@ -141,10 +81,6 @@ const SignupScreen = () => {
   const navigateToLogin = () => {
     router.push('/auth/login');
   };
-
-  if (showOtpScreen) {
-    return <OTPVerification email={email} />;
-  }
 
   return (
     <KeyboardAvoidingView 
