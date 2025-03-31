@@ -18,19 +18,20 @@ export async function uploadImage(
   next: NextFunction
 ): Promise<void> {
   try {
-    if (!req.file) {
-      throw new BadRequestError("No file uploaded.");
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      throw new BadRequestError("No files uploaded.");
     }
 
-    console.log("Received Image:");
-    console.log("Original Name:", req.file.originalname);
-    console.log("MIME Type:", req.file.mimetype);
-    console.log("Size:", req.file.size, "bytes");
+    // while loop through req.files until empty, adding each original name to an array
+    const encodedFiles: string[] = [];
+    let i = 0;
+    while (req.files[i]) {
+      // Convert the image to Base64
+      encodedFiles.push(req.files[i].buffer.toString("base64"));
+      i++;
+    }
 
-    // Convert the image to Base64
-    const imageBase64: string = req.file.buffer.toString("base64");
-
-    let output: string = await geminiResponse(imageBase64);
+    let output: string = await geminiResponse(encodedFiles);
 
     // Optional: Save the file temporarily for debugging
     // fs.writeFileSync("debug_image.jpg", req.file.buffer);
@@ -56,22 +57,33 @@ export async function uploadImage(
   }
 }
 
-async function geminiResponse(input: string): Promise<string> {
+function fileToGenPart(file: string, mimType: string) {
+  return {
+    inlineData: {
+      mimeType: mimType,
+      data: file,
+    },
+  };
+}
+
+async function geminiResponse(input: string[]): Promise<string> {
   try {
+    // Check if the environment variable is set
     const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+    // Check if the API key is valid
     const model = ai.getGenerativeModel({ model: "models/gemini-2.0-flash" });
+    if (!model) {
+      throw new Error("Failed to initialize the Gemini model.");
+    }
 
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          mimeType: "image/jpg",
-          data: input,
-        },
-      },
-      GEMINI_PROMPT,
-    ]);
+    // Check if the input is valid
+    const images = input.map((file) => fileToGenPart(file, "image/jpg"));
 
+    // generateContent expects an array of strings, so we need to convert the images to strings
+    const result = await model.generateContent([GEMINI_PROMPT, ...images]);
+
+    // Check if the result is valid
     const object = JSON.stringify(
       result,
       (key, value) => {
@@ -81,180 +93,10 @@ async function geminiResponse(input: string): Promise<string> {
       2
     );
 
+    // Check if the response is valid
     const ret = JSON.parse(object).response.candidates[0].content.parts[0].text;
-    // const ret = object.response.candidates[0].content.parts[0].text;
-
     return ret;
-
-    // try {
-    //   const responseText = result.response.text();
-    //   console.log("Generated description:", responseText);
-    //   return responseText;
-    // } catch (textError) {
-    //   console.error("Error extracting text from response:", textError);
-
-    //   // Fallback to your JSON parsing approach
-    //   console.log("Falling back to JSON parsing method");
-    //   const object = JSON.stringify(
-    //     result,
-    //     (key, value) => {
-    //       if (typeof value === "function") return "[Function]";
-    //       return value;
-    //     },
-    //     2
-    //   );
-
-    //   try {
-    //     const parsed = JSON.parse(object);
-    //     const text = parsed.response.candidates[0]?.content?.parts[0]?.text;
-    //     return text || "No descriptive text found in the response";
-    //   } catch (parseError) {
-    //     console.error("Error parsing response:", parseError);
-    //     return "Failed to parse API response";
-    //   }
-    // }
   } catch (error: unknown) {
     return `error: ${error}`;
   }
 }
-
-// async function geminiResponse(input: string): Promise<string> {
-//   try {
-//     const apiKey = process.env.GEMINI_API_KEY;
-//     const base64Image = input;
-//     const prompt = "What is in this image?";
-
-//     if (!apiKey || !base64Image) {
-//       throw new BadRequestError("API Key or image not found");
-//     }
-
-//     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
-
-//     const payload = {
-//       contents: [
-//         {
-//           parts: [
-//             { text: prompt },
-//             {
-//               inline_data: {
-//                 mime_type: "image/jpg",
-//                 data: base64Image.split(",")[1] || base64Image, // Remove data URI prefix if present
-//               },
-//             },
-//           ],
-//         },
-//       ],
-//     };
-
-//     interface GeminiResponse {
-//       candidates: Array<{
-//         content: {
-//           parts: Array<{
-//             text?: string;
-//           }>;
-//         };
-//       }>;
-//     }
-
-//     console.log("Sending request to Gemini API...");
-
-//     const response = await axios.post(geminiUrl, payload, {
-//       headers: {
-//         Authorization: `Bearer ${apiKey}`,
-//         "Content-Type": "application/json",
-//       },
-//     });
-
-//     // console log the data
-//     console.log("here");
-
-//     console.log(response.data);
-
-//     // Extract the text response from Gemini
-//     const data = response.data as GeminiResponse;
-//     const description =
-//       data.candidates[0]?.content?.parts[0]?.text || "No description generated";
-
-//     return description;
-//   } catch (error) {
-//     return `error: ${error}`;
-//   }
-// }
-
-// async function geminiResponse(input: string): Promise<string> {
-//   const apiUrl: string = "https://vision.googleapis.com/v1/images:annotate";
-
-//   interface VisionAPIRequest {
-//     requests: Array<{
-//       image: {
-//         content: string;
-//       };
-//       features: Array<{
-//         type: string;
-//         maxResults: number;
-//       }>;
-//     }>;
-//   }
-
-//   const requestPayload: VisionAPIRequest = {
-//     requests: [
-//       {
-//         image: {
-//           content: input, // Your Base64-encoded image
-//         },
-//         features: [
-//           {
-//             type: "LABEL_DETECTION", // Analyzes image content and provides descriptions
-//             maxResults: 1, // Return only the top label
-//           },
-//         ],
-//       },
-//     ],
-//   };
-
-//   interface VisionAPIResponse {
-//     responses: Array<{
-//       labelAnnotations: Array<{
-//         description: string;
-//         score: number;
-//         topicality: number;
-//       }>;
-//     }>;
-//   }
-
-//   try {
-//     const apiKey: string | undefined = process.env.GEMINI_API_KEY;
-//     if (!apiKey) {
-//       throw new BadRequestError("API Key not found");
-//     }
-//     // const requestUrl: string = `${apiUrl}?key=${apiKey}`;
-
-//     // axios.AxiosResponse<VisionAPIResponse>
-//     // eslint-disable-next-line @typescript-eslint/typedef
-//     const response = await axios.post<VisionAPIResponse>(
-//       apiUrl,
-//       requestPayload,
-//       {
-//         headers: {
-//           Authorization: `Bearer ${apiKey}`, // Replace with your Google API key
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     // Handle the response, which will contain labels/descriptions of the image
-//     console.log("Google Vision API Response:", response.data);
-
-//     const labels: Array<{
-//       description: string;
-//       score: number;
-//       topicality: number;
-//     }> = response.data.responses[0]?.labelAnnotations || [];
-//     const descriptions: string[] = labels.map((label) => label.description); // Extract descriptions
-
-//     // Return the first description (or an array of descriptions if needed)
-//     return descriptions[0];
-//   } catch (error: unknown) {
-//     return `error: ${error}`;
-//   }
-// }
