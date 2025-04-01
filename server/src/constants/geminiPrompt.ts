@@ -1,14 +1,3 @@
-// export const GEMINI_PROMPT: string = `I am going to give you some images that are products trying to be sold on a marketplace app.
-// I want you to analyze and extract relevant information to create a product listing.
-// Avoid a generic description and give me specific details about the product in the images.
-// Extract information such as the title, description, price, condition, category, and any other relevant details.
-// I want the response to be in json format with no extra text. Return only one json response that should summarize ALL images that have been given.
-// The json should have the following keys:
-//     title: string;
-//     description: string;
-//     price: number;
-//     condition: string ("used" or "new");    `;
-
 export const GEMINI_PROMPT: string = `I am going to give you some images of products being sold on a marketplace app. 
 Analyze and extract relevant information to create a structured product listing.
 
@@ -17,6 +6,19 @@ Analyze and extract relevant information to create a structured product listing.
 - Extract details including title, description, price, condition, and category.
 - Return a single JSON object summarizing **ALL** images provided.
 - Ensure the response is **valid JSON with no extra text**.
+- add the category that fits one of these the best
+  ACADEMIC: "Academic & School Supplies",
+  ELECTRONICS: "Electronics & Gadgets",
+  FURNITURE: "Furniture & Dorm Essentials",
+  CLOTHING: "Clothing & Accessories",
+  ENTERTAINMENT: "Entertainment & Hobbies",
+  TRANSPORTATION: "Transportation",
+  KITCHEN: "Kitchen & Appliances",
+  SPORTS: "Sports & Fitness",
+  BEAUTY: "Beauty & Personal Care",
+  ARTS: "Arts & Crafts",
+  SEASONAL: "Seasonals",
+  SERVICES: "Services & Miscellaneous",
 
 ### JSON Format:
 \`\`\`json
