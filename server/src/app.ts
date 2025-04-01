@@ -20,6 +20,7 @@ import userAccountRoutes from "./routes/user.route";
 import listingRoutes from "./routes/listings.route";
 import favoriteRoutes from "./routes/favorites.route";
 import uploadRoutes from "./routes/upload.route";
+import searchRoutes from "./routes/search.route";
 // import OTPRoutes from "./routes/otp.route";
 // import userRoutes from "./routes/admin.users.route";
 
@@ -47,6 +48,7 @@ apiRouter.use("/account", auth, userAccountRoutes);
 apiRouter.use("/listings", auth, listingRoutes);
 apiRouter.use("/favorites", auth, favoriteRoutes);
 apiRouter.use("/upload", uploadRoutes);
+apiRouter.use("/search", searchRoutes);
 // apiRouter.use("/otp", OTPRoutes);
 // apiRouter.use("/users", userRoutes);
 
