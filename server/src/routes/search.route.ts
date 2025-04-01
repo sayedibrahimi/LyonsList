@@ -8,6 +8,6 @@ import {
 
 // GET /listings - Get all listings
 router.get("/", getAllListings);
-router.get("/category", getListingsByCategory);
+router.post("/category", getListingsByCategory);
 
 export default router;
