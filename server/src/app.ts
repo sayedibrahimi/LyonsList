@@ -47,8 +47,8 @@ apiRouter.use("/auth", authRoutes);
 apiRouter.use("/account", auth, userAccountRoutes);
 apiRouter.use("/listings", auth, listingRoutes);
 apiRouter.use("/favorites", auth, favoriteRoutes);
-apiRouter.use("/upload", uploadRoutes);
-apiRouter.use("/search", searchRoutes);
+apiRouter.use("/upload", auth, uploadRoutes);
+apiRouter.use("/search", auth, searchRoutes);
 // apiRouter.use("/otp", OTPRoutes);
 // apiRouter.use("/users", userRoutes);
 

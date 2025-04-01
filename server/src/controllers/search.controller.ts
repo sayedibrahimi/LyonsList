@@ -25,9 +25,6 @@ export async function getAllListings(
     if (!allListings) {
       throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
     }
-    if (allListings.length === 0) {
-      throw new NotFoundError(ErrorMessages.LISTING_NO_LISTINGS_CREATED);
-    }
 
     sendSuccess(res, SuccessMessages.LISTING_SUCCESS_FETCHED, StatusCodes.OK, {
       listings: allListings,
@@ -57,9 +54,6 @@ export async function getListingsByCategory(
 
     if (!allListings) {
       throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
-    }
-    if (allListings.length === 0) {
-      throw new NotFoundError("No listings found in this category.");
     }
 
     sendSuccess(res, SuccessMessages.LISTING_SUCCESS_FETCHED, StatusCodes.OK, {
