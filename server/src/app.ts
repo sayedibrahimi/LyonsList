@@ -16,11 +16,12 @@ const mongoURI: string = process.env.MONGO_URI!;
 // import routes
 import auth from "./middlewares/auth";
 import authRoutes from "./routes/auth.route";
-// import userRoutes from "./routes/admin.users.route";
 import userAccountRoutes from "./routes/user.route";
 import listingRoutes from "./routes/listings.route";
 import favoriteRoutes from "./routes/favorites.route";
+import searchRoutes from "./routes/search.route";
 // import OTPRoutes from "./routes/otp.route";
+// import userRoutes from "./routes/admin.users.route";
 
 // Create base API router
 const apiRouter: express.Router = express.Router();
@@ -42,11 +43,12 @@ app.use(API_BASE_PATH, apiRouter);
 
 // Mount all routes to the API router
 apiRouter.use("/auth", authRoutes);
-// apiRouter.use("/users", userRoutes);
 apiRouter.use("/account", auth, userAccountRoutes);
 apiRouter.use("/listings", auth, listingRoutes);
 apiRouter.use("/favorites", auth, favoriteRoutes);
+apiRouter.use("/search", auth, searchRoutes);
 // apiRouter.use("/otp", OTPRoutes);
+// apiRouter.use("/users", userRoutes);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);
