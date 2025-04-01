@@ -1,6 +1,6 @@
 // client/screens/ProductDetailsScreen.tsx
-// Purpose: Display the details of a single product
-// Description: This screen fetches the details of a single product by its ID and displays the product title, price, condition, description, and seller information. It also allows the user to favorite the product, reply to the seller, and navigate back to the previous screen.
+// Purpose: This file contains the ProductDetailsScreen component, which displays detailed information about a specific product. It includes features such as viewing images, adding to favorites, reporting listings, and contacting the seller.
+// Description: The ProductDetailsScreen component uses React Native components to create a user interface for displaying product details. It includes an image viewer, product title, price, condition, description, and buttons for replying to the seller and reporting the listing. The component also handles loading states, error messages, and user authentication for certain actions.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -18,6 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { listingsService, Listing } from '../services/listingsService';
 import { favoritesService } from '../services/favoritesService';
 import { useAuth } from '../hooks/useAuth';
+import ReportListingModal from '../components/ReportListingModal';
 
 export default function ProductDetailsScreen(): React.ReactElement {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -141,6 +143,22 @@ export default function ProductDetailsScreen(): React.ReactElement {
     }
   };
 
+  const handleReport = () => {
+    if (!user) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login to report a listing',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => router.push('/auth/login') }
+        ]
+      );
+      return;
+    }
+    
+    setShowReportModal(true);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -172,16 +190,24 @@ export default function ProductDetailsScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>Product Details</Text>
-        <TouchableOpacity 
-          style={styles.favoriteButton}
-          onPress={handleFavoriteToggle}
-        >
-          <Ionicons 
-            name={isFavorite ? "heart" : "heart-outline"} 
-            size={24} 
-            color={isFavorite ? "#ff6b6b" : "#333"} 
-          />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.reportButton}
+            onPress={handleReport}
+          >
+            <Ionicons name="flag-outline" size={22} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.favoriteButton}
+            onPress={handleFavoriteToggle}
+          >
+            <Ionicons 
+              name={isFavorite ? "heart" : "heart-outline"} 
+              size={24} 
+              color={isFavorite ? "#ff6b6b" : "#333"} 
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -230,6 +256,14 @@ export default function ProductDetailsScreen(): React.ReactElement {
           <Text style={styles.replyButtonText}>Reply to Seller</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Report Modal */}
+      <ReportListingModal 
+        isVisible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        listingId={productId}
+        listingTitle={product ? product.title : ''}
+      />
     </SafeAreaView>
   );
 }
@@ -261,8 +295,16 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 6,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   favoriteButton: {
     padding: 6,
+  },
+  reportButton: {
+    padding: 6,
+    marginRight: 5,
   },
   scrollContainer: {
     flex: 1,

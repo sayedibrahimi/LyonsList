@@ -1,7 +1,7 @@
 // client/app/auth/login.tsx
-// Purpose: Login screen component
-// Description: This file contains the LoginScreen component, which is used to allow users to log in to the application. It uses the useAuth hook to handle the login logic and navigate to the appropriate screens based on the user's authentication status.
-import React, { useState } from 'react';
+// Purpose: This file serves as a route for the Login screen in the authentication flow of the app.
+// Description: This file imports the LoginScreen component from the screens directory and exports it as the default export. This allows the Expo Router to recognize this file as a route for the Login screen, enabling navigation to this screen when needed.
+import React, { useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -22,8 +22,16 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginSuccessful, setLoginSuccessful] = useState(false);
   const router = useRouter();
-  const { login, error: authError, clearError } = useAuth();
+  const { login, error: authError, clearError, isAuthenticated } = useAuth();
+
+  // Effect to handle navigation after successful login
+  useEffect(() => {
+    if (loginSuccessful && isAuthenticated) {
+      router.replace('/(tabs)/search');
+    }
+  }, [loginSuccessful, isAuthenticated, router]);
 
   const handleLogin = async () => {
     // Reset error messages
@@ -44,12 +52,10 @@ const LoginScreen = () => {
     }
     
     try {
-       setIsSubmitting(true);
+      setIsSubmitting(true);
       await login({ email, password });
-      // Add a small delay before navigation
-      setTimeout(() => {
-        router.replace('/(tabs)/search');
-      }, 300);
+      setLoginSuccessful(true);
+      // Navigation will be handled by the useEffect hook
     } catch (error) {
       console.error('Login error:', error);
       // Error will be handled by the AuthContext
@@ -63,8 +69,7 @@ const LoginScreen = () => {
   };
 
   const navigateToForgotPassword = () => {
-    // In a full implementation, this would navigate to forgot password screen
-    console.log('Navigate to forgot password');
+    router.push('/auth/forgot-password');
   };
 
   return (

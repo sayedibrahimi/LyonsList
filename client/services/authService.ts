@@ -1,6 +1,6 @@
 // client/services/authService.ts
-// Purpose: Handle authentication related API requests
-// Description: This file contains methods for handling authentication related API requests such as login, register, verify OTP, logout, reset password, verify reset, get current user, and check if user is authenticated.
+// Purpose: This file contains the authentication service that handles user login, registration, OTP verification, password reset, and logout functionalities. It interacts with the backend API to perform these actions and manages user tokens using AsyncStorage.
+// Description: The authService object contains methods for logging in, registering, verifying OTPs, sending OTPs, requesting password resets, and logging out. Each method makes an API call using the apiService and handles the response. It also manages user tokens using AsyncStorage to persist authentication state across app sessions.
 import { apiService } from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -78,12 +78,28 @@ export const authService = {
       throw error;
     }
   },
-  
-  logout: async (): Promise<void> => {
+
+  resendOTP: async (email: string): Promise<any> => {
     try {
-      // Remove token from storage
-      await AsyncStorage.removeItem('userToken');
-      await AsyncStorage.removeItem('user');
+      // The backend should have an endpoint to resend OTP
+      return await apiService.post<any>('/auth/resend-otp', { email });
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  requestPasswordReset: async (email: string): Promise<any> => {
+    try {
+      return await apiService.post<any>('/auth/reset-password', { email });
+    } catch (error) {
+      throw error;
+    }
+  },
+  
+  verifyResetOTP: async (email: string, otp: string): Promise<any> => {
+    try {
+      // This should just verify the OTP for password reset, not actually reset the password yet
+      return await apiService.post<any>('/auth/verify-reset', { email, otp });
     } catch (error) {
       throw error;
     }
@@ -91,15 +107,21 @@ export const authService = {
   
   resetPassword: async (email: string, password1: string, password2: string): Promise<any> => {
     try {
-      return await apiService.post<any>('/auth/reset-password', { email, password1, password2 });
+      return await apiService.post<any>('/auth/reset-password', { 
+        email, 
+        password1, 
+        password2
+      });
     } catch (error) {
       throw error;
     }
   },
   
-  verifyReset: async (email: string, otp: string): Promise<any> => {
+  logout: async (): Promise<void> => {
     try {
-      return await apiService.post<any>('/auth/verify-reset', { email, otp });
+      // Remove token from storage
+      await AsyncStorage.removeItem('userToken');
+      await AsyncStorage.removeItem('user');
     } catch (error) {
       throw error;
     }
