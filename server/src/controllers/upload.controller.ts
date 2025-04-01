@@ -21,6 +21,8 @@ export async function uploadImage(
       throw new BadRequestError("No files uploaded.");
     }
 
+    // TODO: req.body used or not
+
     // while loop through req.files until empty, adding each original name to an array
     const encodedFiles: string[] = [];
     let i: number = 0;
@@ -43,13 +45,12 @@ export async function uploadImage(
         res,
         "Image response successfully generated",
         StatusCodes.OK,
-        {
-          description: parsedOutput,
-        }
+        parsedOutput
       );
     } catch (jsonError) {
-      console.error("Error parsing JSON:", jsonError);
-      throw new BadRequestError("Failed to parse JSON response from Gemini.");
+      throw new BadRequestError(
+        `Failed to parse JSON response from Gemini: ${jsonError}`
+      );
     }
   } catch (error: unknown) {
     ControllerError(error, next);
