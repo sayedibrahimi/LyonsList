@@ -59,10 +59,6 @@ export async function getAllListings(
     const allListings: ListingModel[] = await Listing.find({
       sellerID: UserReqID,
     });
-    // if null, check if length is zero
-    if (allListings.length === 0) {
-      throw new NotFoundError(ErrorMessages.LISTING_NO_LISTINGS_CREATED);
-    }
 
     sendSuccess(res, SuccessMessages.LISTINGS_SUCCESS_FETCHED, StatusCodes.OK, {
       listings: allListings,
