@@ -3,7 +3,7 @@ import { ControllerError, BadRequestError } from "../errors";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
 import multer from "multer";
-import { GEMINI_PROMPT } from "../constants/geminiPrompt";
+import { geminiPromptTemplate } from "../constants/geminiPrompt";
 import {
   GoogleGenerativeAI,
   GenerateContentResult,
@@ -21,7 +21,7 @@ export async function uploadImage(
       throw new BadRequestError("No files uploaded.");
     }
 
-    // TODO: req.body used or not
+    const geminiPrompt: string = geminiPromptTemplate(req.body.condition);
 
     // while loop through req.files until empty, adding each original name to an array
     const encodedFiles: string[] = [];
@@ -32,7 +32,7 @@ export async function uploadImage(
       i++;
     }
 
-    let output: string = await geminiResponse(encodedFiles);
+    let output: string = await geminiResponse(encodedFiles, geminiPrompt);
 
     // Optional: Save the file temporarily for debugging
     // fs.writeFileSync("debug_image.jpg", req.file.buffer);
@@ -66,7 +66,10 @@ function fileToGenPart(file: string, mimType: string) {
   };
 }
 
-async function geminiResponse(input: string[]): Promise<string> {
+async function geminiResponse(
+  input: string[],
+  prompt: string
+): Promise<string> {
   try {
     // Check if the environment variable is set
     const ai: GoogleGenerativeAI = new GoogleGenerativeAI(
@@ -88,7 +91,7 @@ async function geminiResponse(input: string[]): Promise<string> {
 
     // generateContent expects an array of strings, so we need to convert the images to strings
     const result: GenerateContentResult = await model.generateContent([
-      GEMINI_PROMPT,
+      prompt,
       ...images,
     ]);
 
