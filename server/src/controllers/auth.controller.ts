@@ -17,9 +17,7 @@ import {
 } from "../errors";
 import ErrorMessages from "../constants/errorMessages";
 import SuccessMessages from "../constants/successMessages";
-import { generateOTP } from "../utils/generateOTP";
-import { MailOptions } from "../types";
-import { sendEmailOTP } from "../utils/sendEmail";
+import { sendOtp, resendOtp } from "../utils/generateOTP";
 import otpCache from "../db/cache";
 
 export async function register(
@@ -40,8 +38,14 @@ export async function register(
     if (existingUser !== null) {
       throw new BadRequestError(ErrorMessages.USER_EMAIL_IN_USE);
     }
+    // !TODO: resend OTP if user already exists
     if (otpCache.get(`user:${email}`)) {
-      throw new BadRequestError(ErrorMessages.USER_EMAIL_IN_USE);
+      // clear otp from cache
+      otpCache.del(`otp:${email}`);
+      // resend otp
+      req.body = { email };
+      await resendOtp(req, res, next);
+      return;
     }
 
     const hashedPassword: string = await hashData(password);
@@ -49,35 +53,37 @@ export async function register(
       throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
     }
 
-    // cache data using regis
+    // cache data
     const userData: RegisterRequestObject = {
       firstName,
       lastName,
       email,
       password: hashedPassword,
-      // password,
     };
     otpCache.set(`user:${email}`, userData);
+    req.body = { email, subject: "OTP for user registration" };
 
-    const generatedOTP: number = await generateOTP(next);
-    const hashedOTP: string = await hashData(generatedOTP.toString());
-    if (!hashedOTP) {
-      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    }
-    otpCache.set(`otp:${email}`, hashedOTP, 600);
+    // const generatedOTP: number = await generateOTP(next);
+    // const hashedOTP: string = await hashData(generatedOTP.toString());
+    // if (!hashedOTP) {
+    //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    // }
+    // otpCache.set(`otp:${email}`, hashedOTP, 600);
 
-    const emailSender: string | undefined = process.env.EMAIL;
-    if (!emailSender) {
-      throw new InternalServerError(ErrorMessages.EMAIL_NOT_FOUND);
-    }
+    // const emailSender: string | undefined = process.env.EMAIL;
+    // if (!emailSender) {
+    //   throw new InternalServerError(ErrorMessages.EMAIL_NOT_FOUND);
+    // }
 
-    const mailOptions: MailOptions<string> = {
-      from: emailSender,
-      to: email,
-      subject: "OTP for password reset",
-      data: generatedOTP.toString(),
-    };
-    await sendEmailOTP(mailOptions, next);
+    // const mailOptions: MailOptions<string> = {
+    //   from: emailSender,
+    //   to: email,
+    //   subject: "OTP for user registration",
+    //   data: generatedOTP.toString(),
+    // };
+    // await sendEmailOTP(mailOptions, next);
+
+    await sendOtp(req, res, next);
 
     sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
       user: userData.email,
@@ -206,17 +212,3 @@ export async function login(
     ControllerError(error, next);
   }
 }
-
-// export async function logout(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     // clear the cookie
-//     res.clearCookie("token");
-//     sendSuccess(res, SuccessMessages.USER_SUCCESS_LOGOUT, StatusCodes.OK);
-//   } catch (error: unknown) {
-//     ControllerError(error, next);
-//   }
-// }

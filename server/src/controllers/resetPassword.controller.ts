@@ -9,9 +9,7 @@ import { ResetPasswordRequestObject } from "../types";
 import { BadRequestError, ControllerError } from "../errors";
 import ErrorMessages from "../constants/errorMessages";
 import SuccessMessages from "../constants/successMessages";
-import { generateOTP } from "../utils/generateOTP";
-import { MailOptions } from "../types";
-import { sendEmailOTP } from "../utils/sendEmail";
+import { sendOtp } from "../utils/generateOTP";
 import otpCache from "../db/cache";
 
 export async function resetPasswordRequest(
@@ -52,29 +50,31 @@ export async function resetPasswordRequest(
     };
     // cache data using reset password
     otpCache.set(`user:${email}`, userData);
-    // generate OTP
-    const generatedOTP: number = await generateOTP(next);
-    const hashedOTP: string = await hashData(generatedOTP.toString());
+    req.body = { email, subject: "OTP for password reset" };
+    await sendOtp(req, res, next);
+    // // generate OTP
+    // const generatedOTP: number = await generateOTP(next);
+    // const hashedOTP: string = await hashData(generatedOTP.toString());
 
-    if (!hashedOTP) {
-      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    }
+    // if (!hashedOTP) {
+    //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    // }
 
-    otpCache.set(`otp:${email}`, hashedOTP, 600);
+    // otpCache.set(`otp:${email}`, hashedOTP, 600);
 
-    // send OTP email
-    const emailSender: string | undefined = process.env.EMAIL;
-    if (!emailSender) {
-      throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    }
+    // // send OTP email
+    // const emailSender: string | undefined = process.env.EMAIL;
+    // if (!emailSender) {
+    //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
+    // }
 
-    const mailOptions: MailOptions<string> = {
-      from: emailSender,
-      to: email,
-      subject: "OTP for password reset",
-      data: generatedOTP.toString(),
-    };
-    await sendEmailOTP(mailOptions, next);
+    // const mailOptions: MailOptions<string> = {
+    //   from: emailSender,
+    //   to: email,
+    //   subject: "OTP for password reset",
+    //   data: generatedOTP.toString(),
+    // };
+    // await sendEmailOTP(mailOptions, next);
     sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
       user: userData.email,
       message: "OTP sent successfully",
