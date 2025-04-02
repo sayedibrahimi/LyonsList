@@ -68,17 +68,26 @@ export default function PostDetailsScreen(): React.ReactElement {
       const uriParts = photoUri.split('.');
       const fileType = uriParts[uriParts.length - 1];
       
-      formData.append('images', {
-        uri: photoUri,
+      // Create a file object that matches what multer expects
+      const fileObj = {
+        uri: Platform.OS === 'ios' ? photoUri.replace('file://', '') : photoUri,
         name: `photo.${fileType}`,
         type: `image/${fileType}`
-      } as any);
-      
+      };
+
+      formData.append('images', fileObj as any);
+
+      console.log('API BASE URL:', process.env.EXPO_PUBLIC_BASE_URL);
+      console.log('Full request URL:', process.env.EXPO_PUBLIC_BASE_URL + '/upload');
+
+      console.log('Sending FormData:', JSON.stringify(formData));
+
       // Call the upload API
       const response = await apiService.upload('/upload', formData);
       
       if (response) {
         const aiData = response as AIGeneratedData;
+        console.log('Upload response:', response);
         
         // Store original AI content
         setAiContent(aiData);
@@ -90,8 +99,7 @@ export default function PostDetailsScreen(): React.ReactElement {
         setCondition(aiData.condition || condition);
         setCategory(aiData.category || '');
       } else {
-        Alert.alert('AI Processing Error', 'Failed to analyze image. Please fill in the details manually.');
-        setUseAIContent(false);
+        throw new Error('Response was empty');
       }
     } catch (error) {
       console.error('Error processing image with AI:', error);
