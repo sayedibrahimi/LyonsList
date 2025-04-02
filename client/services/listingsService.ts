@@ -42,10 +42,32 @@ interface CreateListingData {
 }
 
 export const listingsService = {
-  // Get all listings (without authentication)
+  // Get all listings (excluding user's own listings)
   getAllListings: async (): Promise<Listing[]> => {
     try {
+      const response = await apiService.get<ListingsResponse>('/search');
+      return response.data.listings;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Method to get only the user's listings
+  getUserListings: async (): Promise<Listing[]> => {
+    try {
+      // Use the listings endpoint which returns only the user's listings
       const response = await apiService.get<ListingsResponse>('/listings');
+      return response.data.listings;
+    } catch (error) {
+        throw error;
+    }
+  },
+
+  // Get listings by category (excluding user's own listings)
+  getListingsByCategory: async (category: string): Promise<Listing[]> => {
+    try {
+      // Use the search/category endpoint which filters by category and excludes user's listings
+      const response = await apiService.post<ListingsResponse>('/search/category', { category });
       return response.data.listings;
     } catch (error) {
       throw error;
