@@ -24,6 +24,9 @@ export default function StackNavigator() {
         <>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="productDetails" options={{ headerShown: false }} />
+          <Stack.Screen name="postImage" options={{ headerShown: false }} />
+          <Stack.Screen name="postDetails" options={{ headerShown: false }} />
+          <Stack.Screen name="myListings" options={{ headerShown: false }} />
         </>
       ) : (
         // Non-authenticated stack
