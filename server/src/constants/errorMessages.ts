@@ -47,7 +47,7 @@ const ErrorMessages: Record<string, string> = {
     "No account exists with this email, check email was entered correctly.",
   AUTH_NO_PASSWORD_MATCH:
     "Password does not match, check it was entered correctly.",
-  AUTH_NO_TOKEN: "No token provided, authorization denied.",
+  AUTH_NO_TOKEN: "No Auth token provided, authorization denied.",
   AUTH_INVALID_TOKEN: "Invalid token bearer, authorization denied.",
   AUTH_INVALID_JWT_SECRET: "Internal server error: JWT_SECRET is not defined.",
   AUTH_CHECK_FAILED: "Authentication check failed.",
