@@ -32,7 +32,9 @@ export default function AccountScreen(): React.ReactElement {
       id: 'listings', 
       title: 'My Listings', 
       icon: 'list',
-      onPress: () => Alert.alert('My Listings', 'Navigate to listings') 
+      onPress: () => router.push({
+        pathname: '/myListings',
+      })
     },
     { 
       id: 'purchases', 

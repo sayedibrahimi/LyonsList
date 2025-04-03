@@ -4,9 +4,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const BASE_URL = process.env.EXPO_BASE_URL;
+const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
 console.log('BASE_URL:', BASE_URL);
-
 
 // Create axios instance with default config
 const api: AxiosInstance = axios.create({
@@ -112,6 +111,20 @@ export const apiService = {
   delete: async <T>(url: string): Promise<T> => {
     try {
       const response: AxiosResponse<T> = await api.delete(url);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Upload file (multipart/form-data)
+  upload: async <T>(url: string, formData: FormData): Promise<T> => {
+    try {
+      const response: AxiosResponse<T> = await api.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error) {
       throw error;
