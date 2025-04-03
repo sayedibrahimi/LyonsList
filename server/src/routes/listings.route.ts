@@ -18,7 +18,7 @@ router.post("/", createListing);
 // GET /listings/:id - Get a listing by ID
 // PATCH /listings/:id - Update a listing by ID
 // DELETE /listings/:id - Delete a listing by ID
-router.get("/:id", sellerAuth, getListingById);
+router.get("/:id", getListingById);
 router.patch("/:id", sellerAuth, updateListing);
 router.delete("/:id", sellerAuth, deleteListing);
 
