@@ -48,7 +48,7 @@ export async function createListing(
 }
 
 // Get all listings
-export async function getAllListings(
+export async function getAllUsersListings(
   req: Request,
   res: Response,
   next: NextFunction

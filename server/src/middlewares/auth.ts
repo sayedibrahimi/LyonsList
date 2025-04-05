@@ -34,7 +34,6 @@ export default async function auth(
       lastName: payload.userData.lastName,
       email: payload.userData.email,
     };
-
     next();
   } catch (error: unknown) {
     ControllerError(error, next);
