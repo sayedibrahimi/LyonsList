@@ -63,26 +63,6 @@ export async function register(
     otpCache.set(`user:${email}`, userData);
     req.body = { email, subject: "OTP for user registration" };
 
-    // const generatedOTP: number = await generateOTP(next);
-    // const hashedOTP: string = await hashData(generatedOTP.toString());
-    // if (!hashedOTP) {
-    //   throw new InternalServerError(ErrorMessages.INTERNAL_SERVER_ERROR);
-    // }
-    // otpCache.set(`otp:${email}`, hashedOTP, 600);
-
-    // const emailSender: string | undefined = process.env.EMAIL;
-    // if (!emailSender) {
-    //   throw new InternalServerError(ErrorMessages.EMAIL_NOT_FOUND);
-    // }
-
-    // const mailOptions: MailOptions<string> = {
-    //   from: emailSender,
-    //   to: email,
-    //   subject: "OTP for user registration",
-    //   data: generatedOTP.toString(),
-    // };
-    // await sendEmailOTP(mailOptions, next);
-
     await sendOtp(req, res, next);
 
     sendSuccess(res, SuccessMessages.OTP_CREATED, StatusCodes.CREATED, {
