@@ -12,6 +12,9 @@ export interface ListingModel extends Document {
   category: string;
   status: string;
   sellerID: Schema.Types.ObjectId;
+  reportCount: number; // Optional field to track the number of reports
+  lastReported: Date;
+  flagged: boolean; // Optional field to indicate if the listing is flagged
 }
 
 const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
@@ -73,6 +76,17 @@ const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
       type: Schema.Types.ObjectId,
       ref: "User", // Assuming the seller is referenced from a User model
       required: [true, ListingMessages.PROVIDE_SELLER_ID], // Ensure sellerID is provided
+    },
+    reportCount: {
+      type: Number,
+      default: 0, // Default report count to 0
+    },
+    lastReported: {
+      type: Date,
+    },
+    flagged: {
+      type: Boolean,
+      default: false, // Default flagged status to false
     },
   },
   { timestamps: true }

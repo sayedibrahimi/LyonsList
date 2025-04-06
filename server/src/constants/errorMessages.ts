@@ -61,6 +61,7 @@ const ErrorMessages: Record<string, string> = {
   // report
   REPORT_MESSAGE_EMPTY: "Report message cannot be empty.",
   REPORT_INVALID_CATEGORY: "Invalid report category.",
+  REPORT_ALREADY_EXISTS: "Report already exists for this user on this listing.",
 };
 
 export default ErrorMessages;
