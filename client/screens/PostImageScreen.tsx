@@ -1,5 +1,6 @@
-// Create a new file: screens/PostImageScreen.tsx
-
+// screens/PostImageScreen.tsx
+// Purpose: This screen allows users to add a photo for their listing.
+// Description: The screen provides options to take a photo using the camera or select one from the library. It also includes a modal for camera functionality and handles image processing before navigating to the post details screen.
 import React, { useState, useRef } from 'react';
 import type { CameraView as CameraViewType } from 'expo-camera';
 import { 
@@ -15,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Camera, CameraView } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function PostImageScreen(): React.ReactElement {
   const router = useRouter();
@@ -61,57 +63,82 @@ export default function PostImageScreen(): React.ReactElement {
   const handleOpenCamera = async () => {
     await requestCameraPermission();
   };
-  
-  // Take picture with camera
-  const handleTakePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        const photo = await cameraRef.current.takePictureAsync();
-        if (!photo) {
-          throw new Error('Failed to take picture');
-        }
-        setCameraVisible(false);
-        
-        // Navigate to post details screen with photo and condition
-        router.push({
-          pathname: '/postDetails',
-          params: { 
-            photoUri: photo.uri, 
-            condition: selectedCondition 
-          }
-        });
-      } catch (error) {
-        console.error('Error taking picture:', error);
-        Alert.alert('Error', 'Failed to take picture');
-      }
+
+  const processImage = async (uri: string): Promise<{ uri: string, base64: string }> => {
+  // Compress and resize the image to a much smaller size
+  const processedImage = await ImageManipulator.manipulateAsync(
+    uri,
+    [{ resize: { width: 600 } }], // Smaller width = smaller file
+    {
+      compress: 0.5, // Higher compression = smaller file
+      format: ImageManipulator.SaveFormat.JPEG,
+      base64: true
     }
-  };
+  );
   
-  // Pick image from library
-  const handlePickImage = async () => {
+  return {
+    uri: processedImage.uri,
+    base64: processedImage.base64 || ''
+  };
+};
+
+const handleTakePicture = async () => {
+  if (cameraRef.current) {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-      
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Navigate to post details screen with photo and condition
-        router.push({
-          pathname: '/postDetails',
-          params: { 
-            photoUri: result.assets[0].uri, 
-            condition: selectedCondition 
-          }
-        });
+      const photo = await cameraRef.current.takePictureAsync();
+      if (!photo) {
+        throw new Error('Failed to take picture');
       }
+      
+      // Process and compress the image
+      const processedImage = await processImage(photo.uri);
+      
+      setCameraVisible(false);
+      
+      // Navigate to post details screen with photo, base64, and condition
+      router.push({
+        pathname: '/postDetails',
+        params: { 
+          photoUri: processedImage.uri, 
+          photoBase64: processedImage.base64,
+          condition: selectedCondition 
+        }
+      });
     } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Error', 'Failed to select image');
+      console.error('Error taking picture:', error);
+      Alert.alert('Error', 'Failed to take picture');
     }
-  };
+  }
+};
+
+const handlePickImage = async () => {
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.5, // Lower quality
+    });
+    
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      // Process and compress the image
+      const processedImage = await processImage(result.assets[0].uri);
+      
+      // Navigate to post details screen
+      router.push({
+        pathname: '/postDetails',
+        params: { 
+          photoUri: processedImage.uri, 
+          photoBase64: processedImage.base64,
+          condition: selectedCondition 
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error picking image:', error);
+    Alert.alert('Error', 'Failed to select image');
+  }
+};
 
   return (
     <View style={styles.container}>
