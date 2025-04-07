@@ -27,6 +27,8 @@ const SuccessMessages: Record<string, string> = {
 
   FAVORITES_SUCCESS_FETCHED: "Favorites have been successfully fetched.",
   REPORT_CREATED: "Report has been successfully created.",
+
+  FEEDBACK_SENT: "Feedback has been successfully sent.",
 };
 
 export default SuccessMessages;

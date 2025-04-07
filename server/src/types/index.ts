@@ -8,6 +8,7 @@ import UserResponseObject from "./UserResponse";
 import MailOptions from "./MailOptions";
 import SendOTPResponse from "./SendOTPResponse";
 import JWTClaim from "./JWTClaim";
+import FeedbackForm from "./FeedbackForm";
 import ResetPasswordRequestObject from "./ResetPasswordRequest";
 
 export {
@@ -21,5 +22,6 @@ export {
   MailOptions,
   SendOTPResponse,
   JWTClaim,
+  FeedbackForm,
   ResetPasswordRequestObject,
 };

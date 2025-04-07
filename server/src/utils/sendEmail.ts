@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { MailOptions } from "../types";
+import { MailOptions, FeedbackForm } from "../types";
 import ReportForm from "../types/ReportForm";
 import { ControllerError } from "../errors";
 import { NextFunction } from "express";
@@ -54,6 +54,31 @@ export async function sendEmailOTP(
         <p style="font-size: 14px; color: #777;">This OTP will expire in 10 minutes.</p>
       </div>
       `;
+    await transporter.sendMail(messageBody);
+  } catch (error: unknown) {
+    ControllerError(error, next);
+  }
+}
+
+export async function sendEmailFeedback(
+  messageBody: MailOptions<FeedbackForm>,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const transporter: nodemailer.Transporter = createTransporter();
+    await verifyTransporter(transporter);
+    messageBody.html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #333;">New User Feedback Received</h2>
+        <p style="font-size: 16px; color: #555;"><strong>Name:</strong> ${messageBody.data.firstName}</p>
+        <p style="font-size: 16px; color: #555;"><strong>Email:</strong> ${messageBody.data.email}</p>
+        <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+          <p style="font-size: 16px; color: #333;"><strong>Message:</strong></p>
+          <p style="font-size: 15px; color: #555; white-space: pre-wrap;">${messageBody.data.message}</p>
+        </div>
+        <p style="font-size: 13px; color: #aaa; margin-top: 30px;">This message was sent through the feedback form on your app.</p>
+      </div>
+    `;
     await transporter.sendMail(messageBody);
   } catch (error: unknown) {
     ControllerError(error, next);
