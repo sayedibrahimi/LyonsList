@@ -67,10 +67,14 @@ export async function sendEmailFeedback(
   try {
     const transporter: nodemailer.Transporter = createTransporter();
     await verifyTransporter(transporter);
+    let header: string = `<h2 style="color: #333;">New User Feedback Received</h2>`;
+    if (messageBody.data.issue) {
+      header = `<h2 style="color: #900;">Issue Reported!</h2>`;
+    }
     messageBody.html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <h2 style="color: #333;">New User Feedback Received</h2>
-        <p style="font-size: 16px; color: #555;"><strong>Name:</strong> ${messageBody.data.firstName}</p>
+        ${header}
+        <p style="font-size: 16px; color: #555;"><strong>Name:</strong> ${messageBody.data.firstName} ${messageBody.data.lastName}</p>
         <p style="font-size: 16px; color: #555;"><strong>Email:</strong> ${messageBody.data.email}</p>
         <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
           <p style="font-size: 16px; color: #333;"><strong>Message:</strong></p>

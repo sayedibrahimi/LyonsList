@@ -4,4 +4,5 @@ export default interface FeedbackForm {
   email: string;
   subject: string;
   message: string;
+  issue?: string;
 }
