@@ -1,6 +1,6 @@
 // client/services/listingsService.ts
-// Purpose: Handle listing related API requests
-// Description: This file contains methods for handling listing related API requests such as getting all listings, getting a specific listing by ID, creating a new listing, updating a listing, and deleting a listing.
+// Purpose: This file contains the listingsService which provides methods to interact with the listings API.
+// Description: The listingsService includes methods to get all listings, get a specific listing by ID, create a new listing, update an existing listing, and delete a listing. It uses the apiService to make HTTP requests to the backend API.
 import { apiService } from './api';
 
 export interface Listing {
@@ -45,7 +45,7 @@ export const listingsService = {
   // Get all listings (excluding user's own listings)
   getAllListings: async (): Promise<Listing[]> => {
     try {
-      const response = await apiService.get<ListingsResponse>('/search');
+      const response = await apiService.get<ListingsResponse>('/listings/search');
       return response.data.listings;
     } catch (error) {
       throw error;
@@ -67,7 +67,7 @@ export const listingsService = {
   getListingsByCategory: async (category: string): Promise<Listing[]> => {
     try {
       // Use the search/category endpoint which filters by category and excludes user's listings
-      const response = await apiService.post<ListingsResponse>('/search/category', { category });
+      const response = await apiService.post<ListingsResponse>('listings/search/category', { category });
       return response.data.listings;
     } catch (error) {
       throw error;
