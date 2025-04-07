@@ -1,6 +1,6 @@
 // client/services/api.ts
-// Purpose: Create a reusable Axios instance with interceptors for handling common HTTP methods
-// Description: This file contains a reusable Axios instance with interceptors for handling common HTTP methods. It also includes a helper method for making HTTP requests with different methods (GET, POST, PUT, PATCH, DELETE).
+// Purpose: This file contains the API service for making HTTP requests using Axios.
+// Description: It includes a base URL, request and response interceptors, and helper methods for common HTTP methods (GET, POST, PUT, PATCH, DELETE). It also includes a method for uploading images for AI processing.
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -10,7 +10,7 @@ console.log('BASE_URL:', BASE_URL);
 // Create axios instance with default config
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 100000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -116,18 +116,40 @@ export const apiService = {
       throw error;
     }
   },
-
-  // Upload file (multipart/form-data)
-  upload: async <T>(url: string, formData: FormData): Promise<T> => {
+  
+  // Upload image for AI processing
+  uploadImageForAI: async <T>(
+    imageBase64: string, 
+    fileName: string, 
+    condition: string, 
+    mimeType: string = 'image/jpeg'
+  ): Promise<T> => {
     try {
-      const response: AxiosResponse<T> = await api.post(url, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      console.log("Using image, base64 length:", imageBase64 ? imageBase64.length : 0);
+      
+      if (!imageBase64) {
+        throw new Error('No base64 image data available');
+      }
+      
+      // Create JSON payload with explicit mime type
+      const jsonPayload = {
+        condition,
+        imageData: imageBase64,
+        fileName,
+        mimeType
+      };
+      
+      // Your server IP address - consider using BASE_URL instead of hardcoding
+      const apiUrl = '/upload/';
+      console.log("Attempting to connect to:", BASE_URL + apiUrl);
+      
+      const response: AxiosResponse<T> = await api.post(apiUrl, jsonPayload);
+      console.log('Upload response received:', response.data);
+      
       return response.data;
     } catch (error) {
-      throw error;
+      console.error('API error details:', error);
+      throw new Error('Failed to process image data');
     }
   }
 };

@@ -2,14 +2,12 @@ import { Request, Response, NextFunction } from "express";
 import { ControllerError, BadRequestError } from "../errors";
 import { sendSuccess } from "../utils/sendResponse";
 import { StatusCodes } from "http-status-codes";
-import multer from "multer";
 import { geminiPromptTemplate } from "../constants/geminiPrompt";
 import {
   GoogleGenerativeAI,
   GenerateContentResult,
   GenerativeModel,
 } from "@google/generative-ai";
-export const upload: multer.Multer = multer();
 
 export async function uploadImage(
   req: Request,
@@ -17,50 +15,66 @@ export async function uploadImage(
   next: NextFunction
 ): Promise<void> {
   try {
-    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-      throw new BadRequestError("No files uploaded.");
+    // console.log("Request body keys:", Object.keys(req.body));
+    
+    const { condition, imageData, mimeType = 'image/jpeg' } = req.body;
+    
+    if (!imageData) {
+      throw new BadRequestError("No image data provided.");
     }
-
-    const geminiPrompt: string = geminiPromptTemplate(req.body.condition);
-
-    // while loop through req.files until empty, adding each original name to an array
-    const encodedFiles: string[] = [];
-    let i: number = 0;
-    while (req.files[i]) {
-      // Convert the image to Base64
-      encodedFiles.push(req.files[i].buffer.toString("base64"));
-      i++;
-    }
-
-    let output: string = await geminiResponse(encodedFiles, geminiPrompt);
-
-    // Optional: Save the file temporarily for debugging
-    // fs.writeFileSync("debug_image.jpg", req.file.buffer);
-
-    output = output.replace(/```json\n|\n```/g, ""); // Replace escaped newlines with actual newlines
-
+    
+    // console.log(`Processing image: ${fileName}, data length: ${imageData.length}, type: ${mimeType}`);
+    
+    // The image is already base64 encoded
+    const encodedFiles: string[] = [imageData];
+    
+    const geminiPrompt: string = geminiPromptTemplate(condition);
+    // console.log("Gemini prompt:", geminiPrompt);
+    
     try {
+      // Use the correct mime type when calling gemini
+      let output: string = await geminiResponse(encodedFiles, geminiPrompt, mimeType);
+      
+      // Clean up the output
+      output = output.replace(/```json\n|\n```/g, "");
+      // console.log("Processed Gemini output (first 100 chars):", output.substring(0, 100));
+      
       const parsedOutput: Record<string, unknown> = JSON.parse(output);
+      // console.log("Successfully parsed JSON response");
       sendSuccess(
         res,
         "Image response successfully generated",
         StatusCodes.OK,
         parsedOutput
       );
-    } catch (jsonError) {
+    } catch (error) {
+      // console.error("Gemini API error:", error);
       throw new BadRequestError(
-        `Failed to parse JSON response from Gemini: ${jsonError}`
+        `Failed to get a valid response from Gemini API: ${error}`
       );
     }
   } catch (error: unknown) {
+    // console.log("Error in uploadImageJson:", error);
     ControllerError(error, next);
   }
 }
 
-function fileToGenPart(file: string, mimType: string) {
+function fileToGenPart(file: string, mimeType: string = 'image/jpeg') {
+  // If file already has a data URI prefix, extract just the base64 part
+  if (file.startsWith('data:')) {
+    const base64Data: string = file.split(',')[1];
+    return {
+      inlineData: {
+        mimeType: mimeType,
+        data: base64Data,
+      },
+    };
+  }
+  
+  // If it's already just the base64 data
   return {
     inlineData: {
-      mimeType: mimType,
+      mimeType: mimeType,
       data: file,
     },
   };
@@ -68,48 +82,50 @@ function fileToGenPart(file: string, mimType: string) {
 
 async function geminiResponse(
   input: string[],
-  prompt: string
+  prompt: string,
+  mimeType: string = 'image/jpeg'
 ): Promise<string> {
   try {
     // Check if the environment variable is set
-    const ai: GoogleGenerativeAI = new GoogleGenerativeAI(
-      process.env.GEMINI_API_KEY || ""
-    );
+    const apiKey: string | undefined = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY environment variable is not set");
+    }
+    
+    const ai: GoogleGenerativeAI = new GoogleGenerativeAI(apiKey);
 
-    // Check if the API key is valid
-    const model: GenerativeModel | null = ai.getGenerativeModel({
+    // Get the model
+    const model: GenerativeModel = ai.getGenerativeModel({
       model: "models/gemini-2.0-flash",
     });
-    if (!model) {
-      throw new Error("Failed to initialize the Gemini model.");
-    }
-
-    // Check if the input is valid
-    // TODO convert this to a type
-    const images: { inlineData: { mimeType: string; data: string } }[] =
-      input.map((file) => fileToGenPart(file, "image/jpg"));
-
-    // generateContent expects an array of strings, so we need to convert the images to strings
+    
+    // Convert the images to the format expected by Gemini
+    const images: Array<{ inlineData: { mimeType: string; data: string } }> = input.map((file) => fileToGenPart(file, mimeType));
+    
+    // console.log("Sending request to Gemini API with prompt and images");
+    
+    // Generate content
     const result: GenerateContentResult = await model.generateContent([
       prompt,
       ...images,
     ]);
-
-    // Check if the result is valid
-    const object: string = JSON.stringify(
-      result,
-      (key, value) => {
-        if (typeof value === "function") return "[Function]";
-        return value;
-      },
-      2
-    );
-
-    // Check if the response is valid
-    const ret: string =
-      JSON.parse(object).response.candidates[0].content.parts[0].text;
-    return ret;
+    
+    // console.log("Received response from Gemini API");
+    
+    if (!result.response) {
+      throw new Error("Empty response from Gemini API");
+    }
+    
+    const text: string = result.response.text();
+    // console.log("Extracted text from response");
+    
+    return text;
   } catch (error: unknown) {
-    return `error: ${error}`;
+    if (error instanceof Error) {
+      // console.error("Gemini API error:", error.message, error.stack);
+    } else {
+      // console.error("Unknown Gemini API error:", error);
+    }
+    throw error;
   }
 }

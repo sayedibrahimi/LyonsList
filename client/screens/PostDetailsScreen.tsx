@@ -1,5 +1,6 @@
-// Create a new file: screens/PostDetailsScreen.tsx
-
+// screens/PostDetailsScreen.tsx
+// Purpose: This screen allows users to create a new listing by providing details such as title, description, price, condition, and category. It also includes an AI feature that generates content based on an uploaded image.
+// Description: The screen includes a form with input fields for title, description, price, condition, and category. It also allows users to toggle between AI-generated content and manual input. The screen handles image uploads, AI processing, and form submission to create a new listing.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -20,6 +21,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { apiService } from '../services/api';
 import { Categories } from '../constants/Categories';
 import { listingsService } from '@/services/listingsService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface AIGeneratedData {
   title: string;
@@ -43,6 +45,7 @@ export default function PostDetailsScreen(): React.ReactElement {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [useAIContent, setUseAIContent] = useState<boolean>(true);
+  const photoBase64 = params.photoBase64 as string;
   
   // Store original AI content
   const [aiContent, setAiContent] = useState<AIGeneratedData | null>(null);
@@ -55,52 +58,67 @@ export default function PostDetailsScreen(): React.ReactElement {
   useEffect(() => {
     processImageWithAI();
   }, []);
-  
-  const processImageWithAI = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Create form data
-      const formData = new FormData();
-      formData.append('condition', condition);
-      
-      // Append the image
-      const uriParts = photoUri.split('.');
-      const fileType = uriParts[uriParts.length - 1];
-      
-      formData.append('images', {
-        uri: photoUri,
-        name: `photo.${fileType}`,
-        type: `image/${fileType}`
-      } as any);
-      
-      // Call the upload API
-      const response = await apiService.upload('/upload', formData);
-      
-      if (response) {
-        const aiData = response as AIGeneratedData;
-        
-        // Store original AI content
-        setAiContent(aiData);
-        
-        // Set form fields with AI data
-        setTitle(aiData.title || '');
-        setDescription(aiData.description || '');
-        setPrice(aiData.price ? aiData.price.toString() : '');
-        setCondition(aiData.condition || condition);
-        setCategory(aiData.category || '');
-      } else {
-        Alert.alert('AI Processing Error', 'Failed to analyze image. Please fill in the details manually.');
-        setUseAIContent(false);
-      }
-    } catch (error) {
-      console.error('Error processing image with AI:', error);
-      Alert.alert('AI Processing Error', 'Failed to analyze image. Please fill in the details manually.');
-      setUseAIContent(false);
-    } finally {
-      setIsLoading(false);
+
+const processImageWithAI = async () => {
+  try {
+    setIsLoading(true);
+    
+    const uriParts = photoUri.split('/');
+    const fileName = uriParts[uriParts.length - 1];
+    
+    if (!photoBase64) {
+      throw new Error('No base64 image data available');
     }
-  };
+    
+    try {
+      // Use the new API service method
+      const responseData = await apiService.uploadImageForAI(
+        photoBase64,
+        fileName,
+        condition
+      );
+      
+      // Check if the response has the expected format (handle different response structures)
+      let aiData: AIGeneratedData;
+      
+      if (typeof responseData === 'object' && responseData !== null && 'data' in responseData) {
+        // If the response is wrapped in a 'data' property
+        aiData = responseData.data as AIGeneratedData;
+      } else if (typeof responseData === 'object' && responseData !== null && 'title' in responseData) {
+        // If the response is the direct AIGeneratedData object
+        aiData = responseData as AIGeneratedData;
+      } else {
+        console.log('Response structure:', JSON.stringify(responseData));
+        throw new Error('Unexpected response format from AI service');
+      }
+      
+      console.log('Parsed AI data:', aiData);
+      
+      // Store original AI content
+      setAiContent(aiData);
+      
+      // Set form fields with AI data
+      if (aiData.title) setTitle(aiData.title);
+      if (aiData.description) setDescription(aiData.description);
+      if (aiData.price) setPrice(aiData.price.toString());
+      if (aiData.condition) setCondition(aiData.condition);
+      if (aiData.category) setCategory(aiData.category);
+      
+      console.log('Form fields populated successfully');
+    } catch (error) {
+      console.error('API error details:', error);
+      throw new Error('Failed to process image data');
+    }
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error processing image with AI:', errorMessage, errorStack);
+    Alert.alert('AI Processing Error', 'Failed to analyze image. Please fill in the details manually.');
+    setUseAIContent(false);
+  } finally {
+    setIsLoading(false);
+  }
+};
   
   // Toggle between AI and manual content
   const toggleAIContent = (value: boolean) => {
@@ -145,11 +163,6 @@ export default function PostDetailsScreen(): React.ReactElement {
     try {
       setIsSubmitting(true);
       
-      // Upload image first
-      // const formData = new FormData();
-      // const uriParts = photoUri.split('.');
-      // const fileType = uriParts[uriParts.length - 1];
-
       // Use placeholder image URL instead of uploading
       const placeholderImageUrl = '../assets/images/placeholder.png';
       
