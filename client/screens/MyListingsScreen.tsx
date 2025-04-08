@@ -1,5 +1,6 @@
-// Updated screens/MyListingsScreen.tsx
-
+// screens/MyListingsScreen.tsx
+// Purpose: This file contains the MyListingsScreen component, which displays the user's listings.
+// Description: The MyListingsScreen component fetches and displays the user's listings. It includes error handling, loading states, and a retry button. The user can navigate to create a new listing or view details of an existing listing.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -45,31 +46,6 @@ export default function MyListingsScreen(): React.ReactElement {
     }
   };
 
-  const handleDeleteListing = async (listingId: string): Promise<void> => {
-    Alert.alert(
-      'Delete Listing',
-      'Are you sure you want to delete this listing?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await listingsService.deleteListing(listingId);
-              // Remove from local state
-              setListings(listings.filter(item => item._id !== listingId));
-              Alert.alert('Success', 'Listing deleted successfully');
-            } catch (err) {
-              console.error('Error deleting listing:', err);
-              Alert.alert('Error', 'Failed to delete listing');
-            }
-          }
-        }
-      ]
-    );
-  };
-
   const renderListingItem = ({ item }: { item: Listing }): React.ReactElement => {
     const itemImageError = imageError[item._id] || false;
     
@@ -77,7 +53,7 @@ export default function MyListingsScreen(): React.ReactElement {
       <TouchableOpacity 
         style={styles.listingCard}
         onPress={() => router.push({
-          pathname: '/productDetails',
+          pathname: '/myProductDetails',
           params: { productId: item._id }
         })}
       >
@@ -112,13 +88,6 @@ export default function MyListingsScreen(): React.ReactElement {
             <Text style={styles.listingPrice}>{formatPrice(item.price)}</Text>
           </View>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.deleteButton}
-          onPress={() => handleDeleteListing(item._id)}
-        >
-          <Ionicons name="trash-outline" color="#ff6b6b" size={24} />
-        </TouchableOpacity>
       </TouchableOpacity>
     );
   };
@@ -263,15 +232,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: '700',
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   loadingContainer: {
     flex: 1,
