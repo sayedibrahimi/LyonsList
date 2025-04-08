@@ -24,6 +24,8 @@ export async function createListing(
       throw new BadRequestError(ErrorMessages.LISTING_INVALID_REQUEST);
     }
 
+    // upload images here
+
     const newListing: ListingModel = await Listing.create(req.body);
     if (!newListing) {
       throw new BadRequestError(ErrorMessages.LISTING_CREATION_FAILED);
