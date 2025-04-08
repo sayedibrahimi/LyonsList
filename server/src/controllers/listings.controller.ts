@@ -9,7 +9,8 @@ import SuccessMessages from "../constants/successMessages";
 import User, { UserModel } from "../models/users.model";
 import { ListingObject } from "../types";
 import { validListingRequest } from "../utils/validListingRequest";
-
+import { hostImage } from "../utils/uploadImage";
+import { v4 as uuidv4 } from "uuid";
 // Create a new listing
 export async function createListing(
   req: Request,
@@ -24,7 +25,26 @@ export async function createListing(
       throw new BadRequestError(ErrorMessages.LISTING_INVALID_REQUEST);
     }
 
-    // upload images here
+    if (Array.isArray(req.body.pictures) && req.body.pictures.length > 0) {
+      const uploadedImageUrls: string[] = [];
+      for (const image of req.body.pictures) {
+        const now: Date = new Date();
+        const year: number = now.getFullYear();
+        const month: string = String(now.getMonth() + 1).padStart(2, "0");
+        const day: string = String(now.getDate()).padStart(2, "0");
+
+        const formattedDate: string = `${year}${month}${day}`;
+        const fileName: string = `users/${UserReqID}/${formattedDate}_${uuidv4().replace(/-/g, "").slice(0, 8)}.jpg`;
+        const uploadedImageUrl: string = await hostImage(image, fileName);
+        if (uploadedImageUrl === "Error") {
+          throw new BadRequestError("Image upload failed");
+        }
+        uploadedImageUrls.push(uploadedImageUrl);
+      }
+      req.body.pictures = uploadedImageUrls;
+    } else {
+      req.body.pictures = [];
+    }
 
     const newListing: ListingModel = await Listing.create(req.body);
     if (!newListing) {
