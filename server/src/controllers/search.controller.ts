@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { Types } from "mongoose";
+// import { Types } from "mongoose";
 import Listing, { ListingModel } from "../models/listings.model";
 import { StatusCodes } from "http-status-codes";
 import { sendSuccess } from "../utils/sendResponse";
@@ -21,9 +21,15 @@ export async function getAllListings(
       throw new NotFoundError("Invalid user ID.");
     }
 
-    const allListings: ListingModel[] = await Listing.find({
-      sellerID: { $ne: new Types.ObjectId(UserReqID) },
-    });
+    // TODO uncomment this line to allow user to see their own listings
+    // reverse order for newer listings to be on top
+    const allListings: ListingModel[] = await Listing
+      .find
+      //   {
+      //   sellerID: { $ne: new Types.ObjectId(UserReqID) },
+      // }
+      ()
+      .sort({ createdAt: -1 }); // Sort by createdAt field in descending order
 
     if (!allListings || allListings.length === 0) {
       throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
