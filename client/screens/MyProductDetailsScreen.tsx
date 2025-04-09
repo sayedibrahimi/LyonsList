@@ -97,7 +97,7 @@ export default function MyProductDetailsScreen(): React.ReactElement {
         [
           { 
             text: 'OK', 
-            onPress: () => router.push('/myListings') 
+            onPress: () => router.replace('/myListings') 
           }
         ]
       );
