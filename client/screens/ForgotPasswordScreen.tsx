@@ -52,12 +52,14 @@ export default function ForgotPasswordScreen({}: ForgotPasswordScreenProps): Rea
     try {
       setIsSubmitting(true);
       await resetPassword.sendOTP(email);
-
-      // Navigate to OTP verification screen
+      // Add a small delay before navigation
+      setTimeout(() => {
+        // Navigate to OTP verification screen 
         router.push({
-        pathname: '/auth/otp-verification',
-        params: { email, mode: 'reset' }
+          pathname: '/auth/otp-verification',
+          params: { email, mode: 'signup' }
       });
+      }, 100);
     } catch (error) {
       console.error('Password reset request error:', error);
     } finally {
