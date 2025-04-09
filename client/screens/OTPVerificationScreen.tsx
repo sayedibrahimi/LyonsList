@@ -35,6 +35,8 @@ export default function OTPVerificationScreen({}: OTPVerificationScreenProps): R
   const [timeLeft, setTimeLeft] = useState<number>(120); // 2 minutes countdown
   const [canResend, setCanResend] = useState<boolean>(false);
   const [verificationSuccessful, setVerificationSuccessful] = useState<boolean>(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
+
 
   
   const { verifyOTP, resetPassword, sendOTP, error: authError, clearError } = useAuth();
@@ -64,14 +66,14 @@ export default function OTPVerificationScreen({}: OTPVerificationScreenProps): R
         // For signup flow - navigate to home
         router.replace('/(tabs)/search');
       } else if (mode === 'reset') {
-        // For password reset flow - navigate to reset password screen
+        // For password reset flow - navigate to reset password screen with token
         router.push({
           pathname: '/auth/new-password',
-          params: { email }
+          params: { email, token: resetToken }
         });
       }
     }
-  }, [verificationSuccessful, mode, email, router]);
+  }, [verificationSuccessful, mode, email, router, resetToken]);
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -79,38 +81,42 @@ export default function OTPVerificationScreen({}: OTPVerificationScreenProps): R
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const handleVerify = async () => {
-    // Log the current OTP state before verification
-    console.log('Verifying OTP:', otp, 'Length:', otp?.length || 0);
-    
-    // Check if OTP is valid
-    if (!otp || otp.length < 6) {
-      console.log('OTP validation failed, current value:', otp);
-      Alert.alert('Error', 'Please enter the complete 6-digit OTP');
-      return;
+  // Update handleVerify function
+const handleVerify = async () => {
+  // Log the current OTP state before verification
+  console.log('Verifying OTP:', otp, 'Length:', otp?.length || 0);
+  
+  // Check if OTP is valid
+  if (!otp || otp.length < 6) {
+    console.log('OTP validation failed, current value:', otp);
+    Alert.alert('Error', 'Please enter the complete 6-digit OTP');
+    return;
+  }
+  
+  clearError();
+  setIsSubmitting(true);
+  
+  try {
+    console.log('Proceeding with OTP verification for:', otp);
+    if (mode === 'signup') {
+      // For signup flow - verify OTP and then navigate to home
+      await verifyOTP(email, otp);
+      setVerificationSuccessful(true);
+      // Navigation will be handled by the useEffect hook
+    } else if (mode === 'reset') {
+      // For password reset flow - verify OTP and then navigate to reset password screen
+      const result = await resetPassword.verifyOTP(email, otp);
+      // Check if token exists in the result or use a default value
+      const token = typeof result === 'string' ? result : '';
+      setResetToken(token);
+      setVerificationSuccessful(true);
     }
-    
-    clearError();
-    setIsSubmitting(true);
-    
-    try {
-      console.log('Proceeding with OTP verification for:', otp);
-      if (mode === 'signup') {
-        // For signup flow - verify OTP and then navigate to home
-        await verifyOTP(email, otp);
-        setVerificationSuccessful(true);
-        // Navigation will be handled by the useEffect hook
-      } else if (mode === 'reset') {
-        // For password reset flow - verify OTP and then navigate to reset password screen
-        await resetPassword.verifyOTP(email, otp);
-        setVerificationSuccessful(true);
-      }
-    } catch (error) {
-      console.error('OTP verification error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  } catch (error) {
+    console.error('OTP verification error:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleResendOTP = async () => {
     clearError();
