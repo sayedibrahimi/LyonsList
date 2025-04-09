@@ -36,8 +36,8 @@ interface AuthState {
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: {
     sendOTP: (email: string) => Promise<void>;
-    verifyOTP: (email: string, otp: string) => Promise<void>;
-    setNewPassword: (email: string, password1: string, password2: string) => Promise<void>;
+    verifyOTP: (email: string, otp: string) => Promise<any>;
+    setNewPassword: (email: string, password1: string, password2: string, token: string) => Promise<void>;
   };
   clearError: () => void;
 }
@@ -152,48 +152,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPassword = {
-    sendOTP: async (email: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        await authService.requestPasswordReset(email);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.error?.message || 'Failed to send reset code. Please try again.';
-        setError(errorMessage);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    
-    verifyOTP: async (email: string, otp: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        await authService.verifyResetOTP(email, otp);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.error?.message || 'OTP verification failed. Please try again.';
-        setError(errorMessage);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
-    },
-    
-    setNewPassword: async (email: string, password1: string, password2: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        await authService.resetPassword(email, password1, password2);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.error?.message || 'Password reset failed. Please try again.';
-        setError(errorMessage);
-        throw err;
-      } finally {
-        setLoading(false);
-      }
+  sendOTP: async (email: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await authService.requestPasswordReset(email);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to send reset code. Please try again.';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  };
+  },
+  
+  verifyOTP: async (email: string, otp: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await authService.verifyResetOTP(email, otp);
+      // Return the token from the response
+      return response.data.token;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'OTP verification failed. Please try again.';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  },
+  
+  setNewPassword: async (email: string, password1: string, password2: string, token: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await authService.resetPassword(email, password1, password2, token);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Password reset failed. Please try again.';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }
+};
 
   const logout = async () => {
     setLoading(true);
