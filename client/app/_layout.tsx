@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { AuthProvider } from '../context/AuthContext';
+import { FavoritesProvider } from '@/context/FavoritesContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -32,9 +33,11 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <FavoritesProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <StackNavigator />
       </ThemeProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }
