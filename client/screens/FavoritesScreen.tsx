@@ -1,161 +1,30 @@
-// // screens/FavoritesScreen.tsx
-// import React from 'react';
-// import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native';
-// import { Ionicons } from '@expo/vector-icons';
-// import { tabStyles } from '../styles/tabStyles';
-
-// interface FavoritesScreenProps {
-//   // Define props if needed
-// }
-
-// // You can define an interface for your favorite items
-// interface FavoriteItem {
-//   id: string;
-//   title: string;
-//   price: number;
-//   image?: string;
-// }
-
-// export default function FavoritesScreen({}: FavoritesScreenProps): React.ReactElement {
-//   // Sample data - replace with actual data from your state management
-//   const favorites: FavoriteItem[] = [];
-  
-//   return (
-//     <View style={tabStyles.container}>
-//       <View style={tabStyles.header}>
-//         <Text style={tabStyles.headerTitle}>Your Favorites</Text>
-//       </View>
-      
-//       <ScrollView style={tabStyles.content}>
-//         {favorites.length > 0 ? (
-//           <FlatList
-//             data={favorites}
-//             keyExtractor={(item) => item.id}
-//             renderItem={({ item }) => (
-//               <View style={styles.favoriteItem}>
-//                 <View style={styles.imageContainer}>
-//                   {item.image ? (
-//                     <Text>Image would go here</Text>
-//                   ) : (
-//                     <Ionicons name="image-outline" size={40} color="#ccc" />
-//                   )}
-//                 </View>
-//                 <View style={styles.itemDetails}>
-//                   <Text style={styles.itemTitle}>{item.title}</Text>
-//                   <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
-//                 </View>
-//                 <Ionicons name="heart" size={24} color="#007BFF" />
-//               </View>
-//             )}
-//           />
-//         ) : (
-//           <View style={tabStyles.placeholderContent}>
-//             <Ionicons name="heart-outline" size={50} color="#999" />
-//             <Text style={tabStyles.placeholderText}>No favorites yet</Text>
-//             <Text style={styles.emptyStateText}>
-//               Items you save will appear here
-//             </Text>
-//           </View>
-//         )}
-//       </ScrollView>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   favoriteItem: {
-//     flexDirection: 'row',
-//     padding: 15,
-//     borderBottomWidth: 1,
-//     borderBottomColor: '#eee',
-//     alignItems: 'center',
-//   },
-//   imageContainer: {
-//     width: 60,
-//     height: 60,
-//     backgroundColor: '#f0f0f0',
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     borderRadius: 5,
-//   },
-//   itemDetails: {
-//     flex: 1,
-//     marginLeft: 15,
-//   },
-//   itemTitle: {
-//     fontSize: 16,
-//     fontWeight: '500',
-//   },
-//   itemPrice: {
-//     fontSize: 14,
-//     color: '#007BFF',
-//     marginTop: 4,
-//   },
-//   emptyStateText: {
-//     fontSize: 14,
-//     color: '#999',
-//     marginTop: 10,
-//     textAlign: 'center',
-//   }
-// });
-
-
 // client/screens/FavoritesScreen.tsx
-// Purpose: Display a list of favorite items
-// Description: This screen displays a list of favorite items. If the user is not logged in, a message is displayed prompting the user to log in. If the user is logged in, the list of favorite items is displayed. If there are no favorite items, a message is displayed indicating that there are no favorite items. Each item in the list displays the item's image, title, and price. The user can tap on an item to view more details or remove the item from their favorites.
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+// Purpose: This file defines the FavoritesScreen component, which displays the user's favorite listings.
+// Description: The FavoritesScreen component fetches and displays the user's favorite listings. It includes functionality to remove items from favorites and handles loading and error states. The component uses the useFavorites hook to access the favorites context and manage the state of the favorites list.
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  FlatList, 
+  TouchableOpacity, 
+  Image, 
+  ActivityIndicator, 
+  StyleSheet 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { tabStyles } from '../styles/tabStyles';
-import { favoritesService } from '../services/favoritesService';
 import { Listing } from '../services/listingsService';
 import { useAuth } from '../hooks/useAuth';
+import { useFavorites } from '../hooks/useFavorites';
 
-interface FavoritesScreenProps {
-  // Define props if needed
-}
-
-export default function FavoritesScreen({}: FavoritesScreenProps): React.ReactElement {
-  const [favorites, setFavorites] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function FavoritesScreen(): React.ReactElement {
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
   const { user } = useAuth();
+  const { favorites, loading, error, refreshFavorites, removeFavorite } = useFavorites();
 
-  useEffect(() => {
-    if (user) {
-      fetchFavorites();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const fetchFavorites = async () => {
-    try {
-      setLoading(true);
-      const data = await favoritesService.getAllFavorites();
-      setFavorites(data);
-      setError(null);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || 'Failed to fetch favorites';
-      setError(errorMessage);
-      console.error('Error fetching favorites:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemoveFavorite = async (id: string) => {
-    try {
-      await favoritesService.removeFavorite(id);
-      setFavorites(favorites.filter(item => item._id !== id));
-    } catch (err) {
-      console.error('Error removing favorite:', err);
-    }
-  };
-
+  // Format price for display
   const formatPrice = (price: number) => {
     return `$${price.toFixed(2)}`;
   };
@@ -172,24 +41,20 @@ export default function FavoritesScreen({}: FavoritesScreenProps): React.ReactEl
         })}
       >
         <View style={styles.imageContainer}>
-          {item.pictures && item.pictures.length > 0 ? (
-            <Image 
-              source={
-                itemImageError 
-                  ? require('../assets/images/placeholder.png') 
-                  : { uri: item.pictures[0] }
+          <Image 
+            source={
+              itemImageError 
+                ? require('../assets/images/placeholder.png') 
+                : { uri: item.pictures[0] }
               } 
-              style={styles.itemImage}
-              onError={() => {
-                setImageError(prev => ({
-                  ...prev,
-                  [item._id]: true
-                }));
-              }}
-            />
-          ) : (
-            <Ionicons name="image-outline" size={40} color="#ccc" />
-          )}
+            style={styles.itemImage}
+            onError={() => {
+              setImageError(prev => ({
+                ...prev,
+                [item._id]: true
+              }));
+            }}
+          />
         </View>
         <View style={styles.itemDetails}>
           <Text style={styles.itemTitle}>{item.title}</Text>
@@ -197,7 +62,7 @@ export default function FavoritesScreen({}: FavoritesScreenProps): React.ReactEl
         </View>
         <TouchableOpacity 
           style={styles.removeButton}
-          onPress={() => handleRemoveFavorite(item._id)}
+          onPress={() => removeFavorite(item._id)}
         >
           <Ionicons name="heart" size={24} color="#ff6b6b" />
         </TouchableOpacity>
@@ -240,7 +105,7 @@ export default function FavoritesScreen({}: FavoritesScreenProps): React.ReactEl
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchFavorites}>
+          <TouchableOpacity style={styles.retryButton} onPress={refreshFavorites}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -251,7 +116,7 @@ export default function FavoritesScreen({}: FavoritesScreenProps): React.ReactEl
           renderItem={renderFavoriteItem}
           contentContainerStyle={styles.listContent}
           refreshing={loading}
-          onRefresh={fetchFavorites}
+          onRefresh={refreshFavorites}
         />
       ) : (
         <View style={tabStyles.placeholderContent}>
