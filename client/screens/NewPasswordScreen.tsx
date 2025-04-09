@@ -90,7 +90,8 @@ export default function NewPasswordScreen({}: NewPasswordScreenProps): React.Rea
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled">
           <TouchableOpacity style={styles.backButton} onPress={handleBack}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
