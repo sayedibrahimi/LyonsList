@@ -39,46 +39,54 @@ export default function NewPasswordScreen({}: NewPasswordScreenProps): React.Rea
   const { resetPassword, error: authError, clearError } = useAuth();
 
   const handleResetPassword = async () => {
-    // Clear previous errors
-    setFormError('');
-    clearError();
+  // Clear previous errors
+  setFormError('');
+  clearError();
+  
+  // Basic validation
+  if (!email || !password || !confirmPassword) {
+    setFormError('Please enter both password fields');
+    return;
+  }
+  
+  if (password !== confirmPassword) {
+    setFormError('Passwords do not match');
+    return;
+  }
+  
+  if (password.length < 8) {
+    setFormError('Password must be at least 8 characters long');
+    return;
+  }
+  
+  try {
+    setIsSubmitting(true);
+    // Get the token from params
+    const token = params.token as string;
     
-    // Basic validation
-    if (!password || !confirmPassword) {
-      setFormError('Please enter both password fields');
+    if (!token) {
+      setFormError('Invalid session. Please try the password reset process again.');
       return;
     }
     
-    if (password !== confirmPassword) {
-      setFormError('Passwords do not match');
-      return;
-    }
+    await resetPassword.setNewPassword(email, password, confirmPassword, token);
     
-    if (password.length < 8) {
-      setFormError('Password must be at least 8 characters long');
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      await resetPassword.setNewPassword(email, password, confirmPassword);
-      
-      Alert.alert(
-        'Success',
-        'Your password has been reset successfully',
-        [
-          {
-            text: 'Login Now',
-            onPress: () => router.replace('/auth/login')
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Password reset error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    Alert.alert(
+      'Success',
+      'Your password has been reset successfully',
+      [
+        {
+          text: 'Login Now',
+          onPress: () => router.replace('/auth/login')
+        }
+      ]
+    );
+  } catch (error) {
+    console.error('Password reset error:', error);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleBack = () => {
     router.back();
