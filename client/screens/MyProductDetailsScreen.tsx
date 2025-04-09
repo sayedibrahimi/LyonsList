@@ -1,6 +1,6 @@
 // client/screens/MyProductDetailsScreen.tsx
-// Purpose: This file contains the MyProductDetailsScreen component, which displays detailed information about the user's own listing.
-// Description: The MyProductDetailsScreen component shows product details with options to delete the listing.
+// Purpose: This screen displays the details of a product listing, including its title, price, description, and images. It allows the user to edit or delete the listing.
+// Description: The MyProductDetailsScreen component fetches the product details using the productId passed as a parameter. It displays the product information, including an image, title, price, and description. The user can edit or delete the listing using buttons at the bottom of the screen. The screen also handles loading and error states gracefully.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -108,6 +108,13 @@ export default function MyProductDetailsScreen(): React.ReactElement {
     }
   };
 
+  const handleEditListing = () => {
+    router.push({
+      pathname: '/editListing',
+      params: { productId }
+    });
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -181,6 +188,14 @@ export default function MyProductDetailsScreen(): React.ReactElement {
 
       <View style={styles.footer}>
         <TouchableOpacity 
+          style={styles.editButton}
+          onPress={handleEditListing}
+        >
+          <Ionicons name="create-outline" size={20} color="#fff" />
+          <Text style={styles.editButtonText}>Edit Listing</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
           style={styles.deleteButton}
           onPress={handleDeleteListing}
           disabled={isDeleting}
@@ -190,7 +205,7 @@ export default function MyProductDetailsScreen(): React.ReactElement {
           ) : (
             <>
               <Ionicons name="trash-outline" size={20} color="#fff" />
-              <Text style={styles.deleteButtonText}>Delete Listing</Text>
+              <Text style={styles.deleteButtonText}>Delete</Text>
             </>
           )}
         </TouchableOpacity>
@@ -313,11 +328,34 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: '#fff',
     padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+  },
+  editButton: {
+    backgroundColor: '#007bff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
+    flex: 2,
+    marginRight: 10,
+    elevation: 2,
+    shadowColor: '#007bff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   deleteButton: {
     backgroundColor: '#dc3545',
@@ -326,6 +364,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: 10,
+    flex: 1,
     elevation: 2,
     shadowColor: '#dc3545',
     shadowOffset: { width: 0, height: 2 },
