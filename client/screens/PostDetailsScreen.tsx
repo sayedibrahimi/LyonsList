@@ -163,14 +163,13 @@ const processImageWithAI = async () => {
     try {
       setIsSubmitting(true);
       
-      // Use placeholder image URL instead of uploading
-      const placeholderImageUrl = '../assets/images/placeholder.png';
+      const formattedBase64 = `data:image/jpeg;base64,${photoBase64}`;
       
       // Create listing with the uploaded image URL
       const listingData = {
         title,
         description,
-        pictures: [placeholderImageUrl], // use the URL returned from server here But for now placeholder
+        pictures: [formattedBase64], // use the URL returned from server here But for now placeholder
         price: parseFloat(price),
         condition,
         category,
@@ -186,7 +185,7 @@ const processImageWithAI = async () => {
           [
             {
               text: 'View Listings',
-              onPress: () => router.push('/(tabs)/search')
+              onPress: () => router.replace('/(tabs)/search')
             }
           ]
         );
