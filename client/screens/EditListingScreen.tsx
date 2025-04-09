@@ -1,6 +1,6 @@
-// screens/PostDetailsScreen.tsx
-// Purpose: This screen allows users to create a new listing by providing details such as title, description, price, condition, and category. It also includes an AI feature that generates content based on an uploaded image.
-// Description: The screen includes a form with input fields for title, description, price, condition, and category. It also allows users to toggle between AI-generated content and manual input. The screen handles image uploads, AI processing, and form submission to create a new listing.
+// client/screens/EditListingScreen.tsx
+// Purpose: This screen allows users to edit their existing listings, including updating the title, description, price, condition, category, and status of the listing. It also handles image uploads and form validation.
+// Description: The EditListingScreen component fetches the existing listing details using the productId from the URL parameters. It provides a form for users to edit the listing details, including character count validation for title and description. The screen also includes a loading state while fetching data and error handling for failed requests. Upon successful submission, it navigates back to the listing details page.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -18,129 +18,58 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { apiService } from '../services/api';
 import { Categories } from '../constants/Categories';
-import { listingsService } from '@/services/listingsService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { listingsService, Listing } from '../services/listingsService';
 
-interface AIGeneratedData {
-  title: string;
-  description: string;
-  price: number;
-  condition: string;
-  category: string;
-}
-
-export default function PostDetailsScreen(): React.ReactElement {
+export default function EditListingScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const photoUri = params.photoUri as string;
-  const initialCondition = params.condition as string;
+  const productId = params.productId as string;
   
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [price, setPrice] = useState<string>('');
-  const [condition, setCondition] = useState<string>(initialCondition || 'used');
+  const [condition, setCondition] = useState<string>('');
   const [category, setCategory] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [status, setStatus] = useState<string>('');
+  const [pictures, setPictures] = useState<string[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [useAIContent, setUseAIContent] = useState<boolean>(true);
-  const photoBase64 = params.photoBase64 as string;
-  
-  // Store original AI content
-  const [aiContent, setAiContent] = useState<AIGeneratedData | null>(null);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<boolean>(false);
   
   // Character count for validation
   const titleCharCount = title.length;
   const descriptionCharCount = description.length;
   
-  // Get AI-generated content
+  // Fetch listing details
   useEffect(() => {
-    processImageWithAI();
-  }, []);
+    fetchListingDetails();
+  }, [productId]);
 
-const processImageWithAI = async () => {
-  try {
-    setIsLoading(true);
-    
-    const uriParts = photoUri.split('/');
-    const fileName = uriParts[uriParts.length - 1];
-    
-    if (!photoBase64) {
-      throw new Error('No base64 image data available');
-    }
-    
+  const fetchListingDetails = async () => {
     try {
-      // Use the new API service method
-      const responseData = await apiService.uploadImageForAI(
-        photoBase64,
-        fileName,
-        condition
-      );
-      
-      // Check if the response has the expected format (handle different response structures)
-      let aiData: AIGeneratedData;
-      
-      if (typeof responseData === 'object' && responseData !== null && 'data' in responseData) {
-        // If the response is wrapped in a 'data' property
-        aiData = responseData.data as AIGeneratedData;
-      } else if (typeof responseData === 'object' && responseData !== null && 'title' in responseData) {
-        // If the response is the direct AIGeneratedData object
-        aiData = responseData as AIGeneratedData;
-      } else {
-        console.log('Response structure:', JSON.stringify(responseData));
-        throw new Error('Unexpected response format from AI service');
+      setLoading(true);
+      const listing: Listing = await listingsService.getListingById(productId);
+      if (listing) {
+        setTitle(listing.title);
+        setDescription(listing.description);
+        setPrice(listing.price.toString());
+        setCondition(listing.condition);
+        setCategory(listing.category);
+        setStatus(listing.status);
+        setPictures(listing.pictures);
+        setLoadingError(null);
       }
-      
-      console.log('Parsed AI data:', aiData);
-      
-      // Store original AI content
-      setAiContent(aiData);
-      
-      // Set form fields with AI data
-      if (aiData.title) setTitle(aiData.title);
-      if (aiData.description) setDescription(aiData.description);
-      if (aiData.price) setPrice(aiData.price.toString());
-      if (aiData.condition) setCondition(aiData.condition);
-      if (aiData.category) setCategory(aiData.category);
-      
-      console.log('Form fields populated successfully');
-    } catch (error) {
-      console.error('API error details:', error);
-      throw new Error('Failed to process image data');
-    }
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error('Error processing image with AI:', errorMessage, errorStack);
-    Alert.alert('AI Processing Error', 'Failed to analyze image. Please fill in the details manually.');
-    setUseAIContent(false);
-  } finally {
-    setIsLoading(false);
-  }
-};
-  
-  // Toggle between AI and manual content
-  const toggleAIContent = (value: boolean) => {
-    setUseAIContent(value);
-    
-    if (value && aiContent) {
-      // Restore AI content
-      setTitle(aiContent.title || '');
-      setDescription(aiContent.description || '');
-      setPrice(aiContent.price ? aiContent.price.toString() : '');
-      setCondition(aiContent.condition || condition);
-      setCategory(aiContent.category || '');
-    } else {
-      // Clear all fields for manual input
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setCondition(initialCondition);
-      setCategory('');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to fetch listing details';
+      setLoadingError(errorMessage);
+      console.error('Error fetching listing details:', err);
+    } finally {
+      setLoading(false);
     }
   };
-  
+
   // Handle form submission
   const handleSubmit = async () => {
     // Validate form
@@ -150,12 +79,12 @@ const processImageWithAI = async () => {
     }
     
     // Validate character lengths
-    if (title.length > 100) {
+    if (titleCharCount > 100) {
       Alert.alert('Error', 'Title must be 100 characters or less');
       return;
     }
     
-    if (description.length > 500) {
+    if (descriptionCharCount > 500) {
       Alert.alert('Error', 'Description must be 500 characters or less');
       return;
     }
@@ -163,49 +92,71 @@ const processImageWithAI = async () => {
     try {
       setIsSubmitting(true);
       
-      const formattedBase64 = `data:image/jpeg;base64,${photoBase64}`;
-      
-      // Create listing with the uploaded image URL
-      const listingData = {
+      // Create listing data for update
+      const updatedListingData = {
         title,
         description,
-        pictures: [formattedBase64], // use the URL returned from server here But for now placeholder
         price: parseFloat(price),
         condition,
         category,
-        status: 'available',
+        status,
       };
       
-      const createResponse = await listingsService.createListing(listingData);
+      await listingsService.updateListing(productId, updatedListingData);
       
-      if (createResponse) {
-        Alert.alert(
-          'Success', 
-          'Your listing has been posted!',
-          [
-            {
-              text: 'View Listings',
-              onPress: () => router.replace('/(tabs)/search')
-            }
-          ]
-        );
-      } else {
-        throw new Error('Failed to create listing');
-      }
+      Alert.alert(
+        'Success', 
+        'Your listing has been updated!',
+        [
+          {
+            text: 'View Listing',
+            onPress: () => router.push({
+              pathname: '/myProductDetails',
+              params: { productId }
+            })
+          }
+        ]
+      );
     } catch (error) {
-      console.error('Error creating listing:', error);
-      Alert.alert('Error', 'Failed to post your listing. Please try again.');
+      console.error('Error updating listing:', error);
+      Alert.alert('Error', 'Failed to update your listing. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) {
+  const handleCancel = () => {
+    Alert.alert(
+      'Cancel Editing',
+      'Are you sure you want to cancel? Your changes will not be saved.',
+      [
+        { text: 'Continue Editing', style: 'cancel' },
+        { 
+          text: 'Discard Changes', 
+          style: 'destructive',
+          onPress: () => router.back()
+        }
+      ]
+    );
+  };
+
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007BFF" />
-        <Text style={styles.loadingText}>AI analyzing your image...</Text>
-        <Text style={styles.loadingSubtext}>This might take a moment</Text>
+        <Text style={styles.loadingText}>Loading listing details...</Text>
+      </View>
+    );
+  }
+
+  if (loadingError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
+        <Text style={styles.errorText}>{loadingError}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchListingDetails}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -217,41 +168,25 @@ const processImageWithAI = async () => {
     >
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={handleCancel}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Listing</Text>
+          <Text style={styles.headerTitle}>Edit Listing</Text>
           <View style={{width: 24}} />
         </View>
         
         <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
           {/* Image Preview */}
-          <View style={styles.imagePreviewContainer}>
-            <Image source={{ uri: photoUri }} style={styles.imagePreview} />
-            <TouchableOpacity 
-              style={styles.changeImageButton}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="camera" size={20} color="#fff" />
-              <Text style={styles.changeImageText}>Change Image</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* AI Toggle */}
-          {aiContent && (
-            <View style={styles.aiToggleContainer}>
-              <View style={styles.aiToggleLeft}>
-                <Text style={styles.aiToggleTitle}>Use AI-Generated Content</Text>
-                <Text style={styles.aiToggleSubtitle}>
-                  Toggle to switch between AI and manual input
-                </Text>
-              </View>
-              <Switch
-                value={useAIContent}
-                onValueChange={toggleAIContent}
-                trackColor={{ false: '#ccc', true: '#bfe0ff' }}
-                thumbColor={useAIContent ? '#007BFF' : '#f4f3f4'}
-                ios_backgroundColor="#ccc"
+          {pictures.length > 0 && (
+            <View style={styles.imagePreviewContainer}>
+              <Image 
+                source={
+                  imageError 
+                    ? require('../assets/images/placeholder.png') 
+                    : { uri: pictures[0] }
+                } 
+                style={styles.imagePreview}
+                onError={() => setImageError(true)}
               />
             </View>
           )}
@@ -362,17 +297,65 @@ const processImageWithAI = async () => {
               </ScrollView>
             </View>
             
-            <TouchableOpacity 
-              style={[styles.submitButton, isSubmitting ? styles.submitButtonDisabled : null]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Text style={styles.submitButtonText}>Post Listing</Text>
-              )}
-            </TouchableOpacity>
+            <Text style={styles.labelText}>Status</Text>
+            <View style={styles.conditionContainer}>
+              <TouchableOpacity 
+                style={[
+                  styles.conditionButton, 
+                  status === 'available' ? styles.conditionButtonActive : null
+                ]}
+                onPress={() => setStatus('available')}
+              >
+                <Ionicons 
+                  name={status === 'available' ? "radio-button-on" : "radio-button-off"} 
+                  size={20} 
+                  color={status === 'available' ? "#007BFF" : "#666"} 
+                />
+                <Text style={[
+                  styles.conditionText,
+                  status === 'available' ? styles.conditionTextActive : null
+                ]}>Available</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.conditionButton, 
+                  status === 'unavailable' ? styles.conditionButtonActive : null
+                ]}
+                onPress={() => setStatus('unavailable')}
+              >
+                <Ionicons 
+                  name={status === 'unavailable' ? "radio-button-on" : "radio-button-off"} 
+                  size={20} 
+                  color={status === 'unavailable' ? "#007BFF" : "#666"} 
+                />
+                <Text style={[
+                  styles.conditionText,
+                  status === 'unavailable' ? styles.conditionTextActive : null
+                ]}>Unavailable</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={handleCancel}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            
+              <TouchableOpacity 
+                style={[styles.submitButton, isSubmitting ? styles.submitButtonDisabled : null]}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Save Changes</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
           
           <View style={{ height: 30 }} />
@@ -420,10 +403,28 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#333',
   },
-  loadingSubtext: {
-    fontSize: 14,
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 12,
+    fontSize: 16,
     color: '#666',
-    marginTop: 8,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#007bff',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   imagePreviewContainer: {
     width: '100%',
@@ -431,55 +432,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 20,
-    position: 'relative',
+    backgroundColor: '#f0f0f0',
   },
   imagePreview: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
-  },
-  changeImageButton: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-  },
-  changeImageText: {
-    color: '#fff',
-    marginLeft: 6,
-    fontSize: 14,
-  },
-  aiToggleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  aiToggleLeft: {
-    flex: 1,
-  },
-  aiToggleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  aiToggleSubtitle: {
-    fontSize: 14,
-    color: '#666',
   },
   formSection: {
     marginBottom: 20,
@@ -594,12 +552,30 @@ const styles = StyleSheet.create({
     color: '#007BFF',
     fontWeight: '500',
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   submitButton: {
+    flex: 2,
     backgroundColor: '#007BFF',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 10,
   },
   submitButtonDisabled: {
     backgroundColor: '#80bdff',

@@ -1,6 +1,6 @@
 // client/screens/ProductDetailsScreen.tsx
-// Purpose: This file contains the ProductDetailsScreen component, which displays detailed information about a specific product. It includes features such as viewing images, adding to favorites, reporting listings, and contacting the seller.
-// Description: The ProductDetailsScreen component uses React Native components to create a user interface for displaying product details. It includes an image viewer, product title, price, condition, description, and buttons for replying to the seller and reporting the listing. The component also handles loading states, error messages, and user authentication for certain actions.
+// Purpose: This file defines the ProductDetailsScreen component, which displays detailed information about a specific product.
+// Description: The ProductDetailsScreen component fetches and displays detailed information about a product, including its images, price, condition, and description. It includes functionality to add or remove the product from favorites, report the listing, and contact the seller. The component uses various hooks to manage state and handle user interactions.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -16,8 +16,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { listingsService, Listing } from '../services/listingsService';
-import { favoritesService } from '../services/favoritesService';
 import { useAuth } from '../hooks/useAuth';
+import { useFavorites } from '../hooks/useFavorites';
 import ReportListingModal from '../components/ReportListingModal';
 
 export default function ProductDetailsScreen(): React.ReactElement {
@@ -29,16 +29,13 @@ export default function ProductDetailsScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const { user } = useAuth();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
 
   useEffect(() => {
     fetchProductDetails();
-    if (user) {
-      checkIfFavorite();
-    }
-  }, [productId, user]);
+  }, [productId]);
 
   const fetchProductDetails = async () => {
     try {
@@ -55,47 +52,8 @@ export default function ProductDetailsScreen(): React.ReactElement {
     }
   };
 
-  const checkIfFavorite = async () => {
-    if (!user) return;
-    
-    try {
-      const favorites = await favoritesService.getAllFavorites();
-      const isInFavorites = favorites.some(fav => fav._id === productId);
-      setIsFavorite(isInFavorites);
-    } catch (err) {
-      console.error('Error checking favorites:', err);
-    }
-  };
-
-  const handleFavoriteToggle = async () => {
-    if (!user) {
-      Alert.alert(
-        'Authentication Required',
-        'Please login to add items to favorites',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Login', onPress: () => router.push('/auth/login') }
-        ]
-      );
-      return;
-    }
-    
-    try {
-      if (isFavorite) {
-        await favoritesService.removeFavorite(productId);
-        setIsFavorite(false);
-      } else {
-        await favoritesService.addFavorite(productId);
-        setIsFavorite(true);
-      }
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
-      Alert.alert('Error', 'Failed to update favorites');
-    }
-  };
-
   const formatPrice = (price: number) => {
-    return `$${price.toFixed(2)}`;
+    return `${price.toFixed(2)}`;
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -114,6 +72,33 @@ export default function ProductDetailsScreen(): React.ReactElement {
       return `${Math.floor(diffDays / 7)} weeks ago`;
     } else {
       return `${Math.floor(diffDays / 30)} months ago`;
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      Alert.alert(
+        'Authentication Required',
+        'Please login to add items to favorites',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Login', onPress: () => router.push('/auth/login') }
+        ]
+      );
+      return;
+    }
+    
+    if (!product) return;
+    
+    try {
+      if (isFavorite(product._id)) {
+        await removeFavorite(product._id);
+      } else {
+        await addFavorite(product._id);
+      }
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      Alert.alert('Error', 'Failed to update favorites');
     }
   };
 
@@ -180,6 +165,8 @@ export default function ProductDetailsScreen(): React.ReactElement {
     );
   }
 
+  const favorited = isFavorite(product._id);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -202,9 +189,9 @@ export default function ProductDetailsScreen(): React.ReactElement {
             onPress={handleFavoriteToggle}
           >
             <Ionicons 
-              name={isFavorite ? "heart" : "heart-outline"} 
+              name={favorited ? "heart" : "heart-outline"} 
               size={24} 
-              color={isFavorite ? "#ff6b6b" : "#333"} 
+              color={favorited ? "#ff6b6b" : "#333"} 
             />
           </TouchableOpacity>
         </View>

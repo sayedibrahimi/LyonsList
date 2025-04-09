@@ -10,6 +10,7 @@ export interface Listing {
   pictures: string[];
   price: number;
   condition: string;
+  category: string;
   status: string;
   sellerID: string;
   createdAt: string;

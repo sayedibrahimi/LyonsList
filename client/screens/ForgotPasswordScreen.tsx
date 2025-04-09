@@ -75,7 +75,7 @@ export default function ForgotPasswordScreen({}: ForgotPasswordScreenProps): Rea
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent}keyboardShouldPersistTaps="handled">
           <TouchableOpacity style={styles.backButton} onPress={navigateToLogin}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>

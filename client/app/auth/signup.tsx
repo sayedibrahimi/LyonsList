@@ -87,7 +87,8 @@ const SignupScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <Image source={require('../../assets/images/wheaton.webp')} style={styles.logo} />
           <Text style={styles.title}>Create Account</Text>

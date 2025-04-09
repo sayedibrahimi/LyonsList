@@ -1,6 +1,6 @@
 // client/screens/SearchScreen.tsx
-// Purpose: Search for products in the marketplace
-// Description: This screen allows users to search for products in the marketplace. Users can search by product title or description. The screen displays a list of products that match the search query. Users can click on a product to view more details.
+// Purpose: This file defines the SearchScreen component, which allows users to search for products in the marketplace.
+// Description: The SearchScreen component provides a search bar for users to input their search queries. It fetches products from the API and filters them based on the search query. The component displays the filtered products in a list format, with options to view product details and add items to favorites. It handles loading and error states, and includes a retry button for failed fetch attempts.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -17,8 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { tabStyles } from '../styles/tabStyles';
 import { listingsService, Listing } from '../services/listingsService';
-import { favoritesService } from '../services/favoritesService';
 import { useAuth } from '../hooks/useAuth';
+import { useFavorites } from '../hooks/useFavorites';
 
 export default function SearchScreen(): React.ReactElement {
   const [products, setProducts] = useState<Listing[]>([]);
@@ -27,17 +27,15 @@ export default function SearchScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
-  const [favorites, setFavorites] = useState<Listing[]>([]);
   const router = useRouter();
   const { user } = useAuth();
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
+
   
   // Fetch products from the API
   useEffect(() => {
     fetchProducts();
-    if (user) {
-      fetchFavorites();
-    }
-  }, [user]);
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -52,17 +50,6 @@ export default function SearchScreen(): React.ReactElement {
       console.error('Error fetching products:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchFavorites = async () => {
-    if (!user) return;
-    
-    try {
-      const data = await favoritesService.getAllFavorites();
-      setFavorites(data);
-    } catch (err) {
-      console.error('Error fetching favorites:', err);
     }
   };
 
@@ -122,14 +109,10 @@ export default function SearchScreen(): React.ReactElement {
     }
     
     try {
-      const isCurrentlyFavorited = favorites.some(fav => fav._id === item._id);
-      
-      if (isCurrentlyFavorited) {
-        await favoritesService.removeFavorite(item._id);
-        setFavorites(favorites.filter(fav => fav._id !== item._id));
+      if (isFavorite(item._id)) {
+        await removeFavorite(item._id);
       } else {
-        await favoritesService.addFavorite(item._id);
-        setFavorites([...favorites, item]);
+        await addFavorite(item._id);
       }
     } catch (err) {
       console.error('Error toggling favorite:', err);
@@ -139,7 +122,7 @@ export default function SearchScreen(): React.ReactElement {
 
   // Render each product item
   const renderProductItem = ({ item }: { item: Listing }) => {
-    const isFavorited = favorites.some(fav => fav._id === item._id);
+    const favorited = isFavorite(item._id);
     const itemImageError = imageError[item._id] || false;
     
     return (
@@ -188,8 +171,8 @@ export default function SearchScreen(): React.ReactElement {
             onPress={() => handleFavoriteToggle(item)}
           >
             <Ionicons 
-              name={isFavorited ? "heart" : "heart-outline"} 
-              color={isFavorited ? "#ff6b6b" : "#ccc"}
+              name={favorited ? "heart" : "heart-outline"} 
+              color={favorited ? "#ff6b6b" : "#ccc"}
               size={24} 
             />
           </TouchableOpacity>
