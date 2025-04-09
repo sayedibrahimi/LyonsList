@@ -142,7 +142,8 @@ export default function OTPVerificationScreen({}: OTPVerificationScreenProps): R
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent}
+      keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
