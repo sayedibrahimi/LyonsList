@@ -1,4 +1,6 @@
 // client/screens/EditListingScreen.tsx
+// Purpose: This screen allows users to edit their existing listings, including updating the title, description, price, condition, category, and status of the listing. It also handles image uploads and form validation.
+// Description: The EditListingScreen component fetches the existing listing details using the productId from the URL parameters. It provides a form for users to edit the listing details, including character count validation for title and description. The screen also includes a loading state while fetching data and error handling for failed requests. Upon successful submission, it navigates back to the listing details page.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
