@@ -36,8 +36,8 @@ interface AuthState {
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: {
     sendOTP: (email: string) => Promise<void>;
-    verifyOTP: (email: string, otp: string) => Promise<void>;
-    setNewPassword: (email: string, password1: string, password2: string) => Promise<void>;
+    verifyOTP: (email: string, otp: string) => Promise<string>; // Return token
+    setNewPassword: (email: string, password1: string, password2: string, token: string) => Promise<void>;
   };
   clearError: () => void;
 }
