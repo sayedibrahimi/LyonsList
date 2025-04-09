@@ -53,12 +53,19 @@ const LoginScreen = () => {
     
     try {
       setIsSubmitting(true);
-      await login({ email, password });
-      setLoginSuccessful(true);
+      await login({ email, password }).catch(error => {
+        console.log('Login error caught in component:', error?.message || 'Failed to login');
+        // We'll handle this via the authError state from context
+      });
+      // If we get here and there's no error in context, login was successful
+      if (!authError) {
+        setLoginSuccessful(true);
+      }
       // Navigation will be handled by the useEffect hook
     } catch (error) {
-      console.error('Login error:', error);
-      // Error will be handled by the AuthContext
+      // This catch is a fallback - errors should be handled by the useAuth hook
+      console.error('Unexpected login error:', error);
+      setFormError('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,13 +84,13 @@ const LoginScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}         keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
           <Image source={require('../../assets/images/wheaton.webp')} style={styles.logo} />
           <Text style={styles.title}>Welcome Back</Text>
           
           {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
-          {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+          {authError && !formError ? <Text style={styles.errorText}>{authError}</Text> : null}
           
           <TextInput
             style={styles.input}
