@@ -16,6 +16,9 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+let resetToken: string | null = null;
+
+
 // Request interceptor to add the auth token to every request
 api.interceptors.request.use(
   async (config) => {
@@ -30,6 +33,11 @@ api.interceptors.request.use(
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Check for reset token in the authService
+    if (resetToken && config.url?.includes('/reset/password')) {
+      config.headers.Authorization = `Bearer ${resetToken}`;
     }
     
     return config;
