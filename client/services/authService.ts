@@ -35,6 +35,8 @@ interface OTPVerificationData {
   otp: string;
 }
 
+let resetToken: string | null = null;
+
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     try {
@@ -90,28 +92,43 @@ export const authService = {
   
   requestPasswordReset: async (email: string): Promise<any> => {
     try {
-      return await apiService.post<any>('/auth/reset-password', { email });
+      return await apiService.post<any>('/reset/request', { email });
     } catch (error) {
       throw error;
     }
   },
-  
+
   verifyResetOTP: async (email: string, otp: string): Promise<any> => {
     try {
-      // This should just verify the OTP for password reset, not actually reset the password yet
-      return await apiService.post<any>('/auth/verify-reset', { email, otp });
+      // This should return the JWT token 
+      return await apiService.post<any>('/reset/verify', { email, otp });
     } catch (error) {
       throw error;
     }
   },
+
+  setResetToken: (token: string) => {
+    resetToken = token;
+  },
   
-  resetPassword: async (email: string, password1: string, password2: string): Promise<any> => {
+  clearResetToken: () => {
+    resetToken = null;
+  },
+
+  resetPassword: async (email: string, password1: string, password2: string, token: string): Promise<any> => {
     try {
-      return await apiService.post<any>('/auth/reset-password', { 
+      // Create a temporary axios instance with the token
+      const headers = resetToken ? { Authorization: `Bearer ${resetToken}` } : {};
+
+      const response = await apiService.post<any>('/reset/password', { 
         email, 
         password1, 
         password2
       });
+      
+      // Clear the token after use
+      resetToken = null;
+      return response;
     } catch (error) {
       throw error;
     }
