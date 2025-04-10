@@ -1,6 +1,6 @@
 // client/screens/AccountScreen.tsx
-// Purpose: Implement the AccountScreen component
-// Description: This component displays the user's account information and provides options to view listings, purchase history, settings, and help & support. It also allows the user to log out of the app.
+// Purpose: This file defines the AccountScreen component.
+// Description: It provides a UI for user account management, including profile information and settings.
 import React from 'react';
 import { 
   View, 
@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { tabStyles } from '../styles/tabStyles';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'expo-router';
+import ThemeToggle from '../components/ThemeToggle';
+import { useTheme } from '../hooks/useTheme';
 
 interface MenuItem {
   id: string;
@@ -26,6 +28,7 @@ interface MenuItem {
 export default function AccountScreen(): React.ReactElement {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
+  const { isDarkTheme } = useTheme();
   
   const menuItems: MenuItem[] = [
     { 
@@ -88,7 +91,10 @@ export default function AccountScreen(): React.ReactElement {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[
+        styles.loadingContainer,
+        isDarkTheme && styles.darkBackground
+      ]}>
         <ActivityIndicator size="large" color="#007BFF" />
       </View>
     );
@@ -96,13 +102,25 @@ export default function AccountScreen(): React.ReactElement {
 
   if (!user) {
     return (
-      <View style={tabStyles.container}>
-        <View style={tabStyles.header}>
-          <Text style={tabStyles.headerTitle}>My Account</Text>
+      <View style={[
+        tabStyles.container,
+        isDarkTheme && styles.darkBackground
+      ]}>
+        <View style={[
+          tabStyles.header,
+          isDarkTheme && styles.darkHeader
+        ]}>
+          <Text style={[
+            tabStyles.headerTitle,
+            isDarkTheme && styles.darkText
+          ]}>My Account</Text>
         </View>
         <View style={styles.notLoggedInContainer}>
-          <Ionicons name="lock-closed-outline" size={50} color="#999" />
-          <Text style={styles.notLoggedInText}>Please log in to view your account</Text>
+          <Ionicons name="lock-closed-outline" size={50} color={isDarkTheme ? "#fff" : "#999"} />
+          <Text style={[
+            styles.notLoggedInText,
+            isDarkTheme && styles.darkText
+          ]}>Please log in to view your account</Text>
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push('/auth/login')}
@@ -115,37 +133,72 @@ export default function AccountScreen(): React.ReactElement {
   }
 
   return (
-    <View style={tabStyles.container}>
-      <View style={tabStyles.header}>
-        <Text style={tabStyles.headerTitle}>My Account</Text>
+    <View style={[
+      tabStyles.container,
+      isDarkTheme && styles.darkBackground
+    ]}>
+      <View style={[
+        tabStyles.header,
+        isDarkTheme && styles.darkHeader
+      ]}>
+        <Text style={[
+          tabStyles.headerTitle,
+          isDarkTheme && styles.darkText
+        ]}>My Account</Text>
       </View>
       
       <ScrollView style={tabStyles.content}>
-        <View style={styles.profileSection}>
+        <View style={[
+          styles.profileSection,
+          isDarkTheme && styles.darkProfileSection
+        ]}>
           <View style={styles.profileImagePlaceholder}>
-            <Ionicons name="person" size={50} color="#666" />
+            <Ionicons name="person" size={50} color={isDarkTheme ? "#fff" : "#666"} />
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{user.firstName} {user.lastName}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
+            <Text style={[
+              styles.userName,
+              isDarkTheme && styles.darkText
+            ]}>{user.firstName} {user.lastName}</Text>
+            <Text style={[
+              styles.userEmail,
+              isDarkTheme && styles.darkSubText
+            ]}>{user.email}</Text>
             <TouchableOpacity style={styles.editButton}>
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
         </View>
         
-        <View style={styles.menuSection}>
+        <View style={[
+          styles.menuSection,
+          isDarkTheme && styles.darkMenuSection
+        ]}>
           {menuItems.map((item) => (
             <TouchableOpacity 
               key={item.id} 
-              style={styles.menuItem}
+              style={[
+                styles.menuItem,
+                isDarkTheme && styles.darkMenuItem
+              ]}
               onPress={item.onPress}
             >
               <Ionicons name={item.icon as any} size={24} color="#007BFF" />
-              <Text style={styles.menuItemText}>{item.title}</Text>
-              <Ionicons name="chevron-forward" size={24} color="#ccc" />
+              <Text style={[
+                styles.menuItemText,
+                isDarkTheme && styles.darkText
+              ]}>{item.title}</Text>
+              <Ionicons name="chevron-forward" size={24} color={isDarkTheme ? "#777" : "#ccc"} />
             </TouchableOpacity>
           ))}
+        </View>
+        
+        {/* Theme Toggle Section */}
+        <View style={[
+          styles.menuSection,
+          isDarkTheme && styles.darkMenuSection
+        ]}>
+          <ThemeToggle />
         </View>
         
         <TouchableOpacity 
@@ -258,5 +311,30 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Dark mode styles
+  darkBackground: {
+    backgroundColor: '#151718',
+  },
+  darkHeader: {
+    backgroundColor: '#1e2022',
+    borderBottomColor: '#333',
+  },
+  darkText: {
+    color: '#ECEDEE',
+  },
+  darkSubText: {
+    color: '#9BA1A6',
+  },
+  darkProfileSection: {
+    backgroundColor: 'transparent',
+  },
+  darkMenuSection: {
+    backgroundColor: '#1e2022',
+    shadowColor: '#000',
+    borderColor: '#333',
+  },
+  darkMenuItem: {
+    borderBottomColor: '#333',
   }
 });
