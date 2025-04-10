@@ -4,13 +4,24 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View } from 'react-native';
+import { View, Platform, StatusBar } from 'react-native';
+import { useColorScheme } from '../../hooks/useColorScheme';
 
 export default function TabLayout(): React.ReactElement {
   const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  
+  // Set status bar properties for Android
+  if (Platform.OS === 'android') {
+    StatusBar.setTranslucent(true);
+    StatusBar.setBackgroundColor('transparent');
+    StatusBar.setBarStyle(colorScheme === 'dark' ? 'light-content' : 'dark-content');
+  } else {
+    StatusBar.setBarStyle(colorScheme === 'dark' ? 'light-content' : 'dark-content');
+  }
   
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }}>
+    <View style={{ flex: 1, paddingTop: insets.top,  backgroundColor: colorScheme === 'dark' ? '#151718' : '#ffffff',  }}>
       <Tabs 
         screenOptions={{ 
           headerShown: false,
