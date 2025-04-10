@@ -1,6 +1,6 @@
-// client/app/_layout.tsx
-// Purpose: This file defines the root layout for the app, including the navigation theme and authentication context.
-// Description: The RootLayout component uses the Expo Router's ThemeProvider to set the navigation theme based on the user's color scheme. It also wraps the app in authentication and favorites context providers for state management. The SplashScreen is used to prevent flickering during app initialization.
+// app/_layout.tsx
+// Purpose: This file serves as the root layout for the application, providing a consistent structure and theme across all screens.
+// Description: The RootLayout component wraps the entire application in a theme provider and includes authentication and favorites context providers. It also handles splash screen visibility and status bar configuration.
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import StackNavigator from '../components/StackNavigator';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import { AuthProvider } from '../context/AuthContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
 import { StatusBar } from 'react-native';
 import { Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -36,20 +37,22 @@ export default function RootLayout() {
 
   if (!isReady) return null;
 
-  // Set status bar properties
+  // Configure the status bar globally
   if (Platform.OS === 'android') {
     StatusBar.setTranslucent(true);
     StatusBar.setBackgroundColor('transparent');
   }
-  StatusBar.setBarStyle('dark-content');
+  StatusBar.setBarStyle(colorScheme === 'dark' ? 'light-content' : 'dark-content');
 
   return (
-    <AuthProvider>
-      <FavoritesProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <StackNavigator />
-        </ThemeProvider>
-      </FavoritesProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <FavoritesProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <StackNavigator />
+          </ThemeProvider>
+        </FavoritesProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
