@@ -53,7 +53,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
   };
 
   const formatPrice = (price: number) => {
-    return `${price.toFixed(2)}`;
+    return `$${price.toFixed(2)}`;
   };
 
   const getTimeAgo = (timestamp: string) => {
