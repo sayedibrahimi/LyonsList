@@ -1,4 +1,6 @@
 // src/screens/ChatScreen.tsx
+// Purpose: This file defines the ChatScreen component.
+// Description: It provides a UI for displaying chat conversations with search functionality.
 import React, { useState } from 'react';
 import { 
   View, 
@@ -10,7 +12,8 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { tabStyles } from '../styles/tabStyles';
+import { createTabStyles } from '../styles/tabStyles';
+import { useColorScheme } from '../hooks/useColorScheme';
 
 interface ChatScreenProps {
   // Define props if needed
@@ -52,6 +55,9 @@ export default function ChatScreen({}: ChatScreenProps): React.ReactElement {
   ]);
   
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const colorScheme = useColorScheme();
+  const tabStyles = createTabStyles(colorScheme);
+  const isDarkMode = colorScheme === 'dark';
   
   const handleConversationPress = (conversation: ChatConversation) => {
     // Navigate to the specific chat
@@ -82,11 +88,23 @@ export default function ChatScreen({}: ChatScreenProps): React.ReactElement {
         <Text style={tabStyles.headerTitle}>Messages</Text>
       </View>
       
-      <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+      <View style={[
+        styles.searchBar,
+        isDarkMode && styles.darkSearchBar
+      ]}>
+        <Ionicons 
+          name="search" 
+          size={20} 
+          color={isDarkMode ? "#9BA1A6" : "#666"} 
+          style={styles.searchIcon} 
+        />
         <TextInput 
-          style={styles.searchInput}
+          style={[
+            styles.searchInput,
+            isDarkMode && styles.darkSearchInput
+          ]}
           placeholder="Search messages"
+          placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -94,12 +112,15 @@ export default function ChatScreen({}: ChatScreenProps): React.ReactElement {
       
       {conversations.length > 0 ? (
         <FlatList
-          style={styles.chatList}
+          style={isDarkMode ? { backgroundColor: '#151718' } : styles.chatList}
           data={filterConversations()}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity 
-              style={styles.chatItem}
+              style={[
+                styles.chatItem,
+                isDarkMode && styles.darkChatItem
+              ]}
               onPress={() => handleConversationPress(item)}
             >
               <View style={[
@@ -112,14 +133,19 @@ export default function ChatScreen({}: ChatScreenProps): React.ReactElement {
                 <View style={styles.chatHeader}>
                   <Text style={[
                     styles.chatName,
-                    item.unread && styles.unreadText
+                    item.unread && styles.unreadText,
+                    isDarkMode && styles.darkText
                   ]}>{item.name}</Text>
-                  <Text style={styles.chatTime}>{item.time}</Text>
+                  <Text style={[
+                    styles.chatTime,
+                    isDarkMode && styles.darkSubText
+                  ]}>{item.time}</Text>
                 </View>
                 <Text 
                   style={[
                     styles.chatMessage,
-                    item.unread && styles.unreadText
+                    item.unread && styles.unreadText,
+                    isDarkMode && styles.darkSubText
                   ]}
                   numberOfLines={1}
                 >
@@ -130,10 +156,19 @@ export default function ChatScreen({}: ChatScreenProps): React.ReactElement {
           )}
         />
       ) : (
-        <View style={tabStyles.placeholderContent}>
-          <Ionicons name="chatbubbles-outline" size={50} color="#999" />
-          <Text style={tabStyles.placeholderText}>No messages yet</Text>
-          <Text style={styles.emptyStateText}>
+        <View style={[
+          tabStyles.placeholderContent,
+          isDarkMode && { backgroundColor: '#1E2022' }
+        ]}>
+          <Ionicons name="chatbubbles-outline" size={50} color={isDarkMode ? "#9BA1A6" : "#999"} />
+          <Text style={[
+            tabStyles.placeholderText,
+            isDarkMode && styles.darkText
+          ]}>No messages yet</Text>
+          <Text style={[
+            styles.emptyStateText,
+            isDarkMode && styles.darkSubText
+          ]}>
             Start a conversation by messaging a seller
           </Text>
         </View>
@@ -151,11 +186,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     margin: 15,
   },
+  darkSearchBar: {
+    backgroundColor: '#2A2F33',
+  },
   searchIcon: {
     marginRight: 10,
   },
   searchInput: {
     flex: 1,
+    color: '#333',
+  },
+  darkSearchInput: {
+    color: '#ECEDEE',
   },
   chatList: {
     flex: 1,
@@ -165,6 +207,11 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  darkChatItem: {
+    backgroundColor: '#1E2022',
+    borderBottomColor: '#333',
   },
   chatAvatar: {
     width: 50,
@@ -197,6 +244,10 @@ const styles = StyleSheet.create({
   chatName: {
     fontSize: 16,
     fontWeight: '500',
+    color: '#333',
+  },
+  darkText: {
+    color: '#ECEDEE',
   },
   unreadText: {
     fontWeight: 'bold',
@@ -204,6 +255,9 @@ const styles = StyleSheet.create({
   chatMessage: {
     fontSize: 14,
     color: '#666',
+  },
+  darkSubText: {
+    color: '#9BA1A6',
   },
   chatTime: {
     fontSize: 12,
