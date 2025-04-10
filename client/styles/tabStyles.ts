@@ -1,18 +1,28 @@
-// src/styles/commonStyles.ts
-import { StyleSheet } from 'react-native';
+// client/styles/tabStyles.ts
+// Purpose: This file contains the styles for the tab screens in the React Native application.
+import { StyleSheet, Platform, StatusBar } from 'react-native';
 import { colors, spacing, fontSize } from './theme';
+import { getStatusBarHeight } from '../utils/statusBarHelper';
+
+// Get the status bar height
+const statusBarHeight = getStatusBarHeight();
 
 export const tabStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.white,
   },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
   header: {
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'ios' ? statusBarHeight : StatusBar.currentHeight || 0,
     paddingBottom: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: colors.white,
   },
   headerTitle: {
     fontSize: fontSize.xxl,
