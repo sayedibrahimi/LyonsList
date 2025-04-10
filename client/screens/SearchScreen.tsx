@@ -1,24 +1,25 @@
 // client/screens/SearchScreen.tsx
-// Purpose: This file defines the SearchScreen component, which allows users to search for products in the marketplace.
-// Description: The SearchScreen component provides a search bar for users to input their search queries. It fetches products from the API and filters them based on the search query. The component displays the filtered products in a list format, with options to view product details and add items to favorites. It handles loading and error states, and includes a retry button for failed fetch attempts.
+// Purpose: This code implements a search screen for a marketplace app using React Native. It includes features like searching for products, displaying product details, and managing favorites. The screen is styled based on the current theme (light or dark mode) and handles loading states and errors gracefully.
+// Description: The SearchScreen component fetches product listings from an API, allows users to search through them, and displays the results in a list. It also provides functionality to mark products as favorites and handles image loading errors. The screen is responsive to the user's theme preference (light or dark mode) and includes a search bar for user input.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
-  TextInput, 
+  TextInput,
+  Alert, 
   FlatList, 
   Image, 
   TouchableOpacity, 
   ActivityIndicator, 
-  StyleSheet,
-  Alert
+  StyleSheet
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { tabStyles } from '../styles/tabStyles';
+import { createTabStyles } from '../styles/tabStyles';
 import { listingsService, Listing } from '../services/listingsService';
 import { useAuth } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
+import { useColorScheme } from '../hooks/useColorScheme';
 
 export default function SearchScreen(): React.ReactElement {
   const [products, setProducts] = useState<Listing[]>([]);
@@ -30,7 +31,11 @@ export default function SearchScreen(): React.ReactElement {
   const router = useRouter();
   const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
-
+  const colorScheme = useColorScheme();
+  
+  // Get tab styles based on current color scheme
+  const tabStyles = createTabStyles(colorScheme);
+  const isDarkMode = colorScheme === 'dark';
   
   // Fetch products from the API
   useEffect(() => {
@@ -127,7 +132,10 @@ export default function SearchScreen(): React.ReactElement {
     
     return (
       <TouchableOpacity 
-        style={styles.productCard}
+        style={[
+          styles.productCard,
+          isDarkMode && styles.darkProductCard
+        ]}
         onPress={() => router.push({
           pathname: '/productDetails',
           params: { productId: item._id }
@@ -156,11 +164,20 @@ export default function SearchScreen(): React.ReactElement {
         </View>
         
         <View style={styles.productInfo}>
-          <Text style={styles.productTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.productDescription} numberOfLines={2}>{item.description}</Text>
+          <Text style={[
+            styles.productTitle,
+            isDarkMode && styles.darkText
+          ]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[
+            styles.productDescription,
+            isDarkMode && styles.darkSubText
+          ]} numberOfLines={2}>{item.description}</Text>
           
           <View style={styles.productFooter}>
-            <Text style={styles.timeAgo}>{getTimeAgo(item.createdAt)}</Text>
+            <Text style={[
+              styles.timeAgo,
+              isDarkMode && styles.darkSubText
+            ]}>{getTimeAgo(item.createdAt)}</Text>
             <Text style={styles.productPrice}>{formatPrice(item.price)}</Text>
           </View>
         </View>
@@ -172,7 +189,7 @@ export default function SearchScreen(): React.ReactElement {
           >
             <Ionicons 
               name={favorited ? "heart" : "heart-outline"} 
-              color={favorited ? "#ff6b6b" : "#ccc"}
+              color={favorited ? "#ff6b6b" : (isDarkMode ? "#9BA1A6" : "#ccc")}
               size={24} 
             />
           </TouchableOpacity>
@@ -183,22 +200,35 @@ export default function SearchScreen(): React.ReactElement {
 
   return (
     <View style={tabStyles.container}>
-      <View style={styles.header}>
+      <View style={[
+        tabStyles.header,
+        isDarkMode && { borderBottomColor: '#333' }
+      ]}>
         <Text style={tabStyles.headerTitle}>Search Marketplace</Text>
       </View>
       
-      <View style={styles.searchBarContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+      <View style={[
+        styles.searchBarContainer,
+        isDarkMode && { backgroundColor: '#1E2022' }
+      ]}>
+        <View style={[
+          styles.searchBar,
+          isDarkMode && styles.darkSearchBar
+        ]}>
+          <Ionicons name="search" size={20} color={isDarkMode ? "#9BA1A6" : "#666"} style={styles.searchIcon} />
           <TextInput 
-            style={styles.searchInput}
+            style={[
+              styles.searchInput,
+              isDarkMode && styles.darkSearchInput
+            ]}
             placeholder="What are you looking for?"
+            placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
             value={searchQuery}
             onChangeText={handleSearch}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => handleSearch('')}>
-              <Ionicons name="close-circle" size={20} color="#666" style={styles.clearIcon} />
+              <Ionicons name="close-circle" size={20} color={isDarkMode ? "#9BA1A6" : "#666"} style={styles.clearIcon} />
             </TouchableOpacity>
           )}
         </View>
@@ -209,24 +239,45 @@ export default function SearchScreen(): React.ReactElement {
       </View>
       
       {loading ? (
-        <View style={styles.loadingContainer}>
+        <View style={[
+          styles.loadingContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}>
           <ActivityIndicator size="large" color="#007bff" />
-          <Text style={styles.loadingText}>Loading products...</Text>
+          <Text style={[
+            styles.loadingText,
+            isDarkMode && styles.darkText
+          ]}>Loading products...</Text>
         </View>
       ) : error ? (
-        <View style={styles.errorContainer}>
+        <View style={[
+          styles.errorContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}>
           <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[
+            styles.errorText,
+            isDarkMode && styles.darkText
+          ]}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchProducts}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
       ) : filteredProducts.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="search-outline" size={48} color="#aaa" />
-          <Text style={styles.emptyText}>No products found</Text>
+        <View style={[
+          styles.emptyContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}>
+          <Ionicons name="search-outline" size={48} color={isDarkMode ? "#9BA1A6" : "#aaa"} />
+          <Text style={[
+            styles.emptyText,
+            isDarkMode && styles.darkText
+          ]}>No products found</Text>
           {searchQuery.length > 0 && (
-            <Text style={styles.emptySubtext}>Try a different search term</Text>
+            <Text style={[
+              styles.emptySubtext,
+              isDarkMode && styles.darkSubText
+            ]}>Try a different search term</Text>
           )}
         </View>
       ) : (
@@ -234,7 +285,10 @@ export default function SearchScreen(): React.ReactElement {
           data={filteredProducts}
           renderItem={renderProductItem}
           keyExtractor={item => item._id}
-          style={styles.productList}
+          style={[
+            styles.productList,
+            isDarkMode && { backgroundColor: '#151718' }
+          ]}
           contentContainerStyle={styles.productListContent}
           numColumns={1}
           showsVerticalScrollIndicator={false}
@@ -247,13 +301,6 @@ export default function SearchScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
-  },
   searchBarContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -273,6 +320,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
     height: 42,
   },
+  darkSearchBar: {
+    backgroundColor: '#2A2F33',
+    borderColor: '#333',
+  },
   searchIcon: {
     marginRight: 8,
   },
@@ -283,6 +334,10 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     fontSize: 16,
+    color: '#333',
+  },
+  darkSearchInput: {
+    color: '#ECEDEE',
   },
   searchButton: {
     backgroundColor: '#007bff',
@@ -299,6 +354,7 @@ const styles = StyleSheet.create({
   },
   productList: {
     flex: 1,
+    backgroundColor: '#f8f8f8',
   },
   productListContent: {
     paddingHorizontal: 16,
@@ -318,6 +374,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
+  darkProductCard: {
+    backgroundColor: '#1E2022',
+    shadowColor: '#000',
+    borderColor: '#333',
+  },
   productImageContainer: {
     width: 120,
     height: 120,
@@ -335,14 +396,21 @@ const styles = StyleSheet.create({
   },
   productTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     marginBottom: 6,
     paddingRight: 25,
+    color: '#333',
+  },
+  darkText: {
+    color: '#ECEDEE',
   },
   productDescription: {
     fontSize: 14,
     color: '#666',
     marginBottom: 8,
+  },
+  darkSubText: {
+    color: '#9BA1A6',
   },
   productFooter: {
     flexDirection: 'row',
@@ -385,34 +453,36 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#f8f8f8',
   },
   loadingText: {
-    marginTop: 12,
     fontSize: 16,
     color: '#666',
+    marginTop: 12,
   },
   errorContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f8f8',
   },
   errorText: {
-    marginTop: 12,
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 20,
   },
   retryButton: {
-    marginTop: 16,
     backgroundColor: '#007bff',
-    paddingHorizontal: 16,
     paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 8,
   },
   retryButtonText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -420,6 +490,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor: '#f8f8f8',
   },
   emptyText: {
     marginTop: 12,
