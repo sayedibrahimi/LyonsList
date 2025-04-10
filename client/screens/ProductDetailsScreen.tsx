@@ -19,11 +19,15 @@ import { listingsService, Listing } from '../services/listingsService';
 import { useAuth } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
 import ReportListingModal from '../components/ReportListingModal';
+import ScreenHeader from '../components/ScreenHeader';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function ProductDetailsScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams();
   const productId = params.productId as string;
+
+  const colorScheme = useColorScheme();
   
   const [product, setProduct] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,18 +150,26 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, {
+        backgroundColor: colorScheme === 'dark' ? '#151718' : '#f8f9fa'
+      }]}>
         <ActivityIndicator size="large" color="#007bff" />
-        <Text style={styles.loadingText}>Loading product details...</Text>
+        <Text style={[styles.loadingText, {
+          color: colorScheme === 'dark' ? '#ECEDEE' : '#6c757d'
+        }]}>Loading product details...</Text>
       </View>
     );
   }
 
   if (error || !product) {
     return (
-      <View style={styles.errorContainer}>
+      <View style={[styles.errorContainer, {
+        backgroundColor: colorScheme === 'dark' ? '#151718' : '#f8f9fa'
+      }]}>
         <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
-        <Text style={styles.errorText}>{error || 'Product not found'}</Text>
+        <Text style={[styles.errorText, {
+          color: colorScheme === 'dark' ? '#ECEDEE' : '#6c757d'
+        }]}>{error || 'Product not found'}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchProductDetails}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -167,35 +179,33 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
   const favorited = isFavorite(product._id);
 
+  const headerRight = (
+    <View style={styles.headerActions}>
+      <TouchableOpacity 
+        style={styles.reportButton}
+        onPress={handleReport}
+      >
+        <Ionicons name="flag-outline" size={22} color={colorScheme === 'dark' ? '#ECEDEE' : '#333'} />
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.favoriteButton}
+        onPress={handleFavoriteToggle}
+      >
+        <Ionicons 
+          name={favorited ? "heart" : "heart-outline"} 
+          size={24} 
+          color={favorited ? "#ff6b6b" : colorScheme === 'dark' ? '#ECEDEE' : '#333'} 
+        />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>Product Details</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.reportButton}
-            onPress={handleReport}
-          >
-            <Ionicons name="flag-outline" size={22} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.favoriteButton}
-            onPress={handleFavoriteToggle}
-          >
-            <Ionicons 
-              name={favorited ? "heart" : "heart-outline"} 
-              size={24} 
-              color={favorited ? "#ff6b6b" : "#333"} 
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader 
+        title="Product Details" 
+        rightComponent={headerRight}
+      />
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
@@ -212,8 +222,12 @@ export default function ProductDetailsScreen(): React.ReactElement {
           )}
         </View>
 
-        <View style={styles.detailsContainer}>
-          <Text style={styles.productTitle}>{product.title}</Text>
+        <View style={[styles.detailsContainer, {
+          backgroundColor: colorScheme === 'dark' ? '#1e2022' : '#fff',
+        }]}>
+          <Text style={[styles.productTitle, {
+            color: colorScheme === 'dark' ? '#ECEDEE' : '#212529',
+          }]}>{product.title}</Text>
           <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
           
           <View style={styles.infoRow}>
@@ -228,13 +242,19 @@ export default function ProductDetailsScreen(): React.ReactElement {
           </View>
           
           <View style={styles.descriptionContainer}>
-            <Text style={styles.descriptionTitle}>Description</Text>
-            <Text style={styles.descriptionText}>{product.description}</Text>
+            <Text style={[styles.descriptionTitle, {
+              color: colorScheme === 'dark' ? '#ECEDEE' : '#212529',
+            }]}>Description</Text>
+            <Text style={[styles.descriptionText, {
+              color: colorScheme === 'dark' ? '#ECEDEE' : '#212529',
+            }]}>{product.description}</Text>
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, {
+        backgroundColor: colorScheme === 'dark' ? '#1e2022' : '#fff',
+      }]}>
         <TouchableOpacity 
           style={styles.replyButton}
           onPress={handleReply}
@@ -259,25 +279,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
   },
   backButton: {
     padding: 6,
