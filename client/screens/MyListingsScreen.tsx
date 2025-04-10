@@ -1,6 +1,6 @@
 // screens/MyListingsScreen.tsx
-// Purpose: This file contains the MyListingsScreen component, which displays the user's listings.
-// Description: The MyListingsScreen component fetches and displays the user's listings. It includes error handling, loading states, and a retry button. The user can navigate to create a new listing or view details of an existing listing.
+// Purpose: This file defines the MyListingsScreen component, which displays the user's listings in a list format.
+// Description: The MyListingsScreen component fetches the user's listings from the server and displays them in a FlatList. It handles loading states, error states, and empty states. Each listing can be clicked to navigate to its details page. The screen is styled for both iOS and Android platforms.
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -10,7 +10,10 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   StyleSheet,
-  Alert
+  Alert,
+  SafeAreaView,
+  Platform,
+  StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -18,6 +21,7 @@ import { tabStyles } from '../styles/tabStyles';
 import { listingsService, Listing } from '../services/listingsService';
 import { formatPrice } from '../utils/formatUtils';
 import { getTimeAgo } from '@/utils/dateUtils';
+import { getStatusBarHeight } from '../utils/statusBarHelper';
 
 export default function MyListingsScreen(): React.ReactElement {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -93,66 +97,73 @@ export default function MyListingsScreen(): React.ReactElement {
   };
 
   return (
-    <View style={tabStyles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Listings</Text>
-        <View style={{width: 24}} />
-      </View>
-      
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007bff" />
-          <Text style={styles.loadingText}>Loading your listings...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchMyListings}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : listings.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="basket-outline" size={48} color="#aaa" />
-          <Text style={styles.emptyText}>You don't have any listings yet</Text>
+    <SafeAreaView style={tabStyles.safeArea}>
+      <View style={tabStyles.container}>
+        <View style={styles.header}>
           <TouchableOpacity 
-            style={styles.createButton}
-            onPress={() => router.push('/(tabs)/post')}
+            onPress={() => router.back()} 
+            style={styles.backButton}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
-            <Text style={styles.createButtonText}>Create a Listing</Text>
+            <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>My Listings</Text>
+          <View style={{width: 24}} />
         </View>
-      ) : (
-        <FlatList
-          data={listings}
-          renderItem={renderListingItem}
-          keyExtractor={item => item._id}
-          style={styles.listingList}
-          contentContainerStyle={styles.listingListContent}
-          showsVerticalScrollIndicator={false}
-          refreshing={loading}
-          onRefresh={fetchMyListings}
-        />
-      )}
-    </View>
+        
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={styles.loadingText}>Loading your listings...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={fetchMyListings}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : listings.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="basket-outline" size={48} color="#aaa" />
+            <Text style={styles.emptyText}>You don't have any listings yet</Text>
+            <TouchableOpacity 
+              style={styles.createButton}
+              onPress={() => router.push('/(tabs)/post')}
+            >
+              <Text style={styles.createButtonText}>Create a Listing</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={listings}
+            renderItem={renderListingItem}
+            keyExtractor={item => item._id}
+            style={styles.listingList}
+            contentContainerStyle={styles.listingListContent}
+            showsVerticalScrollIndicator={false}
+            refreshing={loading}
+            onRefresh={fetchMyListings}
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  // [Existing styles remain unchanged]
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 16,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     backgroundColor: '#fff',
+    zIndex: 10,
   },
   headerTitle: {
     fontSize: 18,
@@ -160,6 +171,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
+    zIndex: 10,
   },
   listingList: {
     flex: 1,
