@@ -337,6 +337,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 6,
+    paddingRight: 25,
   },
   productDescription: {
     fontSize: 14,
