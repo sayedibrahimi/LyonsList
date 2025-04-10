@@ -1,7 +1,7 @@
 // client/components/ReportListingModal.tsx
-// Purpose: ReportListingModal component for reporting listings
-// Description: This file contains the ReportListingModal component that allows users to report listings. It includes a form for selecting a report category, providing additional details, and submitting the report. The component also handles displaying error messages and submission status.
-import React, { useState } from 'react';
+// Purpose: This file defines a modal component for reporting listings in the app.
+// Description: The ReportListingModal component allows users to select a category and provide additional details for reporting a listing. It handles form submission, error handling, and keyboard management. The modal is styled for both iOS and Android platforms.
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,11 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  ScrollView
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { reportService } from '../services/reportService';
@@ -33,8 +37,27 @@ const ReportListingModal: React.FC<ReportListingModalProps> = ({
   const [message, setMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [keyboardOpen, setKeyboardOpen] = useState<boolean>(false);
 
   const reportCategories = reportService.getReportCategories();
+
+  useEffect(() => {
+    // Add keyboard listeners
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardOpen(true)
+    );
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardOpen(false)
+    );
+
+    // Clean up listeners
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
+  }, []);
 
   const handleSubmit = async () => {
     if (!selectedCategory) {
@@ -75,6 +98,10 @@ const ReportListingModal: React.FC<ReportListingModalProps> = ({
     onClose();
   };
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
   return (
     <Modal
       visible={isVisible}
@@ -82,75 +109,88 @@ const ReportListingModal: React.FC<ReportListingModalProps> = ({
       transparent={true}
       onRequestClose={handleClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Report Listing</Text>
-            <TouchableOpacity onPress={handleClose}>
-              <Ionicons name="close" size={24} color="#333" />
-            </TouchableOpacity>
-          </View>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <View style={styles.modalOverlay}>
+            <View style={[
+              styles.modalContainer,
+              Platform.OS === 'ios' && keyboardOpen ? { marginBottom: 100 } : {}
+            ]}>
+              <View style={styles.header}>
+                <Text style={styles.headerTitle}>Report Listing</Text>
+                <TouchableOpacity onPress={handleClose}>
+                  <Ionicons name="close" size={24} color="#333" />
+                </TouchableOpacity>
+              </View>
 
-          <ScrollView style={styles.content}>
-            <Text style={styles.listingTitle}>{listingTitle}</Text>
-            
-            <Text style={styles.sectionTitle}>Why are you reporting this listing?</Text>
-            
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-            
-            {reportCategories.map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.categoryItem,
-                  selectedCategory === category && styles.selectedCategory
-                ]}
-                onPress={() => setSelectedCategory(category)}
+              <ScrollView 
+                style={styles.content}
+                contentContainerStyle={{ paddingBottom: 20 }}
+                keyboardShouldPersistTaps="handled"
               >
-                <Ionicons
-                  name={selectedCategory === category ? "radio-button-on" : "radio-button-off"}
-                  size={20}
-                  color={selectedCategory === category ? "#007BFF" : "#666"}
+                <Text style={styles.listingTitle}>{listingTitle}</Text>
+                
+                <Text style={styles.sectionTitle}>Why are you reporting this listing?</Text>
+                
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                
+                {reportCategories.map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.categoryItem,
+                      selectedCategory === category && styles.selectedCategory
+                    ]}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <Ionicons
+                      name={selectedCategory === category ? "radio-button-on" : "radio-button-off"}
+                      size={20}
+                      color={selectedCategory === category ? "#007BFF" : "#666"}
+                    />
+                    <Text style={styles.categoryText}>{category}</Text>
+                  </TouchableOpacity>
+                ))}
+                
+                <Text style={styles.sectionTitle}>Additional details (optional)</Text>
+                <TextInput
+                  style={styles.textArea}
+                  placeholder="Please provide any additional information that will help us review this listing"
+                  multiline
+                  numberOfLines={4}
+                  value={message}
+                  onChangeText={setMessage}
                 />
-                <Text style={styles.categoryText}>{category}</Text>
-              </TouchableOpacity>
-            ))}
-            
-            <Text style={styles.sectionTitle}>Additional details (optional)</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Please provide any additional information that will help us review this listing"
-              multiline
-              numberOfLines={4}
-              value={message}
-              onChangeText={setMessage}
-            />
-            <View style={{height: 30}} />
-          </ScrollView>
-          
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleClose}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.submitButtonText}>Submit Report</Text>
-              )}
-            </TouchableOpacity>
+              </ScrollView>
+              
+              <View style={styles.footer}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleClose}
+                  disabled={isSubmitting}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.submitButtonText}>Submit Report</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
-      </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -167,7 +207,14 @@ const styles = StyleSheet.create({
     maxHeight: '80%',
     backgroundColor: '#fff',
     borderRadius: 10,
-    overflow: 'hidden'
+    overflow: 'hidden',
+    // Add shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    // Add elevation for Android
+    elevation: 5,
   },
   header: {
     flexDirection: 'row',
@@ -183,7 +230,8 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   content: {
-    padding: 15
+    padding: 15,
+    maxHeight: Platform.OS === 'ios' ? '75%' : '75%',
   },
   listingTitle: {
     fontSize: 16,
@@ -221,7 +269,8 @@ const styles = StyleSheet.create({
     padding: 10,
     minHeight: 100,
     textAlignVertical: 'top',
-    fontSize: 16
+    fontSize: 16,
+    backgroundColor: '#fff'
   },
   footer: {
     flexDirection: 'row',
