@@ -1,6 +1,6 @@
 // client/screens/FavoritesScreen.tsx
-// Purpose: This file defines the FavoritesScreen component, which displays the user's favorite listings.
-// Description: The FavoritesScreen component fetches and displays the user's favorite listings. It includes functionality to remove items from favorites and handles loading and error states. The component uses the useFavorites hook to access the favorites context and manage the state of the favorites list.
+// Purpose: This code defines a FavoritesScreen component that displays a list of favorite items for a user. It includes functionality to remove items from favorites, handle loading and error states, and navigate to product details. The screen also adapts its appearance based on the user's theme preference (light or dark mode).
+// Description: The FavoritesScreen component uses React Native components to create a user interface that displays a list of favorite items. It utilizes hooks for managing state and side effects, such as loading data and handling errors. The screen also includes styles for both light and dark modes, ensuring a consistent user experience across different themes.
 import React, { useState } from 'react';
 import { 
   View, 
@@ -9,20 +9,25 @@ import {
   TouchableOpacity, 
   Image, 
   ActivityIndicator, 
-  StyleSheet 
+  StyleSheet,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { tabStyles } from '../styles/tabStyles';
+import { createTabStyles } from '../styles/tabStyles';
 import { Listing } from '../services/listingsService';
 import { useAuth } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
+import { useColorScheme } from '../hooks/useColorScheme';
 
 export default function FavoritesScreen(): React.ReactElement {
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
   const { user } = useAuth();
   const { favorites, loading, error, refreshFavorites, removeFavorite } = useFavorites();
+  const colorScheme = useColorScheme();
+  const tabStyles = createTabStyles(colorScheme);
+  const isDarkMode = colorScheme === 'dark';
 
   // Format price for display
   const formatPrice = (price: number) => {
@@ -34,7 +39,10 @@ export default function FavoritesScreen(): React.ReactElement {
     
     return (
       <TouchableOpacity 
-        style={styles.favoriteItem}
+        style={[
+          styles.favoriteItem,
+          isDarkMode && styles.darkFavoriteItem
+        ]}
         onPress={() => router.push({
           pathname: '/productDetails',
           params: { productId: item._id }
@@ -57,8 +65,14 @@ export default function FavoritesScreen(): React.ReactElement {
           />
         </View>
         <View style={styles.itemDetails}>
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
+          <Text style={[
+            styles.itemTitle,
+            isDarkMode && styles.darkText
+          ]}>{item.title}</Text>
+          <Text style={[
+            styles.itemPrice,
+            isDarkMode && { color: '#4a9eff' }
+          ]}>{formatPrice(item.price)}</Text>
         </View>
         <TouchableOpacity 
           style={styles.removeButton}
@@ -76,9 +90,15 @@ export default function FavoritesScreen(): React.ReactElement {
         <View style={tabStyles.header}>
           <Text style={tabStyles.headerTitle}>Your Favorites</Text>
         </View>
-        <View style={styles.notLoggedInContainer}>
-          <Ionicons name="lock-closed-outline" size={50} color="#999" />
-          <Text style={styles.notLoggedInText}>Please log in to view your favorites</Text>
+        <View style={[
+          styles.notLoggedInContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}>
+          <Ionicons name="lock-closed-outline" size={50} color={isDarkMode ? "#9BA1A6" : "#999"} />
+          <Text style={[
+            styles.notLoggedInText,
+            isDarkMode && styles.darkText
+          ]}>Please log in to view your favorites</Text>
           <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push('/auth/login')}
@@ -97,14 +117,26 @@ export default function FavoritesScreen(): React.ReactElement {
       </View>
       
       {loading ? (
-        <View style={styles.loadingContainer}>
+        <View style={[
+          styles.loadingContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}>
           <ActivityIndicator size="large" color="#007bff" />
-          <Text style={styles.loadingText}>Loading favorites...</Text>
+          <Text style={[
+            styles.loadingText,
+            isDarkMode && styles.darkText
+          ]}>Loading favorites...</Text>
         </View>
       ) : error ? (
-        <View style={styles.errorContainer}>
+        <View style={[
+          styles.errorContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}>
           <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[
+            styles.errorText,
+            isDarkMode && styles.darkText
+          ]}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={refreshFavorites}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
@@ -114,15 +146,28 @@ export default function FavoritesScreen(): React.ReactElement {
           data={favorites}
           keyExtractor={(item) => item._id}
           renderItem={renderFavoriteItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            isDarkMode && { backgroundColor: '#151718' }
+          ]}
           refreshing={loading}
           onRefresh={refreshFavorites}
+          style={isDarkMode ? { backgroundColor: '#151718' } : undefined}
         />
       ) : (
-        <View style={tabStyles.placeholderContent}>
-          <Ionicons name="heart-outline" size={50} color="#999" />
-          <Text style={tabStyles.placeholderText}>No favorites yet</Text>
-          <Text style={styles.emptyStateText}>
+        <View style={[
+          tabStyles.placeholderContent,
+          isDarkMode && { backgroundColor: '#1E2022' }
+        ]}>
+          <Ionicons name="heart-outline" size={50} color={isDarkMode ? "#9BA1A6" : "#999"} />
+          <Text style={[
+            tabStyles.placeholderText,
+            isDarkMode && styles.darkText
+          ]}>No favorites yet</Text>
+          <Text style={[
+            styles.emptyStateText,
+            isDarkMode && styles.darkSubText
+          ]}>
             Save items you like by tapping the heart icon
           </Text>
           <TouchableOpacity
@@ -154,6 +199,11 @@ const styles = StyleSheet.create({
     elevation: 3,
     alignItems: 'center',
   },
+  darkFavoriteItem: {
+    backgroundColor: '#1E2022',
+    borderColor: '#333',
+    shadowOpacity: 0.2,
+  },
   imageContainer: {
     width: 70,
     height: 70,
@@ -176,10 +226,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginBottom: 6,
+    color: '#333',
+  },
+  darkText: {
+    color: '#ECEDEE',
+  },
+  darkSubText: {
+    color: '#9BA1A6',
   },
   itemPrice: {
     fontSize: 15,
-    color: '#007BFF',
+    fontWeight: '700',
+    color: '#007bff',
+  },
+  timeAgo: {
+    fontSize: 12,
+    color: '#999',
+  },
+  badgeNew: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: '#2ecc71',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
     fontWeight: '700',
   },
   removeButton: {
@@ -205,31 +280,31 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   loadingText: {
+    marginTop: 12,
     fontSize: 16,
     color: '#666',
-    marginTop: 12,
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 20,
   },
   errorText: {
+    marginTop: 12,
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 20,
   },
   retryButton: {
+    marginTop: 16,
     backgroundColor: '#007bff',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    paddingHorizontal: 20,
     borderRadius: 8,
   },
   retryButtonText: {
