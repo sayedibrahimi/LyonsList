@@ -1,21 +1,20 @@
 // app/_layout.tsx
-// Purpose: This file serves as the root layout for the application, providing a consistent structure and theme across all screens.
-// Description: The RootLayout component wraps the entire application in a theme provider and includes authentication and favorites context providers. It also handles splash screen visibility and status bar configuration.
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+// Purpose: This file defines the root layout for the app.
+// Description: It sets up the main navigation structure and theme provider for the app.
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import StackNavigator from '../components/StackNavigator';
 import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { AuthProvider } from '../context/AuthContext';
-import { FavoritesProvider } from '@/context/FavoritesContext';
 import { StatusBar } from 'react-native';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider } from '../context/ThemeContext';
+import { AuthProvider } from '../context/AuthContext';
+import { FavoritesProvider } from '@/context/FavoritesContext';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -37,6 +36,25 @@ export default function RootLayout() {
 
   if (!isReady) return null;
 
+  return (
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <FavoritesProvider>
+            <RootLayoutContent />
+          </FavoritesProvider>
+        </AuthProvider>
+      </SafeAreaProvider>
+    </ThemeProvider>
+  );
+}
+
+// This component uses the theme context after it's established
+function RootLayoutContent() {
+  // Import useColorScheme here since it now has access to ThemeProvider
+  const { useColorScheme } = require('@/hooks/useColorScheme');
+  const colorScheme = useColorScheme();
+
   // Configure the status bar globally
   if (Platform.OS === 'android') {
     StatusBar.setTranslucent(true);
@@ -45,14 +63,8 @@ export default function RootLayout() {
   StatusBar.setBarStyle(colorScheme === 'dark' ? 'light-content' : 'dark-content');
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <FavoritesProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <StackNavigator />
-          </ThemeProvider>
-        </FavoritesProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <NavigationThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <StackNavigator />
+    </NavigationThemeProvider>
   );
 }
