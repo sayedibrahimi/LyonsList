@@ -1,31 +1,51 @@
 // app/(tabs)/_layout.tsx
-// Purpose: This file defines the layout for the tab navigation in the app, including the tab bar and its screens.
-// Description: The TabLayout component uses the Expo Router's Tabs component to create a tabbed navigation interface. Each tab has an icon and label, and the layout is adjusted for safe area insets to avoid overlapping with system UI elements like the status bar.
+// Purpose: This file defines the layout for the tab navigation in the app.
+// Description: It sets up the tab bar with different screens and their respective icons.
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { View, Platform, StatusBar } from 'react-native';
+import { View, Platform, StatusBar, useColorScheme as useSystemColorScheme } from 'react-native';
 import { useColorScheme } from '../../hooks/useColorScheme';
 
 export default function TabLayout(): React.ReactElement {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
+  
+  // Try to use our custom hook, fall back to system if not available
+  let colorScheme: string;
+  try {
+    colorScheme = useColorScheme();
+  } catch (error) {
+    // Fall back to system color scheme if our hook fails
+    colorScheme = useSystemColorScheme() || 'light';
+  }
+  
+  const isDarkMode = colorScheme === 'dark';
   
   // Set status bar properties for Android
   if (Platform.OS === 'android') {
     StatusBar.setTranslucent(true);
     StatusBar.setBackgroundColor('transparent');
-    StatusBar.setBarStyle(colorScheme === 'dark' ? 'light-content' : 'dark-content');
+    StatusBar.setBarStyle(isDarkMode ? 'light-content' : 'dark-content');
   } else {
-    StatusBar.setBarStyle(colorScheme === 'dark' ? 'light-content' : 'dark-content');
+    StatusBar.setBarStyle(isDarkMode ? 'light-content' : 'dark-content');
   }
   
   return (
-    <View style={{ flex: 1, paddingTop: insets.top,  backgroundColor: colorScheme === 'dark' ? '#151718' : '#ffffff',  }}>
+    <View style={{ 
+      flex: 1, 
+      paddingTop: insets.top, 
+      backgroundColor: isDarkMode ? '#151718' : '#ffffff',
+    }}>
       <Tabs 
         screenOptions={{ 
           headerShown: false,
           tabBarHideOnKeyboard: true,
+          tabBarStyle: {
+            backgroundColor: isDarkMode ? '#1e2022' : '#ffffff',
+            borderTopColor: isDarkMode ? '#333' : '#eee',
+          },
+          tabBarActiveTintColor: '#007BFF',
+          tabBarInactiveTintColor: isDarkMode ? '#9BA1A6' : '#687076',
         }}
       >
         <Tabs.Screen
