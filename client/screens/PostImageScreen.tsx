@@ -388,15 +388,7 @@
 // screens/PostImageScreen.tsx
 import React, { useState, useRef } from 'react';
 import type { CameraView as CameraViewType } from 'expo-camera';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Modal,
-  Platform,
-  Alert
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Alert, SafeAreaView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Camera, CameraView } from 'expo-camera';
@@ -453,23 +445,60 @@ export default function PostImageScreen(): React.ReactElement {
     await requestCameraPermission();
   };
 
-  const processImage = async (uri: string): Promise<{ uri: string, base64: string }> => {
+  // const processImage = async (uri: string): Promise<{ uri: string, base64: string }> => {
+  //   // Compress and resize the image to a much smaller size
+  //   const processedImage = await ImageManipulator.manipulateAsync(
+  //     uri,
+  //     [{ resize: { width: 600 } }], // Smaller width = smaller file
+  //     {
+  //       compress: 0.5, // Higher compression = smaller file
+  //       format: ImageManipulator.SaveFormat.JPEG,
+  //       base64: true
+  //     }
+  //   );
+    
+  //   return {
+  //     uri: processedImage.uri,
+  //     base64: processedImage.base64 || ''
+  //   };
+  // };
+
+  // Modify the processImage function in PostImageScreen.tsx
+const processImage = async (uri: string): Promise<{ uri: string, base64: string }> => {
+  // Higher compression for iOS devices due to their typically larger image files
+  const compressionValue = Platform.OS === 'ios' ? 0.3 : 0.5;
+  
+  // Resize to a more moderate size - 800px wide instead of 600px
+  const maxWidth = 800;
+  
+  try {
     // Compress and resize the image to a much smaller size
     const processedImage = await ImageManipulator.manipulateAsync(
       uri,
-      [{ resize: { width: 600 } }], // Smaller width = smaller file
+      [{ resize: { width: maxWidth } }], // Wider width = better quality but still manageable size
       {
-        compress: 0.5, // Higher compression = smaller file
+        compress: compressionValue, // Higher compression = smaller file
         format: ImageManipulator.SaveFormat.JPEG,
         base64: true
       }
     );
     
+    // Verify the base64 string is present
+    if (!processedImage.base64) {
+      throw new Error('Base64 encoding failed');
+    }
+    
+    console.log(`Processed image: width=${processedImage.width}, height=${processedImage.height}, base64 length=${processedImage.base64.length}`);
+    
     return {
       uri: processedImage.uri,
-      base64: processedImage.base64 || ''
+      base64: processedImage.base64
     };
-  };
+  } catch (error) {
+    console.error('Error processing image:', error);
+    throw error;
+  }
+};
 
   const handleTakePicture = async () => {
     if (cameraRef.current) {
@@ -530,14 +559,19 @@ export default function PostImageScreen(): React.ReactElement {
   };
 
   return (
-    <View style={[styles.container, isDarkMode && styles.darkContainer]}>
-      <View style={[styles.header, isDarkMode && styles.darkHeader]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, isDarkMode && styles.darkText]}>Create Listing</Text>
-        <View style={{width: 24}} />
-      </View>
+    <SafeAreaView style={[styles.safeAreaContainer, isDarkMode && styles.darkContainer]}>
+      <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+        <View style={[styles.header, isDarkMode && styles.darkHeader]}>
+          <TouchableOpacity 
+            onPress={() => router.back()} 
+            style={styles.backButton}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} // Increase touch area
+          >
+            <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, isDarkMode && styles.darkText]}>Create Listing</Text>
+          <View style={{width: 24}} />
+        </View>
       
       <View style={[styles.content, isDarkMode && styles.darkContent]}>
         <Text style={[styles.title, isDarkMode && styles.darkText]}>What are you selling?</Text>
@@ -629,10 +663,19 @@ export default function PostImageScreen(): React.ReactElement {
         </View>
       </Modal>
     </View>
+    </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
+  safeAreaContainer: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+  },
+  backButton: {
+    padding: 12, // Increase padding for easier tapping
+    zIndex: 10,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
@@ -664,9 +707,6 @@ const styles = StyleSheet.create({
   },
   darkSubText: {
     color: '#9BA1A6',
-  },
-  backButton: {
-    padding: 8,
   },
   content: {
     flex: 1,
