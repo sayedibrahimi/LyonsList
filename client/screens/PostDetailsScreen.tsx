@@ -772,8 +772,8 @@ export default function PostDetailsScreen(): React.ReactElement {
       return;
     }
     
-    if (description.length > 500) {
-      Alert.alert('Error', 'Description must be 500 characters or less');
+    if (description.length > 1000) {
+      Alert.alert('Error', 'Description must be 1000 characters or less');
       return;
     }
     
@@ -911,23 +911,23 @@ export default function PostDetailsScreen(): React.ReactElement {
             <View style={styles.labelRow}>
               <Text style={[styles.labelText, isDarkMode && styles.darkText]}>Description</Text>
               <Text style={[styles.charCount, isDarkMode && styles.darkSubText]}>
-                {descriptionCharCount}/500
+                {descriptionCharCount}/1000
               </Text>
             </View>
             <TextInput
-              style={[
-                styles.textArea,
-                descriptionCharCount > 500 ? styles.inputError : null,
-                isDarkMode && styles.darkInput
-              ]}
-              placeholder="Describe your item"
-              placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
-              multiline
-              numberOfLines={4}
-              value={description}
-              onChangeText={setDescription}
-              maxLength={520} // Allow slightly over to show the error
-            />
+  style={[
+    styles.textArea,
+    descriptionCharCount > 1000 ? styles.inputError : null,
+    isDarkMode && styles.darkInput
+  ]}
+  placeholder="Describe your item"
+  placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
+  multiline
+  numberOfLines={6} // Changed from 4 to 6
+  value={description}
+  onChangeText={setDescription}
+  maxLength={1000} // Increased from 520 to 1020
+/>
             
             <Text style={[styles.labelText, isDarkMode && styles.darkText]}>Price</Text>
             <View style={[styles.priceInputContainer, isDarkMode && styles.darkPriceInputContainer]}>
@@ -1193,16 +1193,16 @@ const styles = StyleSheet.create({
     color: '#ECEDEE',
   },
   textArea: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e1e1e1',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
-    minHeight: 120,
-    textAlignVertical: 'top',
-  },
+  backgroundColor: '#fff',
+  borderWidth: 1,
+  borderColor: '#e1e1e1',
+  borderRadius: 8,
+  padding: 12,
+  fontSize: 16,
+  marginBottom: 16,
+  minHeight: 160, // Changed from 120 to 160
+  textAlignVertical: 'top',
+},
   inputError: {
     borderColor: '#dc3545',
   },
