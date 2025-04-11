@@ -29,7 +29,7 @@ const ListingSchema: Schema<ListingModel> = new Schema<ListingModel>(
       type: String,
       required: [true, ListingMessages.MISSING_DESCRIPTION],
       trim: true,
-      maxlength: [500, ListingMessages.DESCRIPTION_TOO_LONG], // Ensure description is not more than 500 characters
+      maxlength: [1000, ListingMessages.DESCRIPTION_TOO_LONG], // Ensure description is not more than 500 characters
     },
     pictures: {
       // Changed from picture to pictures
