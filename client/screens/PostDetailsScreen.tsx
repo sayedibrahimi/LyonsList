@@ -626,7 +626,8 @@ import {
   ActivityIndicator,
   Switch,
   Platform,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  SafeAreaView, StatusBar
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -835,9 +836,14 @@ export default function PostDetailsScreen(): React.ReactElement {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
       <View style={[styles.container, isDarkMode && styles.darkContainer]}>
         <View style={[styles.header, isDarkMode && styles.darkHeader]}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => router.back()}
+            hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }} // Increase touch area
+          >
             <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, isDarkMode && styles.darkText]}>Create Listing</Text>
@@ -1018,11 +1024,17 @@ export default function PostDetailsScreen(): React.ReactElement {
           <View style={{ height: 30 }} />
         </ScrollView>
       </View>
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeAreaContainer: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
@@ -1056,7 +1068,8 @@ const styles = StyleSheet.create({
     color: '#9BA1A6',
   },
   backButton: {
-    padding: 8,
+    padding: 12, // Increase padding for easier tapping
+    zIndex: 10,
   },
   content: {
     flex: 1,
