@@ -26,7 +26,7 @@ api.interceptors.request.use(
     console.log('Request URL:', config.url);
     console.log('Request Method:', config.method);
     console.log('Request Headers:', config.headers);
-    console.log('Request Data:', config.data);
+    // console.log('Request Data:', config.data);
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -44,7 +44,7 @@ api.interceptors.response.use(
   (response) => {
     // Logs for debugging purposes
     console.log('Response Status:', response.status);
-    console.log('Response Data:', response.data);
+    // console.log('Response Data:', response.data);
     return response},
   async (error) => {
     // Handle unauthorized errors (401)
@@ -125,7 +125,7 @@ export const apiService = {
     mimeType: string = 'image/jpeg'
   ): Promise<T> => {
     try {
-      console.log("Using image, base64 length:", imageBase64 ? imageBase64.length : 0);
+      // console.log("Using image, base64 length:", imageBase64 ? imageBase64.length : 0);
       
       if (!imageBase64) {
         throw new Error('No base64 image data available');
@@ -144,7 +144,7 @@ export const apiService = {
       console.log("Attempting to connect to:", BASE_URL + apiUrl);
       
       const response: AxiosResponse<T> = await api.post(apiUrl, jsonPayload);
-      console.log('Upload response received:', response.data);
+      // console.log('Upload response received:', response.data);
       
       return response.data;
     } catch (error) {
