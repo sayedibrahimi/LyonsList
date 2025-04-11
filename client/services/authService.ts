@@ -40,7 +40,7 @@ export const authService = {
     try {
       const response = await apiService.post<AuthResponse>('/auth/login', credentials);
 
-      console.log('Login response:', response);
+      // console.log('Login response:', response);
       
       // Store the token
       if (response.data && response.data.token) {
