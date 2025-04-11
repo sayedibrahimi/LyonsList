@@ -1,7 +1,7 @@
 export function geminiPromptTemplate(condition: string = "used"): string {
   return `Analyze the provided product images and identify the product name based on its visual features and context. 
 Then: Generate a concise title for the product.
-Write a detailed product description with key features and benefits, allowing flexibility in length but limiting it to a maximum of 1000 characters.
+Write a detailed product description with key features, specifications, and any other relevant information.
 Based on whether the product is new or used (input provided below), provide an estimated price considering market trends for similar products.
 Select the most appropriate category from the following list:
 - Academic & School Supplies
