@@ -1,7 +1,6 @@
 // screens/PostScreen.tsx
 // Purpose: This file defines the PostScreen component.
 // Description: It provides a UI for creating a new listing with options to take a photo and fill in details using AI.
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -16,8 +15,20 @@ export default function PostScreen(): React.ReactElement {
 
   return (
     <View style={tabStyles.container}>
-      <View style={tabStyles.header}>
-        <Text style={tabStyles.headerTitle}>Create Listing</Text>
+      <View style={[tabStyles.header, { flexDirection: 'row', alignItems: 'center' }]}>
+        <TouchableOpacity 
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons 
+            name="arrow-back" 
+            size={24} 
+            color={isDarkMode ? '#ECEDEE' : '#333'} 
+          />
+        </TouchableOpacity>
+        <Text style={[tabStyles.headerTitle, { flex: 1, textAlign: 'center' }]}>Create Listing</Text>
+        {/* Empty view for balance */}
+        <View style={{ width: 24 }} /> 
       </View>
       
       <View style={styles.container}>
@@ -87,6 +98,10 @@ export default function PostScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
+   backButton: {
+    padding: 10,
+    zIndex: 1,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
