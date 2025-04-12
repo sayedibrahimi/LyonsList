@@ -1,8 +1,8 @@
-# Wheaton Marketplace
+# LyonsList
 
 ## Overview
 
-Wheaton Marketplace is a mobile application designed for college students to buy and sell items within the campus community. This platform creates a safe and convenient marketplace specifically tailored to the Wheaton College community.
+LyonsList is a mobile application designed for college students to buy and sell items within the campus community. This platform creates a safe and convenient marketplace specifically tailored to the Wheaton College community.
 
 ## Features
 
