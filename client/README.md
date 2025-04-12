@@ -1,6 +1,6 @@
-# Wheaton Marketplace - Mobile Client
+# LyonsList - Mobile Client
 
-This is the frontend mobile application for the Wheaton Marketplace platform, built with React Native, Expo, and TypeScript.
+This is the frontend mobile application for the LyonsList platform, built with React Native, Expo, and TypeScript.
 
 ## Features
 
@@ -44,8 +44,8 @@ client/
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/your-username/wheaton-marketplace.git
-   cd wheaton-marketplace/client
+   git clone https://github.com/your-username/lyons-list.git
+   cd lyons-list/client
    ```
 
 2. Install dependencies
