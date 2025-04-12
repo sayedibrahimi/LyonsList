@@ -1,6 +1,6 @@
-# Wheaton Marketplace - Server API
+# LyonsList - Server API
 
-This is the backend API server for the Wheaton Marketplace platform, built with Node.js, Express, MongoDB, and TypeScript.
+This is the backend API server for the LyonsList platform, built with Node.js, Express, MongoDB, and TypeScript.
 
 ## Features
 
@@ -49,8 +49,8 @@ server/
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/your-username/wheaton-marketplace.git
-   cd wheaton-marketplace/server
+   git clone https://github.com/your-username/lyons-list.git
+   cd lyons-list/server
    ```
 
 2. Install dependencies
@@ -62,7 +62,7 @@ server/
 3. Create a `.env` file in the root directory with the following variables:
    ```
    PORT=3000
-   MONGO_URI=mongodb://localhost:27017/wheaton-marketplace
+   MONGO_URI=mongodb://localhost:27017/lyons-list
    JWT_SECRET=your_jwt_secret_key
    JWT_LIFETIME_HOURS=24
    EMAIL=your_gmail_address@gmail.com
