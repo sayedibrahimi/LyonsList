@@ -1,6 +1,6 @@
 // client/screens/NewPasswordScreen.tsx
-// Purpose: This file contains the NewPasswordScreen component, which allows users to set a new password after verifying their OTP. It includes form validation, error handling, and navigation to the login screen.
-// Description: The NewPasswordScreen component uses React Native components to create a user interface for setting a new password. It includes text inputs for the new password and confirmation, a button to submit the new password, and error messages for invalid input or server errors. The component also handles navigation using the Expo Router and manages loading states during the submission process.
+// Purpose: This file contains the NewPasswordScreen component that allows users to set a new password after verifying their email. It includes input validation, error handling, and navigation to the login screen upon successful password reset.
+// Description: The NewPasswordScreen component provides a user interface for entering a new password and confirming it. It handles form submission, displays loading indicators, and shows error messages when necessary. The component also includes navigation to the login screen after successful password reset.
 import React, { useState } from 'react';
 import { 
   View, 
