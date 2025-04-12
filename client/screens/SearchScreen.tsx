@@ -1,6 +1,6 @@
 // client/screens/SearchScreen.tsx
-// Purpose: This code implements a search screen for a marketplace app using React Native. It includes features like searching for products, displaying product details, and managing favorites. The screen is styled based on the current theme (light or dark mode) and handles loading states and errors gracefully.
-// Description: The SearchScreen component fetches product listings from an API, allows users to search through them, and displays the results in a list. It also provides functionality to mark products as favorites and handles image loading errors. The screen is responsive to the user's theme preference (light or dark mode) and includes a search bar for user input.
+// Purpose: This file contains the SearchScreen component that allows users to search for products in a marketplace. It includes a search bar, product listing, and handles dark mode styling. The component uses React Native's built-in components and hooks for state management and navigation.
+// Description: The SearchScreen component fetches product listings from an API, filters them based on the search query, and displays them in a list. It handles loading states, error handling, and empty state scenarios. The component also utilizes custom hooks for authentication and favorites management, and it applies styles based on the current color scheme (light or dark mode).
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
