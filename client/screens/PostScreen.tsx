@@ -1,6 +1,6 @@
 // screens/PostScreen.tsx
-// Purpose: This file defines the PostScreen component.
-// Description: It provides a UI for creating a new listing with options to take a photo and fill in details using AI.
+// Purpose: This file contains the PostScreen component that allows users to create a new listing by taking a photo of an item. It includes a header, a button to navigate to the image upload screen, and a list of benefits for using the feature. The component uses React Native's built-in components and hooks for state management and navigation.
+// Description: The PostScreen component provides a user interface for creating a new listing. It includes a header with a back button, an icon indicating the action, and a button to navigate to the image upload screen. The component also lists the benefits of using the feature, such as taking a photo, AI assistance, and quick posting. The component handles dark mode styling using a custom hook for color scheme detection.
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
