@@ -1,6 +1,6 @@
 // client/screens/ForgotPasswordScreen.tsx
-// Purpose: This file contains the ForgotPasswordScreen component, which allows users to request a password reset by entering their email address. It includes form validation, error handling, and navigation to the OTP verification screen.
-// Description: The ForgotPasswordScreen component uses React Native components to create a user interface for password reset. It includes a text input for the email address, a button to send the verification code, and error messages for invalid input or server errors. The component also handles navigation using the Expo Router and manages loading states during the submission process.
+// Purpose: This file contains the ForgotPasswordScreen component that allows users to request a password reset. It includes input validation, error handling, and navigation to the OTP verification screen. The component uses React Native's built-in components and hooks for state management and navigation.
+// Description: The ForgotPasswordScreen component provides a user interface for entering an email address to receive a password reset link. It handles form submission, displays loading indicators, and shows error messages when necessary. The component also includes navigation to the login screen.
 import React, { useState } from 'react';
 import { 
   View, 
