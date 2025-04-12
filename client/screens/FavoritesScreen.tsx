@@ -1,6 +1,6 @@
 // client/screens/FavoritesScreen.tsx
-// Purpose: This code defines a FavoritesScreen component that displays a list of favorite items for a user. It includes functionality to remove items from favorites, handle loading and error states, and navigate to product details. The screen also adapts its appearance based on the user's theme preference (light or dark mode).
-// Description: The FavoritesScreen component uses React Native components to create a user interface that displays a list of favorite items. It utilizes hooks for managing state and side effects, such as loading data and handling errors. The screen also includes styles for both light and dark modes, ensuring a consistent user experience across different themes.
+// Purpose: This file contains the FavoritesScreen component that displays a list of favorite items for the logged-in user. It allows users to view, remove, and refresh their favorite items. The component handles loading states, error handling, and dark mode styling.
+// Description: The FavoritesScreen component uses a FlatList to render the list of favorite items. It includes a header, loading indicator, error message, and empty state handling. The component also utilizes custom hooks for authentication and favorites management, and it applies styles based on the current color scheme (light or dark mode).
 import React, { useState } from 'react';
 import { 
   View, 
