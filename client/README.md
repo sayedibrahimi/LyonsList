@@ -44,7 +44,7 @@ client/
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/your-username/lyons-list.git
+   git clone https://github.com/sayedibrahimi/LyonsList.git
    cd lyons-list/client
    ```
 
