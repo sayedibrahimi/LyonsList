@@ -22,6 +22,7 @@ import favoriteRoutes from "./routes/favorites.route";
 import uploadRoutes from "./routes/upload.route";
 import resetRoutes from "./routes/resetPassword.route";
 import supportRoutes from "./routes/support.route";
+import messageRoutes from "./routes/messages.route";
 // import OTPRoutes from "./routes/otp.route";
 // import userRoutes from "./routes/admin.users.route";
 
@@ -29,7 +30,7 @@ import supportRoutes from "./routes/support.route";
 const apiRouter: express.Router = express.Router();
 
 // create express app
-const app: express.Application = express();
+import { app, server } from "./db/socket";
 
 // app use
 app.use(express.json());
@@ -51,14 +52,12 @@ apiRouter.use("/favorites", auth, favoriteRoutes);
 apiRouter.use("/upload", auth, uploadRoutes);
 apiRouter.use("/reset", resetRoutes);
 apiRouter.use("/support", auth, supportRoutes);
+apiRouter.use("/messages", auth, messageRoutes);
 // apiRouter.use("/otp", OTPRoutes);
 // apiRouter.use("/users", userRoutes);
 
 app.use(notFound);
 app.use(errorHandlerMiddleware);
-
-export default app;
-import server from "./db/socket";
 
 // connect to the database
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 3000;

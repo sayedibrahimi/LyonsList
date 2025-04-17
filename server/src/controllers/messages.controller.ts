@@ -2,8 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import Message, { MessageModel } from "../models/messages.model";
 // import { requestAuth } from "../utils/requestAuth";
 import { StatusCodes } from "http-status-codes";
-import { BadRequestError, NotFoundError, ControllerError } from "../errors";
-import ErrorMessages from "../constants/errorMessages";
+import {
+  /* BadRequestError, NotFoundError, */ ControllerError,
+} from "../errors";
+// import ErrorMessages from "../constants/errorMessages";
 import { sendSuccess } from "../utils/sendResponse";
 import SuccessMessages from "../constants/successMessages";
 import { getSocketID } from "../db/socket";
