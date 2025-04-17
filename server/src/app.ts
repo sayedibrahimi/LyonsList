@@ -57,6 +57,9 @@ apiRouter.use("/support", auth, supportRoutes);
 app.use(notFound);
 app.use(errorHandlerMiddleware);
 
+export default app;
+import server from "./db/socket";
+
 // connect to the database
 const PORT: number = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 const start: () => Promise<void> = async () => {
@@ -66,7 +69,7 @@ const start: () => Promise<void> = async () => {
     console.log("Connected to the database");
 
     // start server
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });
   } catch (error: unknown) {
