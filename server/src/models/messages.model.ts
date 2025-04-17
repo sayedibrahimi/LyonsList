@@ -1,8 +1,9 @@
 import mongoose, { Schema, Model, Document } from "mongoose";
 
-export interface MessageInterface extends Document {
+export interface MessageModel extends Document {
   _id: string;
   senderID: Schema.Types.ObjectId;
+  receiverID: Schema.Types.ObjectId;
   listingID: Schema.Types.ObjectId;
   chatID: Schema.Types.ObjectId;
   content: string;
@@ -12,9 +13,14 @@ export interface MessageInterface extends Document {
   updatedAt: Date;
 }
 
-const MessageSchema: Schema<MessageInterface> = new Schema<MessageInterface>(
+const MessageSchema: Schema<MessageModel> = new Schema<MessageModel>(
   {
     senderID: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+    receiverID: {
       type: Schema.Types.ObjectId,
       required: true,
       ref: "User",
@@ -47,7 +53,7 @@ const MessageSchema: Schema<MessageInterface> = new Schema<MessageInterface>(
   }
 );
 
-const MessageModel: Model<MessageInterface> = mongoose.model<MessageInterface>(
+const MessageModel: Model<MessageModel> = mongoose.model<MessageModel>(
   "Message",
   MessageSchema
 );
