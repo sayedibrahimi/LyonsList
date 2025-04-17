@@ -2,7 +2,8 @@
 import { Server, Socket } from "socket.io";
 import http from "http";
 import { Server as SocketIOServer } from "socket.io";
-import app from "../app";
+import express from "express";
+const app: express.Application = express();
 
 const server: http.Server = http.createServer(app);
 const io: SocketIOServer = new Server(server, {
@@ -50,4 +51,4 @@ io.on("connection", (socket: Socket) => {
   });
 });
 
-export default server;
+export { app, server, io };
