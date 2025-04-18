@@ -23,13 +23,9 @@ export async function getAllListings(
 
     // TODO uncomment this line to allow user to see their own listings
     // reverse order for newer listings to be on top
-    const allListings: ListingModel[] = await Listing
-      .find
-      //   {
-      //   sellerID: { $ne: new Types.ObjectId(UserReqID) },
-      // }
-      ()
-      .sort({ createdAt: -1 }); // Sort by createdAt field in descending order
+    const allListings: ListingModel[] = await Listing.find({
+      status: "available", // Filter listings with status: available
+    }).sort({ createdAt: -1 }); // Sort by createdAt field in descending order
 
     if (!allListings || allListings.length === 0) {
       throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);

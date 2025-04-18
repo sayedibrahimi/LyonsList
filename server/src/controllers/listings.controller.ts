@@ -80,7 +80,7 @@ export async function getAllUsersListings(
 
     const allListings: ListingModel[] = await Listing.find({
       sellerID: UserReqID,
-    });
+    }).sort({ createdAt: -1 });
 
     sendSuccess(res, SuccessMessages.LISTINGS_SUCCESS_FETCHED, StatusCodes.OK, {
       listings: allListings,
