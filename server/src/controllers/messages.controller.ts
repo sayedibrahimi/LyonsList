@@ -31,6 +31,7 @@ export async function createMessage(
     const savedMessage: MessageModel = await newMessage.save();
 
     const socketID: Socket | undefined = getSocketID(receiverID);
+    // display all sockcet ids
     if (socketID) {
       socketID.emit("message", savedMessage);
     } else {
