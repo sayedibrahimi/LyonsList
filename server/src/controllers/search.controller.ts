@@ -24,7 +24,7 @@ export async function getAllListings(
     // TODO uncomment this line to allow user to see their own listings
     // reverse order for newer listings to be on top
     const allListings: ListingModel[] = await Listing.find({
-      status: "available", // Filter for listings with status "available"
+      status: "available", // Filter listings with status: available
     }).sort({ createdAt: -1 }); // Sort by createdAt field in descending order
 
     if (!allListings || allListings.length === 0) {
