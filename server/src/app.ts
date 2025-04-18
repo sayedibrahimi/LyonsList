@@ -22,7 +22,7 @@ import favoriteRoutes from "./routes/favorites.route";
 import uploadRoutes from "./routes/upload.route";
 import resetRoutes from "./routes/resetPassword.route";
 import supportRoutes from "./routes/support.route";
-import messageRoutes from "./routes/messages.route";
+import chatRoutes from "./routes/chat.route";
 // import OTPRoutes from "./routes/otp.route";
 // import userRoutes from "./routes/admin.users.route";
 
@@ -52,7 +52,7 @@ apiRouter.use("/favorites", auth, favoriteRoutes);
 apiRouter.use("/upload", auth, uploadRoutes);
 apiRouter.use("/reset", resetRoutes);
 apiRouter.use("/support", auth, supportRoutes);
-apiRouter.use("/messages", auth, messageRoutes);
+apiRouter.use("/chat", auth, chatRoutes);
 // apiRouter.use("/otp", OTPRoutes);
 // apiRouter.use("/users", userRoutes);
 

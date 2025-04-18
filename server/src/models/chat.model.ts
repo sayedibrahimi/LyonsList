@@ -4,8 +4,8 @@ import mongoose, { Schema, Model, Document } from "mongoose";
 export interface ChatModel extends Document {
   _id: string;
   listingID: Schema.Types.ObjectId;
-  senderID: Schema.Types.ObjectId;
-  receiverID: Schema.Types.ObjectId;
+  sellerID: Schema.Types.ObjectId;
+  buyerID: Schema.Types.ObjectId;
   lastMessage: string;
   lastMessageTimestamp: Date;
   createdAt: Date;
@@ -18,24 +18,24 @@ const ChatSchema: Schema<ChatModel> = new Schema<ChatModel>({
     required: true,
     ref: "Listing",
   },
-  senderID: {
+  sellerID: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: "User",
   },
-  receiverID: {
+  buyerID: {
     type: Schema.Types.ObjectId,
     required: true,
     ref: "User",
   },
   lastMessage: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   lastMessageTimestamp: {
     type: Date,
-    required: true,
+    required: false,
     default: Date.now,
   },
   createdAt: {
