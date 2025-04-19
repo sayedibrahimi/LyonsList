@@ -13,7 +13,7 @@ import {
 import { sendSuccess } from "../utils/sendResponse";
 import SuccessMessages from "../constants/successMessages";
 import { getSocketID } from "../db/socket";
-import { Socket } from "socket.io";
+import { io } from "../db/socket";
 
 export async function createMessage(
   req: Request,
@@ -34,10 +34,16 @@ export async function createMessage(
     });
     const savedMessage: MessageModel = await newMessage.save();
 
-    const socketID: Socket | undefined = getSocketID(receiverID);
+    const receiverSocketID: string | undefined = getSocketID(receiverID);
     // display all sockcet ids
-    if (socketID) {
-      socketID.emit("message", savedMessage);
+    if (receiverSocketID) {
+      // TODO check that this is correct socket ID
+      console.log(
+        `User ${receiverID} is connected with socket ID ${receiverSocketID}`,
+        `\n They received this message: ${savedMessage}`
+      );
+      // TODO: change the meesage they receive from json to just the content
+      io.to(receiverSocketID).emit("message", savedMessage.content);
     } else {
       console.log(`User ${receiverID} is not connected`);
     }
@@ -134,8 +140,7 @@ export async function getAllUsersChats(
     const UserReqID: string = requestAuth(req, next);
 
     const allChats: ChatModel[] = await Chat.find({
-      // $or: [{ sellerID: UserReqID }, { buyerID: UserReqID }],
-      sellerID: UserReqID,
+      $or: [{ sellerID: UserReqID }, { buyerID: UserReqID }],
     }).sort({ createdAt: -1 });
 
     sendSuccess(res, SuccessMessages.CHATS_RETRIEVED, StatusCodes.OK, allChats);
