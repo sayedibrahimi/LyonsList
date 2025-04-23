@@ -17,6 +17,8 @@ import SuccessMessages from "../constants/successMessages";
 import { sendEmailReport } from "../utils/sendEmail";
 import Report, { ReportModel } from "../models/reports.model";
 import { createReportForm } from "../utils/createReportForm";
+import User, { UserModel } from "../models/users.model";
+import mongoose from "mongoose";
 
 export async function reportListing(
   req: Request,
@@ -76,6 +78,15 @@ export async function reportListing(
         $set: { lastReported: new Date() },
       }
     );
+
+    const updatedUser: UserModel | null = await User.findByIdAndUpdate(
+      reporterID,
+      { $addToSet: { reports: new mongoose.Types.ObjectId(listingID) } },
+      { new: true }
+    );
+    if (!updatedUser) {
+      throw new InternalServerError(ErrorMessages.LISTING_FAVORITE_FAILED);
+    }
 
     // build the report form
     const newReport: ReportForm | undefined = await createReportForm(
