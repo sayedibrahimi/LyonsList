@@ -118,8 +118,8 @@ export async function getChatById(
     // TODO check the populate fields
     const chatID: string = req.params.chatID;
     const messages: MessageModel[] = await Message.find({ chatID })
-      .populate("senderID", "firstName lastName")
-      .populate("receiverID", "firstName lastName")
+      .populate("senderID", "firstName")
+      .populate("receiverID", "firstName")
       .sort({ createdAt: -1 });
     // TODO test the return data and make sure it is correct and useful
     sendSuccess(res, SuccessMessages.MESSAGES_RETRIEVED, StatusCodes.OK, {

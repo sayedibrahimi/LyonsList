@@ -17,6 +17,7 @@ export interface UserModel extends Document {
   profilePicture: string;
   totalListings: number;
   favorites: Types.ObjectId[];
+  reports: Types.ObjectId[];
   verified: boolean;
   // methods
   createJWT(): string;
@@ -62,6 +63,10 @@ const UserSchema: Schema<UserModel> = new Schema<UserModel>(
       default: 0,
     },
     favorites: {
+      type: [Types.ObjectId],
+      default: [],
+    },
+    reports: {
       type: [Types.ObjectId],
       default: [],
     },
