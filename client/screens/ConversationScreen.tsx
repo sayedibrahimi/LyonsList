@@ -1,4 +1,6 @@
 // screens/ConversationScreen.tsx
+// Purpose: This screen displays the conversation between a buyer and seller, allowing them to send and receive messages related to a specific product listing.
+// Description: The ConversationScreen component fetches messages from a chat service and displays them in a chat interface. It allows users to send new messages, view product details, and manage the conversation (e.g., report or delete). The screen also handles loading states and errors gracefully.
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
