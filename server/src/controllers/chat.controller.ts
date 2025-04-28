@@ -59,6 +59,51 @@ export async function createMessage(
   }
 }
 
+// export async function createChat(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     const buyerID: string = requestAuth(req, next);
+//     const { listingID, content } = req.body as {
+//       listingID: string;
+//       content: string;
+//     };
+//     // get the sellerID from the listingID
+//     const listing: ListingModel | null = await Listing.findById(listingID);
+//     if (!listing) {
+//       throw new BadRequestError("Listing not found");
+//     }
+//     const sellerID: string = listing.sellerID.toString();
+
+//     // create chat
+//     const chat: ChatModel = new Chat({
+//       listingID,
+//       sellerID,
+//       buyerID,
+//     });
+//     const savedChat: ChatModel = await chat.save();
+
+//     // create message for the initialized chat
+//     await createMessage(
+//       {
+//         body: {
+//           senderID: buyerID,
+//           receiverID: sellerID,
+//           listingID,
+//           chatID: savedChat._id,
+//           content,
+//         },
+//       } as Request,
+//       res,
+//       next
+//     );
+//   } catch (error: unknown) {
+//     ControllerError(error, next);
+//   }
+// }
+
 export async function createChat(
   req: Request,
   res: Response,
@@ -70,6 +115,7 @@ export async function createChat(
       listingID: string;
       content: string;
     };
+    
     // get the sellerID from the listingID
     const listing: ListingModel | null = await Listing.findById(listingID);
     if (!listing) {
@@ -77,27 +123,67 @@ export async function createChat(
     }
     const sellerID: string = listing.sellerID.toString();
 
-    // create chat
-    const chat: ChatModel = new Chat({
+    // Check if a chat already exists for this buyer, seller, and listing
+    const existingChat: ChatModel | null = await Chat.findOne({
       listingID,
       sellerID,
-      buyerID,
+      buyerID
     });
-    const savedChat: ChatModel = await chat.save();
 
+    let savedChat: ChatModel;
+    
+    if (existingChat) {
+      // Use the existing chat
+      savedChat = existingChat;
+      console.log(`Using existing chat: ${existingChat._id}`);
+    } else {
+      // Create a new chat
+      const chat: ChatModel = new Chat({
+        listingID,
+        sellerID,
+        buyerID,
+      });
+      savedChat = await chat.save();
+      console.log(`Created new chat: ${savedChat._id}`);
+    }
+    
     // create message for the initialized chat
-    await createMessage(
-      {
-        body: {
-          senderID: buyerID,
-          receiverID: sellerID,
-          listingID,
-          chatID: savedChat._id,
-          content,
-        },
-      } as Request,
+    const messageData: Request = {
+      body: {
+        senderID: buyerID,
+        receiverID: sellerID,
+        listingID,
+        chatID: savedChat._id,
+        content,
+      },
+    } as Request;
+    
+   // Only create a message if content is provided
+    if (content) {
+      const message: MessageModel = await Message.create(messageData);
+      
+      // Update chat with last message
+      savedChat.lastMessage = content;
+      savedChat.lastMessageTimestamp = new Date();
+      await savedChat.save();
+      
+      // Send message via socket if available
+      const receiverSocketID: string | undefined = getSocketID(sellerID);
+      if (receiverSocketID) {
+        console.log(
+          `User ${sellerID} is connected with socket ID ${receiverSocketID}`,
+          `\n They received this message: ${message.content}`
+        );
+        io.to(receiverSocketID).emit("message", message.content);
+      }
+    }
+    
+    // Now respond with the saved chat
+    sendSuccess(
       res,
-      next
+      SuccessMessages.CHAT_CREATED,
+      StatusCodes.OK,
+      savedChat
     );
   } catch (error: unknown) {
     ControllerError(error, next);
