@@ -123,7 +123,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
     // Navigate to chat screen with the seller info
     if (product && product.sellerID) {
       router.push({
-        pathname: '/(tabs)/chat',
+        pathname: '/conversation',
         params: { 
           sellerId: product.sellerID,
           productId: product._id,
