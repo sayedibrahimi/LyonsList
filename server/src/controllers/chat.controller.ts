@@ -15,15 +15,56 @@ import SuccessMessages from "../constants/successMessages";
 import { getSocketID } from "../db/socket";
 import { io } from "../db/socket";
 
+// export async function createMessage(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     // is this needed?
+//     // const UserReqID: string = requestAuth(req, next);
+
+//     const { senderID, receiverID, listingID, chatID, content } = req.body;
+//     const newMessage: MessageModel = new Message({
+//       senderID,
+//       receiverID,
+//       listingID,
+//       chatID,
+//       content,
+//     });
+//     const savedMessage: MessageModel = await newMessage.save();
+
+//     const receiverSocketID: string | undefined = getSocketID(receiverID);
+//     // display all sockcet ids
+//     if (receiverSocketID) {
+//       // TODO check that this is correct socket ID
+//       console.log(
+//         `User ${receiverID} is connected with socket ID ${receiverSocketID}`,
+//         `\n They received this message: ${savedMessage}`
+//       );
+//       // TODO: change the meesage they receive from json to just the content
+//       io.to(receiverSocketID).emit("message", savedMessage.content);
+//     } else {
+//       console.log(`User ${receiverID} is not connected`);
+//     }
+
+//     sendSuccess(
+//       res,
+//       SuccessMessages.MESSAGE_CREATED,
+//       StatusCodes.OK,
+//       savedMessage
+//     );
+//   } catch (error: unknown) {
+//     ControllerError(error, next);
+//   }
+// }
+
 export async function createMessage(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> {
   try {
-    // is this needed?
-    // const UserReqID: string = requestAuth(req, next);
-
     const { senderID, receiverID, listingID, chatID, content } = req.body;
     const newMessage: MessageModel = new Message({
       senderID,
@@ -34,15 +75,20 @@ export async function createMessage(
     });
     const savedMessage: MessageModel = await newMessage.save();
 
+    // Update the associated chat with the latest message information
+    await Chat.findByIdAndUpdate(chatID, {
+      lastMessage: content,
+      lastMessageTimestamp: new Date(),
+      updatedAt: new Date() // Also update the general timestamp
+    });
+
+    // Rest of your existing code...
     const receiverSocketID: string | undefined = getSocketID(receiverID);
-    // display all sockcet ids
     if (receiverSocketID) {
-      // TODO check that this is correct socket ID
       console.log(
         `User ${receiverID} is connected with socket ID ${receiverSocketID}`,
         `\n They received this message: ${savedMessage}`
       );
-      // TODO: change the meesage they receive from json to just the content
       io.to(receiverSocketID).emit("message", savedMessage.content);
     } else {
       console.log(`User ${receiverID} is not connected`);
@@ -217,6 +263,24 @@ export async function getChatById(
   }
 }
 
+// export async function getAllUsersChats(
+//   req: Request,
+//   res: Response,
+//   next: NextFunction
+// ): Promise<void> {
+//   try {
+//     const UserReqID: string = requestAuth(req, next);
+
+//     const allChats: ChatModel[] = await Chat.find({
+//       $or: [{ sellerID: UserReqID }, { buyerID: UserReqID }],
+//     }).sort({ createdAt: -1 });
+
+//     sendSuccess(res, SuccessMessages.CHATS_RETRIEVED, StatusCodes.OK, allChats);
+//   } catch (error: unknown) {
+//     ControllerError(error, next);
+//   }
+// }
+
 export async function getAllUsersChats(
   req: Request,
   res: Response,
@@ -227,7 +291,11 @@ export async function getAllUsersChats(
 
     const allChats: ChatModel[] = await Chat.find({
       $or: [{ sellerID: UserReqID }, { buyerID: UserReqID }],
-    }).sort({ createdAt: -1 });
+    })
+      .populate('listingID', 'title price pictures') // Populate listing details
+      .populate('sellerID', 'firstName lastName') // Populate seller details
+      .populate('buyerID', 'firstName lastName') // Populate buyer details
+      .sort({ lastMessageTimestamp: -1 }); // Sort by most recent message
 
     sendSuccess(res, SuccessMessages.CHATS_RETRIEVED, StatusCodes.OK, allChats);
   } catch (error: unknown) {
