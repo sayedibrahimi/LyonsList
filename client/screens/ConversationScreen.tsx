@@ -591,12 +591,11 @@ const styles = StyleSheet.create({
   menuOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
   },
   menuContainer: {
-    marginTop: 55,
-    marginRight: 10,
+    position: 'absolute',
+    top: 50,
+    right: 10,
     backgroundColor: '#fff',
     borderRadius: 8,
     padding: 5,
@@ -606,7 +605,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     minWidth: 150,
-  },
+},
   darkMenuContainer: {
     backgroundColor: '#1E2022',
     borderColor: '#333',
