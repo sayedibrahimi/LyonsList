@@ -92,25 +92,37 @@ export default function ChatScreen(): React.ReactElement {
   
   // Filter chats based on active tab
   useEffect(() => {
-    if (!user) return;
+    if (!user || !chats.length) return;
     
     let filtered = [...chats];
     
     // Filter based on active tab
     if (activeTab === 'buying') {
-      filtered = chats.filter(chat => chat.buyerID._id === user._id);
+      filtered = chats.filter(chat => {
+        const buyerId = typeof chat.buyerID === 'string' ? 
+          chat.buyerID : 
+          (chat.buyerID && chat.buyerID._id ? chat.buyerID._id : '');
+        return buyerId === user._id;
+      });
     } else if (activeTab === 'selling') {
-      filtered = chats.filter(chat => chat.sellerID._id === user._id);
+      filtered = chats.filter(chat => {
+        const sellerId = typeof chat.sellerID === 'string' ? 
+          chat.sellerID : 
+          (chat.sellerID && chat.sellerID._id ? chat.sellerID._id : '');
+        return sellerId === user._id;
+      });
     }
     
     // Apply search filter if needed
     if (searchQuery) {
-      filtered = filtered.filter(chat => 
-        chat.listingID.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (chat.lastMessage && chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+      filtered = filtered.filter(chat => {
+        const title = typeof chat.listingID === 'string' ? '' : 
+          (chat.listingID && chat.listingID.title ? chat.listingID.title.toLowerCase() : '');
+        
+        return title.includes(searchQuery.toLowerCase()) ||
+          (chat.lastMessage && chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()));
+      });
     }
-    
     setFilteredChats(filtered);
   }, [chats, activeTab, searchQuery, user]);
   
@@ -211,61 +223,79 @@ export default function ChatScreen(): React.ReactElement {
   };
 
   const renderChatItem = ({ item }: { item: ChatItem }) => {
-  // First, add defensive checks to ensure item and its properties exist
-  if (!item) return null;
-  
-  // Make sure user exists before comparing IDs
-  const isUserSeller = user && item.sellerID && user._id === item.sellerID._id;
-  
-  // Handle potentially undefined sellerID or buyerID
-  const otherParty = isUserSeller && item.buyerID ? 
-    item.buyerID : 
-    (item.sellerID ? item.sellerID : { _id: '', firstName: '', lastName: '' });
-  
-  // Handle potentially undefined timestamps
-  const timestamp = item.lastMessageTimestamp ? 
-    formatTimestamp(item.lastMessageTimestamp) : 
-    (item.updatedAt ? formatTimestamp(item.updatedAt) : '');
-  
-  // Use the imageErrors state safely
-  const hasImageError = item._id ? imageErrors[item._id] || false : true;
-  
-  return (
-    <TouchableOpacity 
-      style={[styles.chatItem, isDarkMode && styles.darkChatItem]}
-      onPress={() => navigateToConversation(item)}
-    >
-      <View style={styles.chatImageContainer}>
-        <Image 
-          source={
-            hasImageError || !item.listingID || !item.listingID.pictures || !item.listingID.pictures[0]
-              ? require('../assets/images/placeholder.png')
-              : { uri: item.listingID.pictures[0] }
-          } 
-          style={styles.chatImage}
-          onError={() => item._id && handleImageError(item._id)}
-        />
-      </View>
-      
-      <View style={styles.chatInfo}>
-        <View style={styles.chatHeader}>
-          <Text style={[styles.chatName, isDarkMode && styles.darkText]} numberOfLines={1}>
-            {otherParty.firstName || ''} {otherParty.lastName || ''}
-          </Text>
-          <Text style={[styles.chatTime, isDarkMode && styles.darkSubText]}>
-            {timestamp}
-          </Text>
+    if (!item) return null;
+    
+    // Debug logging to see the actual data structure
+    console.log(`Chat ${item._id}: Last message: "${item.lastMessage}" from ${item.lastMessageTimestamp}`);
+    
+    const isUserSeller = user?._id === (
+      typeof item.sellerID === 'string' 
+        ? item.sellerID 
+        : item.sellerID?._id
+    );
+    
+    // Get other party info
+    const otherParty = isUserSeller 
+      ? (typeof item.buyerID === 'string' 
+          ? { _id: item.buyerID, firstName: 'Buyer', lastName: '' } 
+          : item.buyerID)
+      : (typeof item.sellerID === 'string' 
+          ? { _id: item.sellerID, firstName: 'Seller', lastName: '' } 
+          : item.sellerID);
+    
+    // Get listing details
+    const listingDetails = typeof item.listingID === 'string'
+      ? { _id: item.listingID, title: 'Product', pictures: [] }
+      : item.listingID;
+    
+    // Get image URL
+    const imageUrl = listingDetails?.pictures && listingDetails.pictures.length > 0
+      ? listingDetails.pictures[0]
+      : '';
+    
+    // Format timestamp with fallbacks
+    const timestamp = item.lastMessageTimestamp
+      ? formatTimestamp(item.lastMessageTimestamp)
+      : (item.updatedAt ? formatTimestamp(item.updatedAt) : formatTimestamp(item.createdAt));
+    
+    const hasImageError = !imageUrl || (item._id && imageErrors[item._id]);
+    
+    return (
+      <TouchableOpacity 
+        style={[styles.chatItem, isDarkMode && styles.darkChatItem]}
+        onPress={() => navigateToConversation(item)}
+      >
+        <View style={styles.chatImageContainer}>
+          <Image 
+            source={
+              hasImageError
+                ? require('../assets/images/placeholder.png')
+                : { uri: imageUrl }
+            } 
+            style={styles.chatImage}
+            onError={() => item._id && handleImageError(item._id)}
+          />
         </View>
         
-        <Text style={[styles.productTitle, isDarkMode && styles.darkSubText]} numberOfLines={1}>
-          {item.listingID && item.listingID.title ? item.listingID.title : ''}
-        </Text>
-        
-        <Text style={[styles.lastMessage, isDarkMode && styles.darkSubText]} numberOfLines={1}>
-          {item.lastMessage || "No messages yet"}
-        </Text>
-      </View>
-    </TouchableOpacity>
+        <View style={styles.chatInfo}>
+          <View style={styles.chatHeader}>
+            <Text style={[styles.chatName, isDarkMode && styles.darkText]} numberOfLines={1}>
+              {otherParty?.firstName || ''} {otherParty?.lastName || ''}
+            </Text>
+            <Text style={[styles.chatTime, isDarkMode && styles.darkSubText]}>
+              {timestamp}
+            </Text>
+          </View>
+          
+          <Text style={[styles.productTitle, isDarkMode && styles.darkSubText]} numberOfLines={1}>
+            {listingDetails?.title || 'Product'}
+          </Text>
+          
+          <Text style={[styles.lastMessage, isDarkMode && styles.darkSubText]} numberOfLines={1}>
+            {item.lastMessage || "No messages yet"}
+          </Text>
+        </View>
+      </TouchableOpacity>
     );
   };
   
