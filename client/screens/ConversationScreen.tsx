@@ -23,38 +23,9 @@ import { useColorScheme } from '../hooks/useColorScheme';
 import { useAuth } from '../hooks/useAuth';
 import { chatService } from '../services/chatService';
 import { listingsService } from '../services/listingsService';
-
-// Define message type
-interface Message {
-  _id: string;
-  senderID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  receiverID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  content: string;
-  readStatus: boolean;
-  timestamp: string;
-  createdAt: string;
-}
-
-// Define listing type for product details
-interface ListingDetails {
-  _id: string;
-  title: string;
-  description: string;
-  pictures: string[];
-  price: number;
-  condition: string;
-  category: string;
-  status: string;
-  sellerID: string;
-}
+import { useSocket } from '../hooks/useSocket';
+import MessageIndicator from '../components/MessageIndicator';
+import { Message, ListingDetails, normalizeMessage } from '../types/chat';
 
 export default function ConversationScreen(): React.ReactElement {
   const router = useRouter();
@@ -62,6 +33,7 @@ export default function ConversationScreen(): React.ReactElement {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
   const { user } = useAuth();
+  const { socket, isConnected, messages, setMessagesForChat, addOptimisticMessage } = useSocket();
   
   // Extract params
   const chatId = params.chatId as string;
@@ -72,50 +44,52 @@ export default function ConversationScreen(): React.ReactElement {
   const isNewChat = params.isNew === 'true';
   
   // State variables
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [productDetails, setProductDetails] = useState<ListingDetails | null>(null);
   const [imageError, setImageError] = useState<boolean>(false);
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
+  const [chat, setChat] = useState<any>(null);
   
   // Refs
   const flatListRef = useRef<FlatList>(null);
 
   // Check for existing chat if it's a new chat
   const checkExistingChat = async () => {
-  if (!isNewChat || !productId || !user) return;
-  
-  try {
-    // Get all chats for the user
-    const allChats = await chatService.getAllChats();
+    if (!isNewChat || !productId || !user) return;
     
-    // Find if there's already a chat for this listing
-    const existingChat = allChats.find(chat => 
-      (typeof chat.listingID === 'string' && chat.listingID === productId) || 
-      (typeof chat.listingID === 'object' && chat.listingID && chat.listingID._id === productId)
-    );
-    
-    if (existingChat) {
-      console.log("Found existing chat:", existingChat._id);
-      // Update the params to use the existing chat ID
-      router.setParams({ 
-        chatId: existingChat._id, 
-        isNew: 'false' 
+    try {
+      // Get all chats for the user
+      const allChats = await chatService.getAllChats();
+      
+      // Find if there's already a chat for this listing
+      const existingChat = allChats.find(chat => {
+        if (typeof chat.listingID === 'string') {
+          return chat.listingID === productId;
+        } else {
+          return chat.listingID?._id === productId;
+        }
       });
       
-      // Also fetch messages for this chat
-      const chatData = await chatService.getChatById(existingChat._id);
-      setMessages(chatData.messages.sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      ));
+      if (existingChat) {
+        console.log("Found existing chat:", existingChat._id);
+        // Update the params to use the existing chat ID
+        router.setParams({ 
+          chatId: existingChat._id, 
+          isNew: 'false' 
+        });
+        
+        // Also fetch messages for this chat
+        const chatData = await chatService.getChatById(existingChat._id);
+        
+        setMessagesForChat(existingChat._id, chatData.messages);
+      }
+    } catch (err) {
+      console.error("Error checking for existing chats:", err);
+      // Continue as a new chat if there's an error
     }
-  } catch (err) {
-    console.error("Error checking for existing chats:", err);
-    // Continue as a new chat if there's an error
-  }
-};
+  };
   
   // Set default message for new chat
   useEffect(() => {
@@ -131,15 +105,17 @@ export default function ConversationScreen(): React.ReactElement {
         setLoading(true);
         
         // Fetch product details
-        const productData = await listingsService.getListingById(productId);
-        setProductDetails(productData);
+        if (productId) {
+          const productData = await listingsService.getListingById(productId);
+          setProductDetails(productData);
+        }
         
         // If we have an existing chat, fetch messages
         if (chatId) {
           const data = await chatService.getChatById(chatId);
-          setMessages(data.messages.sort((a, b) => 
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          ));
+          setChat(data.chat);
+          
+          setMessagesForChat(chatId, data.messages);
         }
         
         setError(null);
@@ -161,101 +137,75 @@ export default function ConversationScreen(): React.ReactElement {
   
   // Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messages.length > 0 && flatListRef.current) {
+    if (messages[chatId]?.length && flatListRef.current) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages]);
+  }, [messages, chatId]);
   
-  // Send message
-  const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+  // Send message function
+  const handleSendMessage = () => {
+    if (!inputMessage.trim() || !user || !chatId) return;
     
-    try {
-      const messageText = inputMessage.trim();
-      setInputMessage('');
-      
-      // Determine the receiver ID
-      const receiverId = user?._id === sellerId ? buyerId : sellerId;
-      
-      if (chatId) {
-        // Existing chat
-        const response = await chatService.sendMessage({
-          senderID: user?._id || '',
-          receiverID: receiverId,
-          listingID: productId,
-          chatID: chatId,
-          content: messageText
+    const messageText = inputMessage.trim();
+    setInputMessage('');
+    
+    // Determine the receiver ID
+    const receiverId = user._id === sellerId ? buyerId : sellerId;
+    
+    // Create message data for the API
+    const messageData = {
+      senderID: user._id,
+      receiverID: receiverId,
+      listingID: productId,
+      chatID: chatId,
+      content: messageText
+    };
+    
+    // Create optimistic message for immediate UI update
+    const optimisticMessage: Message = normalizeMessage({
+      _id: `temp_${Date.now()}`, // Use temp_ prefix to identify optimistic messages
+      senderID: {
+        _id: user._id,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
+      },
+      receiverID: {
+        _id: receiverId,
+        firstName: '',
+        lastName: ''
+      },
+      content: messageText,
+      chatID: chatId,
+      readStatus: false,
+      timestamp: new Date(),
+      createdAt: new Date().toISOString()
+    });
+    
+    // Add optimistic message to UI immediately
+    addOptimisticMessage(optimisticMessage);
+    
+    // Send message via socket
+    if (socket && isConnected) {
+      chatService.sendMessageViaSocket(socket, messageData);
+    } else {
+      // Fallback to REST API if socket is not connected
+      chatService.sendMessageViaREST(messageData)
+        .then(confirmedMessage => {
+          // If we had to use REST, manually add the confirmed message
+          // The socket context's addMessage function will handle replacing the temp message
+          console.log('Message sent via REST:', confirmedMessage);
+        })
+        .catch(error => {
+          console.error('Failed to send message:', error);
+          // Could implement message retry or error state here
+          Alert.alert(
+            'Message Failed',
+            'Failed to send message. Please check your connection and try again.',
+            [{ text: 'OK' }]
+          );
         });
-        
-        // Optimistically add message to the list
-        const newMessage: Message = {
-          _id: Date.now().toString(), // Temporary ID until refresh
-          senderID: {
-            _id: user?._id || '',
-            firstName: user?.firstName || '',
-            lastName: user?.lastName || ''
-          },
-          receiverID: {
-            _id: receiverId,
-            firstName: '', // We don't have this info here
-            lastName: ''
-          },
-          content: messageText,
-          readStatus: false,
-          timestamp: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-        
-        setMessages(prevMessages => [...prevMessages, newMessage]);
-      } else {
-        // New chat
-        const response = await chatService.createChat({
-          listingID: productId,
-          content: messageText
-        });
-
-        // The key issue is here - make sure you're accessing the _id correctly
-        console.log("Chat created response:", response); // Add this for debugging
-  
-        // Fix this line to access response.data._id
-        const chatIdFromResponse = response.data?._id;
-
-        if (!chatIdFromResponse) {
-          console.error("No chat ID returned from createChat:", response);
-          Alert.alert('Error', 'Failed to create chat. Please try again.');
-          return;
-        }
-  
-        
-        // Update URL with the new chat ID without reloading
-        router.setParams({ chatId: response.data._id, isNew: 'false' });
-        
-        // Optimistically add message
-        const newMessage: Message = {
-          _id: Date.now().toString(),
-          senderID: {
-            _id: user?._id || '',
-            firstName: user?.firstName || '',
-            lastName: user?.lastName || ''
-          },
-          receiverID: {
-            _id: receiverId,
-            firstName: '', 
-            lastName: ''
-          },
-          content: messageText,
-          readStatus: false,
-          timestamp: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-        
-        setMessages([newMessage]);
-      }
-    } catch (err: any) {
-      console.error('Error sending message:', err);
-      Alert.alert('Error', 'Failed to send message. Please try again.');
     }
   };
   
@@ -312,7 +262,11 @@ export default function ConversationScreen(): React.ReactElement {
   
   // Render a message bubble
   const renderMessageItem = ({ item }: { item: Message }) => {
+    // Check if the message sender ID matches the current user ID
     const isCurrentUser = user?._id === item.senderID._id;
+    
+    // Special styling for optimistic messages
+    const isOptimistic = item._id.startsWith('temp_');
     
     return (
       <View style={[
@@ -323,7 +277,9 @@ export default function ConversationScreen(): React.ReactElement {
           styles.messageBubble,
           isCurrentUser ? 
             (isDarkMode ? styles.darkCurrentUserBubble : styles.currentUserBubble) : 
-            (isDarkMode ? styles.darkOtherUserBubble : styles.otherUserBubble)
+            (isDarkMode ? styles.darkOtherUserBubble : styles.otherUserBubble),
+          // Add a subtle indication for optimistic messages
+          isOptimistic && styles.optimisticMessageBubble
         ]}>
           <Text style={[
             styles.messageText,
@@ -333,14 +289,26 @@ export default function ConversationScreen(): React.ReactElement {
           ]}>
             {item.content}
           </Text>
-          <Text style={[
-            styles.messageTime,
-            isCurrentUser ? 
-              (isDarkMode ? styles.darkCurrentUserTime : styles.currentUserTime) : 
-              (isDarkMode ? styles.darkOtherUserTime : styles.otherUserTime)
-          ]}>
-            {formatMessageTime(item.createdAt)}
-          </Text>
+          <View style={styles.messageFooter}>
+            {isOptimistic && (
+              <Ionicons 
+                name="time-outline" 
+                size={12} 
+                color={isCurrentUser ? 
+                  (isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.7)") : 
+                  (isDarkMode ? "#9BA1A6" : "#999")} 
+                style={styles.sendingIcon}
+              />
+            )}
+            <Text style={[
+              styles.messageTime,
+              isCurrentUser ? 
+                (isDarkMode ? styles.darkCurrentUserTime : styles.currentUserTime) : 
+                (isDarkMode ? styles.darkOtherUserTime : styles.otherUserTime)
+            ]}>
+              {formatMessageTime(item.createdAt)}
+            </Text>
+          </View>
         </View>
       </View>
     );
@@ -440,6 +408,9 @@ export default function ConversationScreen(): React.ReactElement {
         </TouchableOpacity>
       </View>
       
+      {/* Message indicator from v2 */}
+      <MessageIndicator />
+      
       {/* Product header */}
       {renderProductHeader()}
       
@@ -468,7 +439,7 @@ export default function ConversationScreen(): React.ReactElement {
           <>
             <FlatList
               ref={flatListRef}
-              data={messages}
+              data={messages[chatId] || []}
               renderItem={renderMessageItem}
               keyExtractor={(item) => item._id}
               style={styles.messagesList}
@@ -490,7 +461,7 @@ export default function ConversationScreen(): React.ReactElement {
                   styles.sendButton, 
                   !inputMessage.trim() && styles.sendButtonDisabled
                 ]}
-                onPress={sendMessage}
+                onPress={handleSendMessage}
                 disabled={!inputMessage.trim()}
               >
                 <Ionicons 
@@ -605,7 +576,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     minWidth: 150,
-},
+  },
   darkMenuContainer: {
     backgroundColor: '#1E2022',
     borderColor: '#333',
@@ -671,9 +642,14 @@ const styles = StyleSheet.create({
   darkOtherUserText: {
     color: '#ECEDEE',
   },
+  // Footer with time and status indicators
+  messageFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   messageTime: {
     fontSize: 10,
-    alignSelf: 'flex-end',
   },
   currentUserTime: {
     color: 'rgba(255, 255, 255, 0.7)',
@@ -686,6 +662,13 @@ const styles = StyleSheet.create({
   },
   darkOtherUserTime: {
     color: '#9BA1A6',
+  },
+  // Styles for optimistic messages
+  optimisticMessageBubble: {
+    opacity: 0.85, // Slightly faded to indicate pending status
+  },
+  sendingIcon: {
+    marginRight: 4,
   },
   inputContainer: {
     flexDirection: 'row',
