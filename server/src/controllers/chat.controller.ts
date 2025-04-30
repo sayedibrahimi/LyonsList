@@ -1,5 +1,7 @@
+// controllers/chat.controller.ts
+// Purpose: This file contains the chat controller that handles chat-related functionalities such as creating messages, creating chats, retrieving chats, and getting all user chats. It interacts with the database models and manages socket events for real-time updates.
+// Description: The chat controller exports functions that are used as middleware in the Express application. These functions handle incoming requests, interact with the database models (Message, Chat, Listing), and manage socket events for real-time communication. Error handling is also implemented to ensure proper responses are sent back to the client.
 import { NextFunction, Request, Response } from "express";
-// import mongoose from "mongoose";
 import Message, { MessageModel } from "../models/messages.model";
 import Chat, { ChatModel } from "../models/chat.model";
 import Listing, { ListingModel } from "../models/listings.model";
@@ -7,58 +9,14 @@ import { requestAuth } from "../utils/requestAuth";
 import { StatusCodes } from "http-status-codes";
 import {
   BadRequestError,
-  /* NotFoundError, */ ControllerError,
+  ControllerError,
 } from "../errors";
-// import ErrorMessages from "../constants/errorMessages";
 import { sendSuccess } from "../utils/sendResponse";
 import SuccessMessages from "../constants/successMessages";
 import { getSocketID } from "../db/socket";
 import { io } from "../db/socket";
 
-// export async function createMessage(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     // is this needed?
-//     // const UserReqID: string = requestAuth(req, next);
-
-//     const { senderID, receiverID, listingID, chatID, content } = req.body;
-//     const newMessage: MessageModel = new Message({
-//       senderID,
-//       receiverID,
-//       listingID,
-//       chatID,
-//       content,
-//     });
-//     const savedMessage: MessageModel = await newMessage.save();
-
-//     const receiverSocketID: string | undefined = getSocketID(receiverID);
-//     // display all sockcet ids
-//     if (receiverSocketID) {
-//       // TODO check that this is correct socket ID
-//       console.log(
-//         `User ${receiverID} is connected with socket ID ${receiverSocketID}`,
-//         `\n They received this message: ${savedMessage}`
-//       );
-//       // TODO: change the meesage they receive from json to just the content
-//       io.to(receiverSocketID).emit("message", savedMessage.content);
-//     } else {
-//       console.log(`User ${receiverID} is not connected`);
-//     }
-
-//     sendSuccess(
-//       res,
-//       SuccessMessages.MESSAGE_CREATED,
-//       StatusCodes.OK,
-//       savedMessage
-//     );
-//   } catch (error: unknown) {
-//     ControllerError(error, next);
-//   }
-// }
-
+// REST API endpoint for creating messages (fallback for when socket isn't connected)
 export async function createMessage(
   req: Request,
   res: Response,
@@ -82,16 +40,22 @@ export async function createMessage(
       updatedAt: new Date() // Also update the general timestamp
     });
 
-    // Rest of your existing code...
-    const receiverSocketID: string | undefined = getSocketID(receiverID);
-    if (receiverSocketID) {
-      console.log(
-        `User ${receiverID} is connected with socket ID ${receiverSocketID}`,
-        `\n They received this message: ${savedMessage}`
-      );
-      io.to(receiverSocketID).emit("message", savedMessage.content);
-    } else {
-      console.log(`User ${receiverID} is not connected`);
+    // Important: Only emit socket events if we're handling this through the REST API directly
+    // (Socket connections already handle their own events)
+    const viaSocket: boolean = req.query.viaSocket === 'true';
+    
+    if (!viaSocket) {
+      const receiverSocketID: string | undefined = getSocketID(receiverID);
+      if (receiverSocketID) {
+        console.log(
+          `User ${receiverID} is connected with socket ID ${receiverSocketID}`,
+          `\n They received this message: ${savedMessage}`
+        );
+        // Send the full message object for better client handling
+        io.to(receiverSocketID).emit("message", savedMessage);
+      } else {
+        console.log(`User ${receiverID} is not connected`);
+      }
     }
 
     sendSuccess(
@@ -104,51 +68,6 @@ export async function createMessage(
     ControllerError(error, next);
   }
 }
-
-// export async function createChat(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     const buyerID: string = requestAuth(req, next);
-//     const { listingID, content } = req.body as {
-//       listingID: string;
-//       content: string;
-//     };
-//     // get the sellerID from the listingID
-//     const listing: ListingModel | null = await Listing.findById(listingID);
-//     if (!listing) {
-//       throw new BadRequestError("Listing not found");
-//     }
-//     const sellerID: string = listing.sellerID.toString();
-
-//     // create chat
-//     const chat: ChatModel = new Chat({
-//       listingID,
-//       sellerID,
-//       buyerID,
-//     });
-//     const savedChat: ChatModel = await chat.save();
-
-//     // create message for the initialized chat
-//     await createMessage(
-//       {
-//         body: {
-//           senderID: buyerID,
-//           receiverID: sellerID,
-//           listingID,
-//           chatID: savedChat._id,
-//           content,
-//         },
-//       } as Request,
-//       res,
-//       next
-//     );
-//   } catch (error: unknown) {
-//     ControllerError(error, next);
-//   }
-// }
 
 export async function createChat(
   req: Request,
@@ -193,20 +112,17 @@ export async function createChat(
       console.log(`Created new chat: ${savedChat._id}`);
     }
     
-    // create message for the initialized chat
-    const messageData: Request = {
-      body: {
+    // Only create a message if content is provided
+    if (content) {
+      const newMessage: MessageModel = new Message({
         senderID: buyerID,
         receiverID: sellerID,
         listingID,
         chatID: savedChat._id,
         content,
-      },
-    } as Request;
-    
-   // Only create a message if content is provided
-    if (content) {
-      const message: MessageModel = await Message.create(messageData);
+      });
+      
+      const savedMessage: MessageModel = await newMessage.save();
       
       // Update chat with last message
       savedChat.lastMessage = content;
@@ -217,10 +133,9 @@ export async function createChat(
       const receiverSocketID: string | undefined = getSocketID(sellerID);
       if (receiverSocketID) {
         console.log(
-          `User ${sellerID} is connected with socket ID ${receiverSocketID}`,
-          `\n They received this message: ${message.content}`
+          `User ${sellerID} is connected with socket ID ${receiverSocketID}`
         );
-        io.to(receiverSocketID).emit("message", message.content);
+        io.to(receiverSocketID).emit("message", savedMessage);
       }
     }
     
@@ -242,18 +157,21 @@ export async function getChatById(
   next: NextFunction
 ): Promise<void> {
   try {
-    const foundChat: ChatModel | null = await Chat.findById(req.params.id);
+    const foundChat: ChatModel | null = await Chat.findById(req.params.id)
+      .populate('listingID', 'title price pictures')
+      .populate('sellerID', 'firstName lastName')
+      .populate('buyerID', 'firstName lastName');
+      
     if (foundChat === null) {
       throw new BadRequestError("Chat not found");
     }
-    req.params.chatID = foundChat._id.toString();
-    // TODO check the populate fields
-    const chatID: string = req.params.chatID;
+    
+    const chatID: string = foundChat._id.toString();
     const messages: MessageModel[] = await Message.find({ chatID })
-      .populate("senderID", "firstName")
-      .populate("receiverID", "firstName")
-      .sort({ createdAt: -1 });
-    // TODO test the return data and make sure it is correct and useful
+      .populate("senderID", "firstName lastName")
+      .populate("receiverID", "firstName lastName")
+      .sort({ createdAt: 1 }); // Sort from oldest to newest for proper conversation flow
+    
     sendSuccess(res, SuccessMessages.MESSAGES_RETRIEVED, StatusCodes.OK, {
       chat: foundChat,
       messages,
@@ -262,24 +180,6 @@ export async function getChatById(
     ControllerError(error, next);
   }
 }
-
-// export async function getAllUsersChats(
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<void> {
-//   try {
-//     const UserReqID: string = requestAuth(req, next);
-
-//     const allChats: ChatModel[] = await Chat.find({
-//       $or: [{ sellerID: UserReqID }, { buyerID: UserReqID }],
-//     }).sort({ createdAt: -1 });
-
-//     sendSuccess(res, SuccessMessages.CHATS_RETRIEVED, StatusCodes.OK, allChats);
-//   } catch (error: unknown) {
-//     ControllerError(error, next);
-//   }
-// }
 
 export async function getAllUsersChats(
   req: Request,
