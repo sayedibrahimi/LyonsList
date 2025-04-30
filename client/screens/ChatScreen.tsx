@@ -19,34 +19,11 @@ import { useColorScheme } from '../hooks/useColorScheme';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { chatService } from '../services/chatService';
+import MessageIndicator from '../components/MessageIndicator';
+import { Chat } from '../types/chat';
 
 // Chat tab type for better type checking
 type ChatTab = 'all' | 'buying' | 'selling';
-
-// Define interface for chat items
-interface ChatItem {
-  _id: string;
-  listingID: {
-    _id: string;
-    title: string;
-    price: number;
-    pictures: string[];
-  };
-  sellerID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  buyerID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  lastMessage?: string;
-  lastMessageTimestamp?: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export default function ChatScreen(): React.ReactElement {
   const router = useRouter();
@@ -61,13 +38,12 @@ export default function ChatScreen(): React.ReactElement {
   
   // State variables
   const [activeTab, setActiveTab] = useState<ChatTab>('all');
-  const [chats, setChats] = useState<ChatItem[]>([]);
-  const [filteredChats, setFilteredChats] = useState<ChatItem[]>([]);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [filteredChats, setFilteredChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-
 
   // Check if we need to start a new chat with a seller from product details
   useEffect(() => {
@@ -98,26 +74,15 @@ export default function ChatScreen(): React.ReactElement {
     
     // Filter based on active tab
     if (activeTab === 'buying') {
-      filtered = chats.filter(chat => {
-        const buyerId = typeof chat.buyerID === 'string' ? 
-          chat.buyerID : 
-          (chat.buyerID && chat.buyerID._id ? chat.buyerID._id : '');
-        return buyerId === user._id;
-      });
+      filtered = chats.filter(chat => chat.buyerID._id === user._id);
     } else if (activeTab === 'selling') {
-      filtered = chats.filter(chat => {
-        const sellerId = typeof chat.sellerID === 'string' ? 
-          chat.sellerID : 
-          (chat.sellerID && chat.sellerID._id ? chat.sellerID._id : '');
-        return sellerId === user._id;
-      });
+      filtered = chats.filter(chat => chat.sellerID._id === user._id);
     }
     
     // Apply search filter if needed
     if (searchQuery) {
       filtered = filtered.filter(chat => {
-        const title = typeof chat.listingID === 'string' ? '' : 
-          (chat.listingID && chat.listingID.title ? chat.listingID.title.toLowerCase() : '');
+        const title = chat.listingID.title.toLowerCase();
         
         return title.includes(searchQuery.toLowerCase()) ||
           (chat.lastMessage && chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -149,8 +114,7 @@ export default function ChatScreen(): React.ReactElement {
   };
   
   // Navigate to conversation screen
-  const navigateToConversation = (chat: ChatItem) => {
-
+  const navigateToConversation = (chat: Chat) => {
     // Check if all required properties exist
     if (!chat || !chat._id) {
       console.error("Invalid chat object:", chat);
@@ -158,39 +122,14 @@ export default function ChatScreen(): React.ReactElement {
       return;
     }
 
-    // Handle both cases: when listingID is a string or when it's an object
-    const productId = typeof chat.listingID === 'string' 
-      ? chat.listingID 
-      : (chat.listingID && chat.listingID._id ? chat.listingID._id : "");
-      
-    if (!productId) {
-      console.error("Missing product ID in chat:", chat);
-      Alert.alert("Error", "Product information is missing.");
-      return;
-    }
-
-    // For product title, handle both cases as well
-    const productTitle = typeof chat.listingID === 'string' 
-      ? "Product" // Default when listingID is just a string ID
-      : (chat.listingID && chat.listingID.title ? chat.listingID.title : "Product");
-
-    // Handle seller and buyer IDs which might also be strings or objects
-    const sellerId = typeof chat.sellerID === 'string' 
-      ? chat.sellerID 
-      : (chat.sellerID && chat.sellerID._id ? chat.sellerID._id : "");
-      
-    const buyerId = typeof chat.buyerID === 'string' 
-      ? chat.buyerID 
-      : (chat.buyerID && chat.buyerID._id ? chat.buyerID._id : "");
-
     router.push({
       pathname: '/conversation',
       params: { 
         chatId: chat._id,
-        productId: productId, 
-        productTitle: productTitle,
-        sellerId: sellerId,
-        buyerId: buyerId
+        productId: chat.listingID._id, 
+        productTitle: chat.listingID.title,
+        sellerId: chat.sellerID._id,
+        buyerId: chat.buyerID._id
       }
     });
   };
@@ -222,35 +161,19 @@ export default function ChatScreen(): React.ReactElement {
     }));
   };
 
-  const renderChatItem = ({ item }: { item: ChatItem }) => {
+  const renderChatItem = ({ item }: { item: Chat }) => {
     if (!item) return null;
     
     // Debug logging to see the actual data structure
     console.log(`Chat ${item._id}: Last message: "${item.lastMessage}" from ${item.lastMessageTimestamp}`);
     
-    const isUserSeller = user?._id === (
-      typeof item.sellerID === 'string' 
-        ? item.sellerID 
-        : item.sellerID?._id
-    );
-    
-    // Get other party info
-    const otherParty = isUserSeller 
-      ? (typeof item.buyerID === 'string' 
-          ? { _id: item.buyerID, firstName: 'Buyer', lastName: '' } 
-          : item.buyerID)
-      : (typeof item.sellerID === 'string' 
-          ? { _id: item.sellerID, firstName: 'Seller', lastName: '' } 
-          : item.sellerID);
-    
-    // Get listing details
-    const listingDetails = typeof item.listingID === 'string'
-      ? { _id: item.listingID, title: 'Product', pictures: [] }
-      : item.listingID;
+    // Get other party info based on if user is seller or buyer
+    const isUserSeller = user?._id === item.sellerID._id;
+    const otherParty = isUserSeller ? item.buyerID : item.sellerID;
     
     // Get image URL
-    const imageUrl = listingDetails?.pictures && listingDetails.pictures.length > 0
-      ? listingDetails.pictures[0]
+    const imageUrl = item.listingID.pictures && item.listingID.pictures.length > 0
+      ? item.listingID.pictures[0]
       : '';
     
     // Format timestamp with fallbacks
@@ -280,7 +203,7 @@ export default function ChatScreen(): React.ReactElement {
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={[styles.chatName, isDarkMode && styles.darkText]} numberOfLines={1}>
-              {otherParty?.firstName || ''} {otherParty?.lastName || ''}
+              {otherParty.firstName || ''} {otherParty.lastName || ''}
             </Text>
             <Text style={[styles.chatTime, isDarkMode && styles.darkSubText]}>
               {timestamp}
@@ -288,7 +211,7 @@ export default function ChatScreen(): React.ReactElement {
           </View>
           
           <Text style={[styles.productTitle, isDarkMode && styles.darkSubText]} numberOfLines={1}>
-            {listingDetails?.title || 'Product'}
+            {item.listingID.title || 'Product'}
           </Text>
           
           <Text style={[styles.lastMessage, isDarkMode && styles.darkSubText]} numberOfLines={1}>
@@ -368,6 +291,7 @@ export default function ChatScreen(): React.ReactElement {
     <View style={tabStyles.container}>
       <View style={tabStyles.header}>
         <Text style={tabStyles.headerTitle}>Messages</Text>
+        <MessageIndicator />
       </View>
       
       <View style={[
