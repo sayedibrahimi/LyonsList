@@ -79,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await authService.login(data);
       setUser(response.data.user);
       setIsAuthenticated(true);
+      console.log('User authenticated, socket connection will be established');
     } catch (err: any) {
       const errorMessage = err.response?.data?.error?.message || 'Login failed. Please try again.';
       setError(errorMessage);
@@ -201,6 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
+      console.log('User logged out, socket will be disconnected');
     } catch (err: any) {
       setError('Logout failed');
       console.error('Error during logout:', err);
