@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Image,
   SafeAreaView,
+  StatusBar,
   Alert,
   Modal
 } from 'react-native';
@@ -426,101 +427,108 @@ const handleSendMessage = async () => {
   
   // Main render
   return (
-    <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
-      {/* Header */}
-      <View style={[styles.header, isDarkMode && styles.darkHeader]}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
-        </TouchableOpacity>
+    <SafeAreaView style={[styles.safeArea, isDarkMode && styles.darkSafeArea]}>
+      <View style={[styles.container, isDarkMode && styles.darkContainer]}>
+        {/* Header */}
+        <View style={[styles.header, isDarkMode && styles.darkHeader]}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
+          </TouchableOpacity>
+          
+          <Text style={[styles.headerTitle, isDarkMode && styles.darkText]} numberOfLines={1}>
+            {user?._id === sellerId ? 
+              `${productTitle} - Buyer` : 
+              `${productTitle} - Seller`}
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => setMenuVisible(true)}
+          >
+            <Ionicons name="ellipsis-vertical" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
+          </TouchableOpacity>
+        </View>
         
-        <Text style={[styles.headerTitle, isDarkMode && styles.darkText]} numberOfLines={1}>
-          {user?._id === sellerId ? 
-            `${productTitle} - Buyer` : 
-            `${productTitle} - Seller`}
-        </Text>
+        {/* Product header */}
+        {renderProductHeader()}
         
-        <TouchableOpacity 
-          style={styles.menuButton}
-          onPress={() => setMenuVisible(true)}
+        {/* Menu Modal */}
+        {renderOptionsMenu()}
+        
+        {/* Chat content */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidView}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
         >
-          <Ionicons name="ellipsis-vertical" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
-        </TouchableOpacity>
-      </View>
-      
-      {/* Message indicator from v2 */}
-      <MessageIndicator />
-      
-      {/* Product header */}
-      {renderProductHeader()}
-      
-      {/* Menu Modal */}
-      {renderOptionsMenu()}
-      
-      {/* Chat content */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 60}
-      >
-        {loading ? (
-          <View style={[styles.loadingContainer, isDarkMode && styles.darkLoadingContainer]}>
-            <ActivityIndicator size="large" color="#007bff" />
-            <Text style={[styles.loadingText, isDarkMode && styles.darkText]}>
-              Loading conversation...
-            </Text>
-          </View>
-        ) : error ? (
-          <View style={[styles.errorContainer, isDarkMode && styles.darkErrorContainer]}>
-            <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
-            <Text style={[styles.errorText, isDarkMode && styles.darkText]}>{error}</Text>
-          </View>
-        ) : (
-          <>
-            <FlatList
-              ref={flatListRef}
-              data={messages[chatId] || []}
-              renderItem={renderMessageItem}
-              keyExtractor={(item) => item._id}
-              style={styles.messagesList}
-              contentContainerStyle={styles.messagesContent}
-              inverted={false}
-            />
-            
-            <View style={[styles.inputContainer, isDarkMode && styles.darkInputContainer]}>
-              <TextInput
-                style={[styles.textInput, isDarkMode && styles.darkTextInput]}
-                placeholder="Type a message..."
-                placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
-                value={inputMessage}
-                onChangeText={setInputMessage}
-                multiline
-              />
-              <TouchableOpacity 
-                style={[
-                  styles.sendButton, 
-                  !inputMessage.trim() && styles.sendButtonDisabled
-                ]}
-                onPress={handleSendMessage}
-                disabled={!inputMessage.trim()}
-              >
-                <Ionicons 
-                  name="paper-plane" 
-                  size={20} 
-                  color={!inputMessage.trim() ? "#CCC" : "#FFF"} 
-                />
-              </TouchableOpacity>
+          {loading ? (
+            <View style={[styles.loadingContainer, isDarkMode && styles.darkLoadingContainer]}>
+              <ActivityIndicator size="large" color="#007bff" />
+              <Text style={[styles.loadingText, isDarkMode && styles.darkText]}>
+                Loading conversation...
+              </Text>
             </View>
-          </>
-        )}
-      </KeyboardAvoidingView>
+          ) : error ? (
+            <View style={[styles.errorContainer, isDarkMode && styles.darkErrorContainer]}>
+              <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
+              <Text style={[styles.errorText, isDarkMode && styles.darkText]}>{error}</Text>
+            </View>
+          ) : (
+            <>
+              <FlatList
+                ref={flatListRef}
+                data={messages[chatId] || []}
+                renderItem={renderMessageItem}
+                keyExtractor={(item) => item._id}
+                style={styles.messagesList}
+                contentContainerStyle={styles.messagesContent}
+                inverted={false}
+              />
+              
+              <View style={[styles.inputContainer, isDarkMode && styles.darkInputContainer]}>
+                <TextInput
+                  style={[styles.textInput, isDarkMode && styles.darkTextInput]}
+                  placeholder="Type a message..."
+                  placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
+                  value={inputMessage}
+                  onChangeText={setInputMessage}
+                  multiline
+                />
+                <TouchableOpacity 
+                  style={[
+                    styles.sendButton, 
+                    !inputMessage.trim() && styles.sendButtonDisabled
+                  ]}
+                  onPress={handleSendMessage}
+                  disabled={!inputMessage.trim()}
+                >
+                  <Ionicons 
+                    name="paper-plane" 
+                    size={20} 
+                    color={!inputMessage.trim() ? "#CCC" : "#FFF"} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </KeyboardAvoidingView>
+        </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
+  },
+  darkSafeArea: {
+    backgroundColor: '#151718',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
