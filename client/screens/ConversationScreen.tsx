@@ -25,7 +25,7 @@ import { chatService } from '../services/chatService';
 import { listingsService } from '../services/listingsService';
 import { useSocket } from '../hooks/useSocket';
 import MessageIndicator from '../components/MessageIndicator';
-import { Message, ListingDetails, normalizeMessage } from '../types/chat';
+import { Message, ListingDetails, normalizeMessage, NewChatRequest } from '../types/chat';
 
 export default function ConversationScreen(): React.ReactElement {
   const router = useRouter();
@@ -143,14 +143,54 @@ export default function ConversationScreen(): React.ReactElement {
       }, 100);
     }
   }, [messages, chatId]);
+
+
+  const createNewChat = async (productId: string, messageText: string): Promise<string> => {
+  try {
+    const chatData: NewChatRequest = {
+      listingID: productId,
+      content: messageText
+    };
+    
+    // Create a new chat
+    const response = await chatService.createChat(chatData);
+    console.log('New chat created:', response);
+    
+    // Return the new chat ID
+    return response.data._id;
+  } catch (error) {
+    console.error('Failed to create new chat:', error);
+    Alert.alert('Error', 'Failed to create new chat. Please try again.');
+    throw error;
+  }
+};
+
+// Updated handleSendMessage function to handle both new and existing chats
+const handleSendMessage = async () => {
+  if (!inputMessage.trim() || !user) return;
   
-  // Send message function
-  const handleSendMessage = () => {
-    if (!inputMessage.trim() || !user || !chatId) return;
+  const messageText = inputMessage.trim();
+  setInputMessage('');
+  
+  try {
+    let actualChatId = chatId;
     
-    const messageText = inputMessage.trim();
-    setInputMessage('');
+    // If this is a new chat, create it first
+    if (isNewChat || !actualChatId) {
+      console.log('Creating new chat first...');
+      actualChatId = await createNewChat(productId, messageText);
+      
+      // Update the URL params to use the new chat ID
+      router.setParams({ 
+        chatId: actualChatId,
+        isNew: 'false'
+      });
+      
+      // No need to continue as the message was already sent when creating the chat
+      return;
+    }
     
+    // For existing chats, continue with the normal flow
     // Determine the receiver ID
     const receiverId = user._id === sellerId ? buyerId : sellerId;
     
@@ -159,7 +199,7 @@ export default function ConversationScreen(): React.ReactElement {
       senderID: user._id,
       receiverID: receiverId,
       listingID: productId,
-      chatID: chatId,
+      chatID: actualChatId,
       content: messageText
     };
     
@@ -177,7 +217,7 @@ export default function ConversationScreen(): React.ReactElement {
         lastName: ''
       },
       content: messageText,
-      chatID: chatId,
+      chatID: actualChatId,
       readStatus: false,
       timestamp: new Date(),
       createdAt: new Date().toISOString()
@@ -194,12 +234,10 @@ export default function ConversationScreen(): React.ReactElement {
       chatService.sendMessageViaREST(messageData)
         .then(confirmedMessage => {
           // If we had to use REST, manually add the confirmed message
-          // The socket context's addMessage function will handle replacing the temp message
           console.log('Message sent via REST:', confirmedMessage);
         })
         .catch(error => {
           console.error('Failed to send message:', error);
-          // Could implement message retry or error state here
           Alert.alert(
             'Message Failed',
             'Failed to send message. Please check your connection and try again.',
@@ -207,7 +245,11 @@ export default function ConversationScreen(): React.ReactElement {
           );
         });
     }
-  };
+  } catch (error) {
+    console.error('Error in handleSendMessage:', error);
+    Alert.alert('Error', 'Failed to send message. Please try again.');
+  }
+};
   
   // Format timestamp
   const formatMessageTime = (timestamp: string): string => {
