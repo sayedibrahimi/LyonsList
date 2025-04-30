@@ -2,87 +2,21 @@
 // Purpose: This file contains the chat service that handles chat-related functionalities such as fetching all chats, getting a specific chat by ID, sending messages, creating new chats, and deleting chats. It interacts with the backend API to perform these actions.
 // Description: The chatService object contains methods for managing chats. It includes methods to get all chats for the current user, get a specific chat by ID, send a new message, create a new chat, and delete a chat. Each method makes an API call using the apiService and handles the response appropriately.
 import { apiService } from './api';
-
-// Define chat interfaces
-interface ChatItem {
-  _id: string;
-  listingID: {
-    _id: string;
-    title: string;
-    price: number;
-    pictures: string[];
-  };
-  sellerID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  buyerID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  lastMessage?: string;
-  lastMessageTimestamp?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Message {
-  _id: string;
-  senderID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  receiverID: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  content: string;
-  readStatus: boolean;
-  timestamp: string;
-  createdAt: string;
-}
-
-interface ChatResponse {
-  success: boolean;
-  message: string;
-  data: {
-    chat: ChatItem;
-    messages: Message[];
-  };
-}
-
-interface ChatsResponse {
-  success: boolean;
-  message: string;
-  data: ChatItem[];
-}
-
-interface ChatApiResponse {
-  success: boolean;
-  message?: string;
-  data: ChatItem;
-}
-
-interface NewMessageRequest {
-  senderID: string;
-  receiverID: string;
-  listingID: string;
-  chatID: string;
-  content: string;
-}
-
-interface NewChatRequest {
-  listingID: string;
-  content: string;
-}
+import { 
+  Chat, 
+  Message, 
+  NewMessageRequest, 
+  NewChatRequest, 
+  ChatResponse, 
+  ChatsResponse, 
+  ChatApiResponse,
+  normalizeMessage
+} from '../types/chat';
+import { Socket } from 'socket.io-client';
 
 export const chatService = {
   // Get all chats for the current user
-  getAllChats: async (): Promise<ChatItem[]> => {
+  getAllChats: async (): Promise<Chat[]> => {
     try {
       const response = await apiService.get<ChatsResponse>('/chat/all');
       return response.data || [];
@@ -93,25 +27,47 @@ export const chatService = {
   },
   
   // Get a specific chat by ID
-  getChatById: async (chatId: string): Promise<{ chat: ChatItem; messages: Message[] }> => {
+  getChatById: async (chatId: string): Promise<{ chat: Chat; messages: Message[] }> => {
     try {
       const response = await apiService.get<ChatResponse>(`/chat/${chatId}`);
-      return response.data || { chat: {} as ChatItem, messages: [] };
+      
+      // Ensure messages have the correct format
+      const messages = response.data.messages.map(normalizeMessage);
+      
+      return { 
+        chat: response.data.chat, 
+        messages 
+      };
     } catch (error) {
       console.error('Error fetching chat details:', error);
       throw error;
     }
   },
   
-  // Create a new message
-  sendMessage: async (messageData: NewMessageRequest): Promise<Message> => {
+  // Send a message via REST API
+  // Note: This method should be used only when we need to ensure message delivery
+  // For normal operation, use sendMessageViaSocket
+  sendMessageViaREST: async (messageData: NewMessageRequest): Promise<Message> => {
     try {
       const response = await apiService.post<Message>('/chat/message', messageData);
-      return response;
+      return normalizeMessage(response);
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending message via REST:', error);
       throw error;
     }
+  },
+
+  // Send a message via socket (preferred method)
+  // This should be called with the socket instance from SocketContext
+  sendMessageViaSocket: (socket: Socket, messageData: NewMessageRequest): void => {
+    if (!socket) {
+      console.error('Socket is not connected. Falling back to REST API');
+      // You could automatically fall back to REST API here if needed
+      return;
+    }
+    
+    console.log('Sending message via socket:', messageData);
+    socket.emit('message', messageData);
   },
   
   // Create a new chat
@@ -127,7 +83,7 @@ export const chatService = {
     }
   },
   
-  // Delete a chat (optional, can be implemented later)
+  // Delete a chat
   deleteChat: async (chatId: string): Promise<void> => {
     try {
       await apiService.delete(`/chat/${chatId}`);
