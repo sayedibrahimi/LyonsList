@@ -1,6 +1,6 @@
 // app/_layout.tsx
-// Purpose: This file defines the root layout for the app.
-// Description: It sets up the main navigation structure and theme provider for the app.
+// Purpose: This file serves as the root layout for the React Native application, managing themes, authentication, and socket connections.
+// Description: The RootLayout component initializes the application by setting up context providers for theme management, authentication, favorites, and socket connections. It also handles splash screen visibility and status bar configuration based on the current color scheme. The RootLayoutContent component is responsible for rendering the main navigation stack with the appropriate theme.
 import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
 import StackNavigator from '../components/StackNavigator';
 import { useEffect, useState } from 'react';
@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';
 import { FavoritesProvider } from '@/context/FavoritesContext';
+import { SocketProvider } from '../context/SocketContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,7 +42,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <AuthProvider>
           <FavoritesProvider>
+            <SocketProvider>
             <RootLayoutContent />
+            </SocketProvider>
           </FavoritesProvider>
         </AuthProvider>
       </SafeAreaProvider>
