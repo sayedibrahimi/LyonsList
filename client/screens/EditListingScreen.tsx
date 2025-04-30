@@ -174,7 +174,6 @@ export default function EditListingScreen(): React.ReactElement {
 
   return (
     <SafeAreaView style={[styles.safeArea, isDarkMode && styles.darkSafeArea]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
