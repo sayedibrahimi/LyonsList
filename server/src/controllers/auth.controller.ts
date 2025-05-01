@@ -38,7 +38,6 @@ export async function register(
     if (existingUser !== null) {
       throw new BadRequestError(ErrorMessages.USER_EMAIL_IN_USE);
     }
-    // !TODO: resend OTP if user already exists
     if (otpCache.get(`user:${email}`)) {
       // clear otp from cache
       otpCache.del(`otp:${email}`);
