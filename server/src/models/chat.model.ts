@@ -1,6 +1,4 @@
 import mongoose, { Schema, Model, Document } from "mongoose";
-
-// TODO: buyer seller
 export interface ChatModel extends Document {
   _id: string;
   listingID: Schema.Types.ObjectId;

@@ -11,6 +11,7 @@ import {
 import {
   getAllListings,
   getListingsByCategory,
+  getListingsBatch,
 } from "../controllers/search.controller";
 import { reportListing } from "../controllers/report.controller";
 
@@ -25,6 +26,7 @@ router.post("/report/:id", reportListing);
 // GET /listings - Get all listings
 router.get("/search", getAllListings);
 router.post("/search/category", getListingsByCategory);
+router.post("/batch", getListingsBatch);
 
 // GET /listings/:id - Get a listing by ID
 // PATCH /listings/:id - Update a listing by ID
