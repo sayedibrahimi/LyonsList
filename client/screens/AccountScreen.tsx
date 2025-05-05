@@ -174,10 +174,6 @@ export default function AccountScreen(): React.ReactElement {
               styles.userName,
               isDarkMode ? styles.darkText : styles.lightText
             ]}>{user.firstName} {user.lastName}</Text>
-            <Text style={[
-              styles.userEmail,
-              isDarkMode ? styles.darkSubText : styles.lightSubText
-            ]}>{user.email}</Text>
             <TouchableOpacity style={styles.editButton}>
               <Text style={[
                 styles.editButtonText,
