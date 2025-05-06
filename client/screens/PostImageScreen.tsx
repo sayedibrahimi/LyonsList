@@ -100,7 +100,11 @@ export default function PostImageScreen(): React.ReactElement {
   const handleTakePicture = async () => {
     if (cameraRef.current) {
       try {
-        const photo = await cameraRef.current.takePictureAsync();
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.5, // Lower quality for smaller file size
+          base64: true, // Get base64 string for upload
+          exif: false // Strip metadata to reduce size and potential issues
+        });
         if (!photo) {
           throw new Error('Failed to take picture');
         }
