@@ -90,7 +90,7 @@ const SignupScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}
       keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
-          <Image source={require('../../assets/images/wheaton.webp')} style={styles.logo} />
+          <Image source={require('../../assets/images/app-logo.png')} style={styles.logo} />
           <Text style={styles.title}>Create Account</Text>
           
           {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
