@@ -86,7 +86,7 @@ const LoginScreen = () => {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}         keyboardShouldPersistTaps="handled">
         <View style={styles.container}>
-          <Image source={require('../../assets/images/wheaton.webp')} style={styles.logo} />
+          <Image source={require('../../assets/images/app-logo.png')} style={styles.logo} />
           <Text style={styles.title}>Welcome Back</Text>
           
           {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
@@ -160,8 +160,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   logo: {
-    width: 150,
-    height: 150,
+    width: 200,
+    height: 200,
     marginBottom: 20,
     resizeMode: 'contain',
   },
