@@ -149,7 +149,7 @@ export default function OTPVerificationScreen(): React.ReactElement {
           <Ionicons name="arrow-back" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
         </TouchableOpacity>
         
-        <Image source={require('../assets/images/wheaton.webp')} style={styles.logo} />
+        <Image source={require('../assets/images/app-logo.png')} style={styles.logo} />
         
         <Text style={[styles.title, isDarkMode && styles.darkText]}>Verification Code</Text>
         <Text style={[styles.subtitle, isDarkMode && styles.darkSubText]}>
