@@ -12,7 +12,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.lyonlist.Marketplace",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "android": {
@@ -48,6 +51,13 @@
       "eas": {
         "projectId": "db630ffd-1535-4bc0-a702-b3f04671418c"
       }
+    },
+    "owner": "lyonlist",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/db630ffd-1535-4bc0-a702-b3f04671418c"
     }
   }
 }
