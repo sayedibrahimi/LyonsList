@@ -80,7 +80,7 @@ export default function ForgotPasswordScreen({}: ForgotPasswordScreenProps): Rea
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
           
-          <Image source={require('../assets/images/wheaton.webp')} style={styles.logo} />
+          <Image source={require('../assets/images/app-logo.png')} style={styles.logo} />
           
           <Text style={styles.title}>Forgot Password</Text>
           <Text style={styles.subtitle}>
