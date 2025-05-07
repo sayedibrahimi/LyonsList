@@ -33,9 +33,9 @@ export async function getAllListings(
       _id: { $nin: user.reports }, // Exclude listings created by the user
     }).sort({ createdAt: -1 }); // Sort by createdAt field in descending order
 
-    if (!allListings || allListings.length === 0) {
-      throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
-    }
+    // if (!allListings || allListings.length === 0) {
+    //   throw new NotFoundError(ErrorMessages.LISTING_NOT_FOUND);
+    // }
 
     sendSuccess(res, SuccessMessages.LISTING_SUCCESS_FETCHED, StatusCodes.OK, {
       listings: allListings,
