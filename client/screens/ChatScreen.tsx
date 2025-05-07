@@ -19,7 +19,6 @@ import { useColorScheme } from '../hooks/useColorScheme';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { chatService } from '../services/chatService';
-import MessageIndicator from '../components/MessageIndicator';
 import { Chat } from '../types/chat';
 
 // Chat tab type for better type checking
@@ -291,7 +290,6 @@ export default function ChatScreen(): React.ReactElement {
     <View style={tabStyles.container}>
       <View style={tabStyles.header}>
         <Text style={tabStyles.headerTitle}>Messages</Text>
-        <MessageIndicator />
       </View>
       
       <View style={[
