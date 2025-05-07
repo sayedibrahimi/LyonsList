@@ -57,6 +57,9 @@ export default function ProductDetailsScreen(): React.ReactElement {
     }
   };
 
+  // Check if current user is the seller of this listing
+  const isOwnListing = user && product && product.sellerID === user._id;
+
   const formatPrice = (price: number) => {
     return `$${price.toFixed(2)}`;
   };
@@ -176,7 +179,8 @@ export default function ProductDetailsScreen(): React.ReactElement {
 
   const favorited = isFavorite(product._id);
 
-  const headerRight = (
+  // Only show action buttons if it's not the user's own listing
+  const headerRight = !isOwnListing ? (
     <View style={styles.headerActions}>
       <TouchableOpacity 
         style={styles.reportButton}
@@ -199,7 +203,7 @@ export default function ProductDetailsScreen(): React.ReactElement {
         />
       </TouchableOpacity>
     </View>
-  );
+  ) : null;
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.darkContainer]}>
@@ -258,15 +262,18 @@ export default function ProductDetailsScreen(): React.ReactElement {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, isDarkMode && styles.darkFooter]}>
-        <TouchableOpacity 
-          style={styles.replyButton}
-          onPress={handleReply}
-        >
-          <Ionicons name="chatbubble-outline" size={20} color="#fff" />
-          <Text style={styles.replyButtonText}>Reply to Seller</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Only show the Reply button if it's not the user's own listing */}
+      {!isOwnListing && (
+        <View style={[styles.footer, isDarkMode && styles.darkFooter]}>
+          <TouchableOpacity 
+            style={styles.replyButton}
+            onPress={handleReply}
+          >
+            <Ionicons name="chatbubble-outline" size={20} color="#fff" />
+            <Text style={styles.replyButtonText}>Reply to Seller</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Report Modal */}
       <ReportListingModal 
@@ -468,5 +475,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  ownListingNotice: {
+    marginTop: 30,
+    padding: 15,
+    backgroundColor: '#f0f8ff',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007bff',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  darkOwnListingNotice: {
+    backgroundColor: '#1E2022',
+    borderLeftColor: '#4a9eff',
+  },
+  ownListingText: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#333',
+    fontWeight: '500',
   },
 });
