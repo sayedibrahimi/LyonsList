@@ -11,7 +11,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
-  Alert
+  Alert,
+  ScrollView, 
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { createTabStyles } from '../styles/tabStyles';
@@ -52,6 +54,7 @@ export default function ChatScreen(): React.ReactElement {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [unreadMessages, setUnreadMessages] = useState<UnreadMessagesCount>({});
   const [openedChats, setOpenedChats] = useState<Record<string, boolean>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   // Check if we need to start a new chat with a seller from product details
   useEffect(() => {
@@ -380,6 +383,12 @@ export default function ChatScreen(): React.ReactElement {
       </TouchableOpacity>
     );
   };
+
+  const handleRefresh = async () => {
+  setRefreshing(true);
+  await fetchChats(); // existing function already defined
+  setRefreshing(false);
+};
   
   // Tab buttons
   const renderTabs = () => {
@@ -500,28 +509,38 @@ export default function ChatScreen(): React.ReactElement {
           </TouchableOpacity>
         </View>
       ) : filteredChats.length === 0 ? (
-        <View style={[styles.emptyContainer, isDarkMode && { backgroundColor: '#151718' }]}>
-          <Ionicons name="chatbubbles-outline" size={48} color={isDarkMode ? "#9BA1A6" : "#999"} />
-          <Text style={[styles.emptyText, isDarkMode && styles.darkText]}>
-            No {activeTab !== 'all' ? activeTab : ''} messages yet
-          </Text>
-          <Text style={[styles.emptySubText, isDarkMode && styles.darkSubText]}>
-            {activeTab === 'all' ? 'Start a conversation by messaging a seller' :
-             activeTab === 'buying' ? 'Start a conversation by messaging a seller' :
-             'Wait for buyers to contact you about your listings'}
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredChats}
-          renderItem={renderChatItem}
-          keyExtractor={item => item._id}
-          style={[styles.chatList, isDarkMode && { backgroundColor: '#151718' }]}
-          contentContainerStyle={styles.chatListContent}
-          refreshing={loading}
-          onRefresh={fetchChats}
-        />
-      )}
+  <ScrollView
+    contentContainerStyle={[styles.emptyContainer, isDarkMode && { backgroundColor: '#151718' }]}
+    refreshControl={
+      <RefreshControl
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+        colors={['#007bff']}
+        tintColor={isDarkMode ? '#9BA1A6' : '#007bff'}
+      />
+    }
+  >
+    <Ionicons name="chatbubbles-outline" size={48} color={isDarkMode ? "#9BA1A6" : "#999"} />
+    <Text style={[styles.emptyText, isDarkMode && styles.darkText]}>
+      No {activeTab !== 'all' ? activeTab : ''} messages yet
+    </Text>
+    <Text style={[styles.emptySubText, isDarkMode && styles.darkSubText]}>
+      {activeTab === 'all' ? 'Start a conversation by messaging a seller' :
+        activeTab === 'buying' ? 'Start a conversation by messaging a seller' :
+        'Wait for buyers to contact you about your listings'}
+    </Text>
+  </ScrollView>
+) : (
+  <FlatList
+    data={filteredChats}
+    renderItem={renderChatItem}
+    keyExtractor={item => item._id}
+    style={[styles.chatList, isDarkMode && { backgroundColor: '#151718' }]}
+    contentContainerStyle={styles.chatListContent}
+    refreshing={refreshing}
+    onRefresh={handleRefresh}
+  />
+)}
     </View>
   );
 }
