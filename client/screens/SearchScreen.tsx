@@ -13,7 +13,8 @@ import {
   ActivityIndicator, 
   StyleSheet,
   Modal,
-  ScrollView
+  ScrollView,
+  RefreshControl // Import RefreshControl
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -24,20 +25,12 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useColorScheme } from '../hooks/useColorScheme';
 import { Categories } from '@/constants/Categories';
 
-// // Define Categories enum if it doesn't exist elsewhere
-// enum Categories {
-//   Electronics = "Electronics",
-//   Clothing = "Clothing",
-//   Furniture = "Furniture",
-//   Books = "Books",
-//   Other = "Other"
-// }
-
 export default function SearchScreen(): React.ReactElement {
   const [products, setProducts] = useState<Listing[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Listing[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // Add refreshing state for ScrollView
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState<Record<string, boolean>>({});
   const router = useRouter();
@@ -69,7 +62,14 @@ export default function SearchScreen(): React.ReactElement {
       console.error('Error fetching products:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false); // Make sure to turn off refreshing
     }
+  };
+
+  // Add this function for the pull-to-refresh functionality
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchProducts();
   };
 
   // Handle search functionality
@@ -77,7 +77,7 @@ export default function SearchScreen(): React.ReactElement {
     setSearchQuery(text);
   };
 
-  // Then update the useEffect that filters products
+  // Update filtering logic (unchanged)
   useEffect(() => {
     if (!user || !products.length) return;
     
@@ -99,12 +99,12 @@ export default function SearchScreen(): React.ReactElement {
     setFilteredProducts(filtered);
   }, [products, searchQuery, categoryFilter, user]);
 
-  // Format price for display
+  // Format price for display (unchanged)
   const formatPrice = (price: number) => {
     return `$${price.toFixed(2)}`;
   };
 
-  // Calculate how long ago the item was posted
+  // Calculate how long ago the item was posted (unchanged)
   const getTimeAgo = (timestamp: string) => {
     const postTime = new Date(timestamp);
     const now = new Date();
@@ -124,6 +124,7 @@ export default function SearchScreen(): React.ReactElement {
     }
   };
 
+  // Favorite toggle logic (unchanged)
   const handleFavoriteToggle = async (item: Listing) => {
     if (!user) {
       Alert.alert(
@@ -149,89 +150,89 @@ export default function SearchScreen(): React.ReactElement {
     }
   }
 
-// Add this renderCategoryModal function
-const renderCategoryModal = () => {
-  return (
-    <Modal
-      visible={showCategoryModal}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={() => setShowCategoryModal(false)}
-    >
-      <TouchableOpacity 
-        style={styles.modalOverlay} 
-        activeOpacity={1}
-        onPress={() => setShowCategoryModal(false)}
+  // Category modal (unchanged)
+  const renderCategoryModal = () => {
+    return (
+      <Modal
+        visible={showCategoryModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCategoryModal(false)}
       >
-        <View style={[
-          styles.modalContainer,
-          isDarkMode && styles.darkModalContainer
-        ]}>
-          <View style={styles.modalHeader}>
-            <Text style={[styles.modalTitle, isDarkMode && styles.darkText]}>
-              Filter by Category
-            </Text>
-            <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
-              <Ionicons name="close" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView style={styles.categoryList} contentContainerStyle={{ paddingBottom: 24 }}>
-            <TouchableOpacity 
-              style={[
-                styles.categoryOption,
-                !categoryFilter && {
-                  backgroundColor: isDarkMode ? '#3A3F44' : '#e0f0ff'
-                }
-              ]}
-              onPress={() => {
-                setCategoryFilter('');
-                setShowCategoryModal(false);
-              }}
-            >
-              <Text style={[
-                styles.categoryOptionText,  
-                !categoryFilter && styles.categoryOptionTextActive,
-                isDarkMode && styles.darkText
-              ]}>
-                All Categories
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1}
+          onPress={() => setShowCategoryModal(false)}
+        >
+          <View style={[
+            styles.modalContainer,
+            isDarkMode && styles.darkModalContainer
+          ]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, isDarkMode && styles.darkText]}>
+                Filter by Category
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+                <Ionicons name="close" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
+              </TouchableOpacity>
+            </View>
             
-            {Object.values(Categories).map((category) => (
+            <ScrollView style={styles.categoryList} contentContainerStyle={{ paddingBottom: 24 }}>
               <TouchableOpacity 
-                key={category}
                 style={[
-                  styles.categoryOption, 
-                  categoryFilter === category && {
-                    backgroundColor: isDarkMode ? '#3A3F44' : '#e0f0ff' // new dark bg
+                  styles.categoryOption,
+                  !categoryFilter && {
+                    backgroundColor: isDarkMode ? '#3A3F44' : '#e0f0ff'
                   }
                 ]}
                 onPress={() => {
-                  setCategoryFilter(category);
+                  setCategoryFilter('');
                   setShowCategoryModal(false);
                 }}
               >
                 <Text style={[
-                  styles.categoryOptionText,
-                  categoryFilter === category && {
-                    color: isDarkMode ? '#fff' : '#007bff', // ensure contrast
-                    fontWeight: '600',
-                  },
-                  isDarkMode && { color: '#ECEDEE' }
+                  styles.categoryOptionText,  
+                  !categoryFilter && styles.categoryOptionTextActive,
+                  isDarkMode && styles.darkText
                 ]}>
-                  {category}
+                  All Categories
                 </Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-};
+              
+              {Object.values(Categories).map((category) => (
+                <TouchableOpacity 
+                  key={category}
+                  style={[
+                    styles.categoryOption, 
+                    categoryFilter === category && {
+                      backgroundColor: isDarkMode ? '#3A3F44' : '#e0f0ff'
+                    }
+                  ]}
+                  onPress={() => {
+                    setCategoryFilter(category);
+                    setShowCategoryModal(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.categoryOptionText,
+                    categoryFilter === category && {
+                      color: isDarkMode ? '#fff' : '#007bff',
+                      fontWeight: '600',
+                    },
+                    isDarkMode && { color: '#ECEDEE' }
+                  ]}>
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
 
-  // Render each product item
+  // Render each product item (unchanged)
   const renderProductItem = ({ item }: { item: Listing }) => {
     const favorited = isFavorite(item._id);
     const itemImageError = imageError[item._id] || false;
@@ -304,6 +305,64 @@ const renderCategoryModal = () => {
     );
   };
 
+  // Modified empty state with ScrollView and RefreshControl
+  const renderEmptyState = () => {
+    return (
+      <ScrollView 
+        contentContainerStyle={[
+          styles.emptyScrollViewContainer,
+          isDarkMode && { backgroundColor: '#151718' }
+        ]}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            colors={['#007bff']}
+            tintColor={isDarkMode ? '#9BA1A6' : '#007bff'}
+          />
+        }
+      >
+        <View style={styles.emptyContentContainer}>
+          <Ionicons name="search-outline" size={48} color={isDarkMode ? "#9BA1A6" : "#aaa"} />
+          <Text style={[
+            styles.emptyText,
+            isDarkMode && styles.darkText
+          ]}>No products found</Text>
+          
+          {(searchQuery.length > 0 || categoryFilter) ? (
+            <Text style={[
+              styles.emptySubtext,
+              isDarkMode && styles.darkSubText
+            ]}>Try a different search term or category</Text>
+          ) : (
+            <Text style={[
+              styles.emptySubtext,
+              isDarkMode && styles.darkSubText
+            ]}>Pull down to refresh or tap the button below</Text>
+          )}
+          
+          {categoryFilter && (
+            <TouchableOpacity 
+              style={styles.clearFilterButton}
+              onPress={() => setCategoryFilter('')}
+            >
+              <Text style={styles.clearFilterText}>Clear Filter</Text>
+            </TouchableOpacity>
+          )}
+          
+          {!refreshing && !searchQuery && !categoryFilter && (
+            <TouchableOpacity 
+              style={[styles.retryButton, { marginTop: 20 }]}
+              onPress={fetchProducts}
+            >
+              <Text style={styles.retryButtonText}>Refresh Marketplace</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
+    );
+  };
+
   return (
     <View style={tabStyles.container}>
       <View style={[
@@ -354,7 +413,7 @@ const renderCategoryModal = () => {
         </TouchableOpacity>
       </View>
       
-      {loading ? (
+      {loading && !refreshing ? (
         <View style={[
           styles.loadingContainer,
           isDarkMode && { backgroundColor: '#151718' }
@@ -380,30 +439,7 @@ const renderCategoryModal = () => {
           </TouchableOpacity>
         </View>
       ) : filteredProducts.length === 0 ? (
-        <View style={[
-          styles.emptyContainer,
-          isDarkMode && { backgroundColor: '#151718' }
-        ]}>
-          <Ionicons name="search-outline" size={48} color={isDarkMode ? "#9BA1A6" : "#aaa"} />
-          <Text style={[
-            styles.emptyText,
-            isDarkMode && styles.darkText
-          ]}>No products found</Text>
-          {(searchQuery.length > 0 || categoryFilter) && (
-            <Text style={[
-              styles.emptySubtext,
-              isDarkMode && styles.darkSubText
-            ]}>Try a different search term or category</Text>
-          )}
-          {categoryFilter && (
-            <TouchableOpacity 
-              style={styles.clearFilterButton}
-              onPress={() => setCategoryFilter('')}
-            >
-              <Text style={styles.clearFilterText}>Clear Filter</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        renderEmptyState()
       ) : (
         <FlatList
           data={filteredProducts}
@@ -416,11 +452,11 @@ const renderCategoryModal = () => {
           contentContainerStyle={styles.productListContent}
           numColumns={1}
           showsVerticalScrollIndicator={false}
-          refreshing={loading}
-          onRefresh={fetchProducts}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       )}
-    {renderCategoryModal()}
+      {renderCategoryModal()}
     </View>
   );
 }
@@ -610,6 +646,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  // Updated empty state styles
+  emptyScrollViewContainer: {
+    flexGrow: 1,
+    backgroundColor: '#f8f8f8',
+  },
+  emptyContentContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    minHeight: 500, // Give enough height for pull-to-refresh to work well
+  },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -627,6 +675,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     color: '#999',
+    textAlign: 'center',
   },
   filterButton: {
     backgroundColor: '#007bff',
@@ -654,6 +703,18 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  clearFilterButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#007bff',
+    borderRadius: 8,
+  },
+  clearFilterText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -702,18 +763,6 @@ const styles = StyleSheet.create({
   },
   categoryOptionTextActive: {
     color: '#007BFF',
-    fontWeight: '600',
-  },
-  clearFilterButton: {
-    marginTop: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#007bff',
-    borderRadius: 8,
-  },
-  clearFilterText: {
-    color: '#fff',
-    fontSize: 14,
     fontWeight: '600',
   },
 });
