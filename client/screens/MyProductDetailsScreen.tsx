@@ -85,32 +85,32 @@ export default function MyProductDetailsScreen(): React.ReactElement {
         { 
           text: 'Delete', 
           style: 'destructive',
-          onPress: confirmDeleteListing 
+          // onPress: confirmDeleteListing 
         }
       ]
     );
   };
 
-  const confirmDeleteListing = async () => {
-    try {
-      setIsDeleting(true);
-      await listingsService.deleteListing(productId);
-      Alert.alert(
-        'Success',
-        'Your listing has been deleted',
-        [
-          { 
-            text: 'OK', 
-            onPress: () => router.replace('/myListings') 
-          }
-        ]
-      );
-    } catch (err) {
-      console.error('Error deleting listing:', err);
-      Alert.alert('Error', 'Failed to delete listing. Please try again.');
-      setIsDeleting(false);
-    }
-  };
+  // const confirmDeleteListing = async () => {
+  //   try {
+  //     setIsDeleting(true);
+  //     await listingsService.deleteListing(productId);
+  //     Alert.alert(
+  //       'Success',
+  //       'Your listing has been deleted',
+  //       [
+  //         { 
+  //           text: 'OK', 
+  //           onPress: () => router.replace('/myListings') 
+  //         }
+  //       ]
+  //     );
+  //   } catch (err) {
+  //     console.error('Error deleting listing:', err);
+  //     Alert.alert('Error', 'Failed to delete listing. Please try again.');
+  //     setIsDeleting(false);
+  //   }
+  // };
 
   const handleEditListing = () => {
     router.push({
