@@ -33,7 +33,7 @@ export default function TabLayout(): React.ReactElement {
   return (
     <View style={{ 
       flex: 1, 
-      paddingTop: insets.top, 
+      paddingTop: Platform.OS === 'ios' ? 12 : 12,
       backgroundColor: isDarkMode ? '#151718' : '#ffffff',
     }}>
       <Tabs 
@@ -66,8 +66,26 @@ export default function TabLayout(): React.ReactElement {
           name="post"
           options={{
             tabBarLabel: '',
-            tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" color={color} size={size} />,
-            tabBarStyle: { display: 'none' }, // Hide tab label
+            // tabBarIcon: ({ color, size }) => <Ionicons name="add-circle" color={color} size={size + 6} />,
+            tabBarIcon: ({ color, size, focused }) => (
+              <View style={{
+                  position: 'absolute',
+                  bottom: Platform.OS === 'ios' ? 1 : 1, // less float
+                  height: 58,
+                  width: 58,
+                  borderRadius: 29,
+                  backgroundColor: '#007BFF',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#000',
+                  shadowOpacity: 0.1,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowRadius: 4,
+                  elevation: 4,
+                }}>
+                  <Ionicons name="add" size={28} color="white" />
+              </View>
+            ),
           }}
         />
         <Tabs.Screen
