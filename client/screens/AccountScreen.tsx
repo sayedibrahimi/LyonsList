@@ -1,6 +1,6 @@
-// client/screens/AccountScreen.tsx
-// Purpose: This code defines an AccountScreen component that displays user account information, including profile details, a list of menu items, and a logout button. It also includes a theme toggle for light and dark modes. The screen adapts its appearance based on the user's authentication status and theme preference.
-// Description: The AccountScreen component uses React Native components to create a user interface that displays the user's profile information and a list of menu items. It utilizes hooks for managing authentication state and theme preferences. The screen also includes styles for both light and dark modes, ensuring a consistent user experience across different themes.
+// // client/screens/AccountScreen.tsx
+// // Purpose: This code defines an AccountScreen component that displays user account information, including profile details, a list of menu items, and a logout button. It also includes a theme toggle for light and dark modes. The screen adapts its appearance based on the user's authentication status and theme preference.
+// // Description: The AccountScreen component uses React Native components to create a user interface that displays the user's profile information and a list of menu items. It utilizes hooks for managing authentication state and theme preferences. The screen also includes styles for both light and dark modes, ensuring a consistent user experience across different themes.
 import React from 'react';
 import { 
   View, 
@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'expo-router';
 import ThemeToggle from '../components/ThemeToggle';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { createTabStyles } from '../styles/tabStyles';
 
 interface MenuItem {
   id: string;
@@ -29,6 +30,7 @@ export default function AccountScreen(): React.ReactElement {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  const tabStyles = createTabStyles(colorScheme);
   
   const menuItems: MenuItem[] = [
     { 
@@ -88,30 +90,22 @@ export default function AccountScreen(): React.ReactElement {
 
   if (loading) {
     return (
-      <View style={[
-        styles.container,
-        isDarkMode ? styles.darkContainer : styles.lightContainer,
-        styles.loadingContainer
-      ]}>
-        <ActivityIndicator size="large" color={isDarkMode ? "#4a9eff" : "#007BFF"} />
+      <View style={tabStyles.container}>
+        <View style={tabStyles.header}>
+          <Text style={tabStyles.headerTitle}>My Account</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={isDarkMode ? "#4a9eff" : "#007BFF"} />
+        </View>
       </View>
     );
   }
 
   if (!user) {
     return (
-      <View style={[
-        styles.container,
-        isDarkMode ? styles.darkContainer : styles.lightContainer
-      ]}>
-        <View style={[
-          styles.header,
-          isDarkMode ? styles.darkHeader : styles.lightHeader
-        ]}>
-          <Text style={[
-            styles.headerTitle,
-            isDarkMode ? styles.darkText : styles.lightText
-          ]}>My Account</Text>
+      <View style={tabStyles.container}>
+        <View style={tabStyles.header}>
+          <Text style={tabStyles.headerTitle}>My Account</Text>
         </View>
         <View style={styles.notLoggedInContainer}>
           <Ionicons 
@@ -121,7 +115,7 @@ export default function AccountScreen(): React.ReactElement {
           />
           <Text style={[
             styles.notLoggedInText,
-            isDarkMode ? styles.darkText : styles.lightText
+            isDarkMode && styles.darkText
           ]}>Please log in to view your account</Text>
           <TouchableOpacity
             style={styles.loginButton}
@@ -135,24 +129,15 @@ export default function AccountScreen(): React.ReactElement {
   }
 
   return (
-    <View style={[
-      styles.container,
-      isDarkMode ? styles.darkContainer : styles.lightContainer
-    ]}>
-      <View style={[
-        styles.header,
-        isDarkMode ? styles.darkHeader : styles.lightHeader
-      ]}>
-        <Text style={[
-          styles.headerTitle,
-          isDarkMode ? styles.darkText : styles.lightText
-        ]}>My Account</Text>
+    <View style={tabStyles.container}>
+      <View style={tabStyles.header}>
+        <Text style={tabStyles.headerTitle}>My Account</Text>
       </View>
       
       <ScrollView 
         style={[
           styles.content,
-          isDarkMode ? styles.darkContent : styles.lightContent
+          isDarkMode ? { backgroundColor: '#151718' } : { backgroundColor: '#f8f9fa' }
         ]}
       >
         <View style={[
@@ -172,7 +157,7 @@ export default function AccountScreen(): React.ReactElement {
           <View style={styles.profileInfo}>
             <Text style={[
               styles.userName,
-              isDarkMode ? styles.darkText : styles.lightText
+              isDarkMode && styles.darkText
             ]}>{user.firstName} {user.lastName}</Text>
             <TouchableOpacity style={styles.editButton}>
               <Text style={[
@@ -203,7 +188,7 @@ export default function AccountScreen(): React.ReactElement {
               />
               <Text style={[
                 styles.menuItemText,
-                isDarkMode ? styles.darkText : styles.lightText
+                isDarkMode && styles.darkText
               ]}>{item.title}</Text>
               <Ionicons 
                 name="chevron-forward" 
@@ -239,57 +224,12 @@ export default function AccountScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  lightContainer: {
-    backgroundColor: '#f8f9fa',
-  },
-  darkContainer: {
-    backgroundColor: '#151718',
-  },
   content: {
     flex: 1,
     padding: 16,
   },
-  lightContent: {
-    backgroundColor: '#f8f9fa',
-  },
-  darkContent: {
-    backgroundColor: '#151718',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  lightHeader: {
-    backgroundColor: '#fff',
-    borderBottomColor: '#eee',
-  },
-  darkHeader: {
-    backgroundColor: '#1E2022',
-    borderBottomColor: '#333',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  lightText: {
-    color: '#333',
-  },
-  darkText: {
-    color: '#ECEDEE',
-  },
-  lightSubText: {
-    color: '#666',
-  },
-  darkSubText: {
-    color: '#9BA1A6',
-  },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -304,6 +244,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 24,
+    color: '#333',
   },
   loginButton: {
     backgroundColor: '#007BFF',
@@ -349,10 +290,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#333',
   },
-  userEmail: {
-    fontSize: 16,
-    marginTop: 5,
+  darkText: {
+    color: '#ECEDEE',
   },
   editButton: {
     marginTop: 8,
@@ -398,6 +339,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 15,
     fontSize: 16,
+    color: '#333',
   },
   logoutButton: {
     padding: 15,
