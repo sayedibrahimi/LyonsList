@@ -11,7 +11,9 @@ import {
   Image, 
   TouchableOpacity, 
   ActivityIndicator, 
-  StyleSheet
+  StyleSheet,
+  Modal,
+  ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -20,6 +22,16 @@ import { listingsService, Listing } from '../services/listingsService';
 import { useAuth } from '../hooks/useAuth';
 import { useFavorites } from '../hooks/useFavorites';
 import { useColorScheme } from '../hooks/useColorScheme';
+import { Categories } from '@/constants/Categories';
+
+// // Define Categories enum if it doesn't exist elsewhere
+// enum Categories {
+//   Electronics = "Electronics",
+//   Clothing = "Clothing",
+//   Furniture = "Furniture",
+//   Books = "Books",
+//   Other = "Other"
+// }
 
 export default function SearchScreen(): React.ReactElement {
   const [products, setProducts] = useState<Listing[]>([]);
@@ -32,6 +44,8 @@ export default function SearchScreen(): React.ReactElement {
   const { user } = useAuth();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const colorScheme = useColorScheme();
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [showCategoryModal, setShowCategoryModal] = useState<boolean>(false);
   
   // Get tab styles based on current color scheme
   const tabStyles = createTabStyles(colorScheme);
@@ -61,19 +75,29 @@ export default function SearchScreen(): React.ReactElement {
   // Handle search functionality
   const handleSearch = (text: string) => {
     setSearchQuery(text);
+  };
+
+  // Then update the useEffect that filters products
+  useEffect(() => {
+    if (!user || !products.length) return;
     
-    if (text.trim() === '') {
-      setFilteredProducts(products);
-      return;
+    let filtered = [...products];
+    
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(product => 
+        product.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
     
-    const filtered = products.filter(product => 
-      product.title.toLowerCase().includes(text.toLowerCase()) || 
-      product.description.toLowerCase().includes(text.toLowerCase())
-    );
+    // Apply category filter
+    if (categoryFilter) {
+      filtered = filtered.filter(product => product.category === categoryFilter);
+    }
     
     setFilteredProducts(filtered);
-  };
+  }, [products, searchQuery, categoryFilter, user]);
 
   // Format price for display
   const formatPrice = (price: number) => {
@@ -123,7 +147,89 @@ export default function SearchScreen(): React.ReactElement {
       console.error('Error toggling favorite:', err);
       Alert.alert('Error', 'Failed to update favorites');
     }
-  };
+  }
+
+// Add this renderCategoryModal function
+const renderCategoryModal = () => {
+  return (
+    <Modal
+      visible={showCategoryModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowCategoryModal(false)}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1}
+        onPress={() => setShowCategoryModal(false)}
+      >
+        <View style={[
+          styles.modalContainer,
+          isDarkMode && styles.darkModalContainer
+        ]}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, isDarkMode && styles.darkText]}>
+              Filter by Category
+            </Text>
+            <TouchableOpacity onPress={() => setShowCategoryModal(false)}>
+              <Ionicons name="close" size={24} color={isDarkMode ? "#ECEDEE" : "#333"} />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.categoryList} contentContainerStyle={{ paddingBottom: 24 }}>
+            <TouchableOpacity 
+              style={[
+                styles.categoryOption,
+                !categoryFilter && {
+                  backgroundColor: isDarkMode ? '#3A3F44' : '#e0f0ff'
+                }
+              ]}
+              onPress={() => {
+                setCategoryFilter('');
+                setShowCategoryModal(false);
+              }}
+            >
+              <Text style={[
+                styles.categoryOptionText,  
+                !categoryFilter && styles.categoryOptionTextActive,
+                isDarkMode && styles.darkText
+              ]}>
+                All Categories
+              </Text>
+            </TouchableOpacity>
+            
+            {Object.values(Categories).map((category) => (
+              <TouchableOpacity 
+                key={category}
+                style={[
+                  styles.categoryOption, 
+                  categoryFilter === category && {
+                    backgroundColor: isDarkMode ? '#3A3F44' : '#e0f0ff' // new dark bg
+                  }
+                ]}
+                onPress={() => {
+                  setCategoryFilter(category);
+                  setShowCategoryModal(false);
+                }}
+              >
+                <Text style={[
+                  styles.categoryOptionText,
+                  categoryFilter === category && {
+                    color: isDarkMode ? '#fff' : '#007bff', // ensure contrast
+                    fontWeight: '600',
+                  },
+                  isDarkMode && { color: '#ECEDEE' }
+                ]}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
 
   // Render each product item
   const renderProductItem = ({ item }: { item: Listing }) => {
@@ -233,8 +339,18 @@ export default function SearchScreen(): React.ReactElement {
           )}
         </View>
         
-        <TouchableOpacity style={styles.searchButton} onPress={() => handleSearch(searchQuery)}>
-          <Text style={styles.searchButtonText}>Search</Text>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setShowCategoryModal(true)}
+        >
+          <View style={styles.filterButtonContent}>
+            <Ionicons name="filter" size={18} color="#fff" />
+            {categoryFilter && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>1</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
       </View>
       
@@ -273,11 +389,19 @@ export default function SearchScreen(): React.ReactElement {
             styles.emptyText,
             isDarkMode && styles.darkText
           ]}>No products found</Text>
-          {searchQuery.length > 0 && (
+          {(searchQuery.length > 0 || categoryFilter) && (
             <Text style={[
               styles.emptySubtext,
               isDarkMode && styles.darkSubText
-            ]}>Try a different search term</Text>
+            ]}>Try a different search term or category</Text>
+          )}
+          {categoryFilter && (
+            <TouchableOpacity 
+              style={styles.clearFilterButton}
+              onPress={() => setCategoryFilter('')}
+            >
+              <Text style={styles.clearFilterText}>Clear Filter</Text>
+            </TouchableOpacity>
           )}
         </View>
       ) : (
@@ -296,6 +420,7 @@ export default function SearchScreen(): React.ReactElement {
           onRefresh={fetchProducts}
         />
       )}
+    {renderCategoryModal()}
     </View>
   );
 }
@@ -502,5 +627,93 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     color: '#999',
+  },
+  filterButton: {
+    backgroundColor: '#007bff',
+    borderRadius: 8,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterButtonContent: {
+    position: 'relative',
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#ff6b6b',
+    borderRadius: 10,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    maxHeight: '70%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  darkModalContainer: {
+    backgroundColor: '#1E2022',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  categoryList: {
+    padding: 16,
+  },
+  categoryOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  categoryOptionActive: {
+    backgroundColor: '#f0f8ff',
+  },
+  categoryOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  categoryOptionTextActive: {
+    color: '#007BFF',
+    fontWeight: '600',
+  },
+  clearFilterButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#007bff',
+    borderRadius: 8,
+  },
+  clearFilterText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
