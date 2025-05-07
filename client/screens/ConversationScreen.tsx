@@ -25,7 +25,6 @@ import { useAuth } from '../hooks/useAuth';
 import { chatService } from '../services/chatService';
 import { listingsService } from '../services/listingsService';
 import { useSocket } from '../hooks/useSocket';
-import MessageIndicator from '../components/MessageIndicator';
 import { Message, ListingDetails, normalizeMessage, NewChatRequest } from '../types/chat';
 
 export default function ConversationScreen(): React.ReactElement {
