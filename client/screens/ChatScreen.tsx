@@ -1,7 +1,7 @@
-// screens/ChatScreen.tsx
-// Purpose: This file contains the ChatScreen component that displays a list of user chats. It allows users to filter chats by type (all, buying, selling), search through messages, and navigate to individual conversations. The component handles loading states, errors, and dark mode styling.
-// Description: The ChatScreen component fetches chat data from the server and displays it in a list format. Users can switch between different chat types (all, buying, selling) using tabs, and search for specific messages using a search bar. Each chat item shows the other party's name, the product title, and the last message timestamp. The component also handles image loading errors gracefully. It uses React Native's built-in components and hooks for state management and navigation.
-import React, { useState, useEffect } from 'react';
+// // screens/ChatScreen.tsx
+// // Purpose: This file contains the ChatScreen component that displays a list of user chats. It allows users to filter chats by type (all, buying, selling), search through messages, and navigate to individual conversations. The component handles loading states, errors, and dark mode styling.
+// // Description: The ChatScreen component fetches chat data from the server and displays it in a list format. Users can switch between different chat types (all, buying, selling) using tabs, and search for specific messages using a search bar. Each chat item shows the other party's name, the product title, and the last message timestamp. The component also handles image loading errors gracefully. It uses React Native's built-in components and hooks for state management and navigation.
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -20,9 +20,15 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
 import { chatService } from '../services/chatService';
 import { Chat } from '../types/chat';
+import { useSocket } from '../hooks/useSocket';
 
 // Chat tab type for better type checking
 type ChatTab = 'all' | 'buying' | 'selling';
+
+// Interface for tracking unread messages
+interface UnreadMessagesCount {
+  [chatId: string]: number;
+}
 
 export default function ChatScreen(): React.ReactElement {
   const router = useRouter();
@@ -34,6 +40,7 @@ export default function ChatScreen(): React.ReactElement {
   const isDarkMode = colorScheme === 'dark';
   
   const { user } = useAuth();
+  const { socket, isConnected, messages } = useSocket(); // Get messages from socket context
   
   // State variables
   const [activeTab, setActiveTab] = useState<ChatTab>('all');
@@ -43,6 +50,8 @@ export default function ChatScreen(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [unreadMessages, setUnreadMessages] = useState<UnreadMessagesCount>({});
+  const [openedChats, setOpenedChats] = useState<Record<string, boolean>>({});
 
   // Check if we need to start a new chat with a seller from product details
   useEffect(() => {
@@ -58,14 +67,118 @@ export default function ChatScreen(): React.ReactElement {
         }
       });
     }
+    
+    // Mark the current chat as opened when returning from conversation
+    if (params.chatId) {
+      setOpenedChats(prev => ({
+        ...prev,
+        [params.chatId as string]: true
+      }));
+      
+      // Reset unread count for this chat
+      setUnreadMessages(prev => ({
+        ...prev,
+        [params.chatId as string]: 0
+      }));
+    }
   }, [params]);
   
   // Fetch chats from the server
+  const fetchChats = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await chatService.getAllChats();
+      // Sort chats by last message timestamp or creation date
+      const sortedChats = data.sort((a, b) => {
+        const aTime = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : new Date(a.updatedAt).getTime();
+        const bTime = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : new Date(b.updatedAt).getTime();
+        return bTime - aTime; // Descending order (newest first)
+      });
+      
+      setChats(sortedChats);
+      setError(null);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || 'Failed to fetch chats';
+      setError(errorMessage);
+      console.error('Error fetching chats:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchChats();
-  }, []);
+  }, [fetchChats]);
   
-  // Filter chats based on active tab
+  // Update chats and unread messages when socket messages change
+  useEffect(() => {
+    if (!user || !messages || Object.keys(messages).length === 0) return;
+
+    const updatedChats = [...chats];
+    let hasUpdates = false;
+    const newUnreadCounts = { ...unreadMessages };
+    
+    // Loop through all chats to check for updates
+    updatedChats.forEach(chat => {
+      const chatMessages = messages[chat._id];
+      if (!chatMessages || chatMessages.length === 0) return;
+      
+      // Get the latest message
+      const latestMessage = chatMessages[chatMessages.length - 1];
+      
+      // Skip if it's a temporary message
+      if (latestMessage._id.startsWith('temp_')) return;
+      
+      // Check if this is a new message (more recent than the current lastMessageTimestamp)
+      const currentLastMessageTime = chat.lastMessageTimestamp 
+        ? new Date(chat.lastMessageTimestamp).getTime() 
+        : 0;
+      
+      const newMessageTime = new Date(latestMessage.createdAt).getTime();
+      
+      // Only update if the new message is more recent
+      if (newMessageTime > currentLastMessageTime) {
+        // Update chat with latest message info
+        chat.lastMessage = latestMessage.content;
+        chat.lastMessageTimestamp = latestMessage.createdAt;
+        hasUpdates = true;
+        
+        // Always increment unread count for messages from others
+        // regardless of whether the chat was previously opened
+        if (latestMessage.senderID._id !== user._id) {
+          newUnreadCounts[chat._id] = (newUnreadCounts[chat._id] || 0) + 1;
+          
+          // Remove from openedChats when receiving a new message from someone else
+          if (openedChats[chat._id]) {
+            setOpenedChats(prev => {
+              const updated = {...prev};
+              delete updated[chat._id];
+              return updated;
+            });
+          }
+        }
+      }
+    });
+    
+    // Update state if changes were made
+    if (hasUpdates) {
+      // Sort chats by timestamp (newest first)
+      updatedChats.sort((a, b) => {
+        const aTime = a.lastMessageTimestamp 
+          ? new Date(a.lastMessageTimestamp).getTime() 
+          : new Date(a.updatedAt).getTime();
+        const bTime = b.lastMessageTimestamp 
+          ? new Date(b.lastMessageTimestamp).getTime() 
+          : new Date(b.updatedAt).getTime();
+        return bTime - aTime;
+      });
+      
+      setChats([...updatedChats]);
+      setUnreadMessages(newUnreadCounts);
+    }
+  }, [messages, chats, user, openedChats]);
+  
+  // Filter chats based on active tab and search query
   useEffect(() => {
     if (!user || !chats.length) return;
     
@@ -90,28 +203,6 @@ export default function ChatScreen(): React.ReactElement {
     setFilteredChats(filtered);
   }, [chats, activeTab, searchQuery, user]);
   
-  const fetchChats = async () => {
-    try {
-      setLoading(true);
-      const data = await chatService.getAllChats();
-      // Sort chats by last message timestamp or creation date
-      const sortedChats = data.sort((a, b) => {
-        const aTime = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : new Date(a.updatedAt).getTime();
-        const bTime = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : new Date(b.updatedAt).getTime();
-        return bTime - aTime; // Descending order (newest first)
-      });
-      
-      setChats(sortedChats);
-      setError(null);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || 'Failed to fetch chats';
-      setError(errorMessage);
-      console.error('Error fetching chats:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   // Navigate to conversation screen
   const navigateToConversation = (chat: Chat) => {
     // Check if all required properties exist
@@ -120,6 +211,18 @@ export default function ChatScreen(): React.ReactElement {
       Alert.alert("Error", "Cannot open this conversation.");
       return;
     }
+
+    // Mark this chat as opened
+    setOpenedChats(prev => ({
+      ...prev,
+      [chat._id]: true
+    }));
+    
+    // Reset unread count
+    setUnreadMessages(prev => ({
+      ...prev,
+      [chat._id]: 0
+    }));
 
     router.push({
       pathname: '/conversation',
@@ -135,21 +238,42 @@ export default function ChatScreen(): React.ReactElement {
   
   // Format timestamp to a readable format
   const formatTimestamp = (timestamp: string): string => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (!timestamp) return '';
     
-    if (diffDays === 0) {
-      // Same day, show time
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (diffDays === 1) {
-      return 'Yesterday';
-    } else if (diffDays < 7) {
-      return `${diffDays} days ago`;
-    } else {
-      // More than a week, show date
-      return date.toLocaleDateString();
+    try {
+      const date = new Date(timestamp);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date:', timestamp);
+        return '';
+      }
+      
+      // Use direct time format for messages that came in today
+      // This avoids the problematic "days ago" calculation which can cause -1 days
+      const now = new Date();
+      const isToday = date.toDateString() === now.toDateString();
+      
+      if (isToday) {
+        // For messages today, just show the time
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        // For older messages, use date comparison
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          return 'Yesterday';
+        } else if (diffDays > 1 && diffDays < 7) {
+          return `${diffDays} days ago`;
+        } else {
+          // More than a week, show date
+          return date.toLocaleDateString();
+        }
+      }
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return '';
     }
   };
   
@@ -162,9 +286,6 @@ export default function ChatScreen(): React.ReactElement {
 
   const renderChatItem = ({ item }: { item: Chat }) => {
     if (!item) return null;
-    
-    // Debug logging to see the actual data structure
-    console.log(`Chat ${item._id}: Last message: "${item.lastMessage}" from ${item.lastMessageTimestamp}`);
     
     // Get other party info based on if user is seller or buyer
     const isUserSeller = user?._id === item.sellerID._id;
@@ -182,9 +303,18 @@ export default function ChatScreen(): React.ReactElement {
     
     const hasImageError = !imageUrl || (item._id && imageErrors[item._id]);
     
+    // Check for unread messages
+    const unreadCount = unreadMessages[item._id] || 0;
+    const hasUnread = unreadCount > 0;
+    
     return (
       <TouchableOpacity 
-        style={[styles.chatItem, isDarkMode && styles.darkChatItem]}
+        style={[
+          styles.chatItem, 
+          isDarkMode && styles.darkChatItem,
+          hasUnread && styles.unreadChatItem,
+          hasUnread && isDarkMode && styles.darkUnreadChatItem
+        ]}
         onPress={() => navigateToConversation(item)}
       >
         <View style={styles.chatImageContainer}>
@@ -197,11 +327,27 @@ export default function ChatScreen(): React.ReactElement {
             style={styles.chatImage}
             onError={() => item._id && handleImageError(item._id)}
           />
+          {hasUnread && (
+            <View style={styles.unreadBadgeContainer}>
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>
+                  {unreadCount}
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
         
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
-            <Text style={[styles.chatName, isDarkMode && styles.darkText]} numberOfLines={1}>
+            <Text 
+              style={[
+                styles.chatName, 
+                isDarkMode && styles.darkText,
+                hasUnread && styles.boldText
+              ]} 
+              numberOfLines={1}
+            >
               {otherParty.firstName || ''} {otherParty.lastName || ''}
             </Text>
             <Text style={[styles.chatTime, isDarkMode && styles.darkSubText]}>
@@ -209,11 +355,25 @@ export default function ChatScreen(): React.ReactElement {
             </Text>
           </View>
           
-          <Text style={[styles.productTitle, isDarkMode && styles.darkSubText]} numberOfLines={1}>
+          <Text 
+            style={[
+              styles.productTitle, 
+              isDarkMode && styles.darkSubText,
+              hasUnread && { color: isDarkMode ? '#4a9eff' : '#007BFF' }
+            ]} 
+            numberOfLines={1}
+          >
             {item.listingID.title || 'Product'}
           </Text>
           
-          <Text style={[styles.lastMessage, isDarkMode && styles.darkSubText]} numberOfLines={1}>
+          <Text 
+            style={[
+              styles.lastMessage, 
+              isDarkMode && styles.darkSubText,
+              hasUnread && styles.boldText
+            ]} 
+            numberOfLines={1}
+          >
             {item.lastMessage || "No messages yet"}
           </Text>
         </View>
@@ -288,52 +448,51 @@ export default function ChatScreen(): React.ReactElement {
   // Render main screen
   return (
     <View style={tabStyles.container}>
-      <View style={tabStyles.header}>
+      <View style={[
+        tabStyles.header,
+        isDarkMode && { borderBottomColor: '#333' }
+      ]}>
         <Text style={tabStyles.headerTitle}>Messages</Text>
       </View>
       
       <View style={[
-        styles.searchBar,
-        isDarkMode && styles.darkSearchBar
+        styles.searchBarContainer,
+        isDarkMode && { backgroundColor: '#1E2022' }
       ]}>
-        <Ionicons 
-          name="search" 
-          size={20} 
-          color={isDarkMode ? "#9BA1A6" : "#666"} 
-          style={styles.searchIcon} 
-        />
-        <TextInput 
-          style={[
-            styles.searchInput,
-            isDarkMode && styles.darkSearchInput
-          ]}
-          placeholder="Search messages"
-          placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons 
-              name="close-circle" 
-              size={20} 
-              color={isDarkMode ? "#9BA1A6" : "#666"} 
-            />
-          </TouchableOpacity>
-        )}
+        <View style={[
+          styles.searchBar,
+          isDarkMode && styles.darkSearchBar
+        ]}>
+          <Ionicons name="search" size={20} color={isDarkMode ? "#9BA1A6" : "#666"} style={styles.searchIcon} />
+          <TextInput 
+            style={[
+              styles.searchInput,
+              isDarkMode && styles.darkSearchInput
+            ]}
+            placeholder="Search messages"
+            placeholderTextColor={isDarkMode ? "#9BA1A6" : "#999"}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={isDarkMode ? "#9BA1A6" : "#666"} />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
       
       {renderTabs()}
       
       {loading ? (
-        <View style={[styles.loadingContainer, isDarkMode && styles.darkLoadingContainer]}>
+        <View style={[styles.loadingContainer, isDarkMode && { backgroundColor: '#151718' }]}>
           <ActivityIndicator size="large" color="#007bff" />
           <Text style={[styles.loadingText, isDarkMode && styles.darkText]}>
             Loading chats...
           </Text>
         </View>
       ) : error ? (
-        <View style={[styles.errorContainer, isDarkMode && styles.darkErrorContainer]}>
+        <View style={[styles.errorContainer, isDarkMode && { backgroundColor: '#151718' }]}>
           <Ionicons name="alert-circle" size={48} color="#ff6b6b" />
           <Text style={[styles.errorText, isDarkMode && styles.darkText]}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchChats}>
@@ -341,7 +500,7 @@ export default function ChatScreen(): React.ReactElement {
           </TouchableOpacity>
         </View>
       ) : filteredChats.length === 0 ? (
-        <View style={[styles.emptyContainer, isDarkMode && styles.darkEmptyContainer]}>
+        <View style={[styles.emptyContainer, isDarkMode && { backgroundColor: '#151718' }]}>
           <Ionicons name="chatbubbles-outline" size={48} color={isDarkMode ? "#9BA1A6" : "#999"} />
           <Text style={[styles.emptyText, isDarkMode && styles.darkText]}>
             No {activeTab !== 'all' ? activeTab : ''} messages yet
@@ -357,7 +516,7 @@ export default function ChatScreen(): React.ReactElement {
           data={filteredChats}
           renderItem={renderChatItem}
           keyExtractor={item => item._id}
-          style={[styles.chatList, isDarkMode && styles.darkChatList]}
+          style={[styles.chatList, isDarkMode && { backgroundColor: '#151718' }]}
           contentContainerStyle={styles.chatListContent}
           refreshing={loading}
           onRefresh={fetchChats}
@@ -368,26 +527,56 @@ export default function ChatScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
+  searchBarContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f8f8f8',
+    alignItems: 'center',
+  },
   searchBar: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-    padding: 10,
+    backgroundColor: '#fff',
     borderRadius: 8,
-    margin: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    paddingHorizontal: 12,
+    marginRight: 10,
+    height: 42,
   },
   darkSearchBar: {
     backgroundColor: '#2A2F33',
+    borderColor: '#333',
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: 8,
+  },
+  clearIcon: {
+    marginLeft: 8,
   },
   searchInput: {
     flex: 1,
+    height: 40,
+    fontSize: 16,
     color: '#333',
   },
   darkSearchInput: {
     color: '#ECEDEE',
+  },
+  searchButton: {
+    backgroundColor: '#007bff',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -427,10 +616,7 @@ const styles = StyleSheet.create({
   },
   chatList: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  darkChatList: {
-    backgroundColor: '#151718',
+    backgroundColor: '#f8f8f8',
   },
   chatListContent: {
     paddingHorizontal: 15,
@@ -451,17 +637,48 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E2022',
     borderColor: '#333',
   },
+  unreadChatItem: {
+    backgroundColor: '#EDF4FF',
+    borderLeftWidth: 3,
+    borderLeftColor: '#007BFF',
+  },
+  darkUnreadChatItem: {
+    backgroundColor: '#1F2A3C',
+    borderLeftWidth: 3,
+    borderLeftColor: '#4a9eff',
+  },
   chatImageContainer: {
     width: 60,
     height: 60,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#f0f0f0',
+    position: 'relative',
   },
   chatImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+  },
+  unreadBadgeContainer: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'transparent',
+  },
+  unreadBadge: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   chatInfo: {
     flex: 1,
@@ -476,9 +693,12 @@ const styles = StyleSheet.create({
   },
   chatName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#333',
     flex: 1,
+  },
+  boldText: {
+    fontWeight: '700',
   },
   darkText: {
     color: '#ECEDEE',
@@ -505,9 +725,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
   },
-  darkLoadingContainer: {
-    backgroundColor: '#151718',
-  },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
@@ -519,9 +736,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#f8f9fa',
-  },
-  darkErrorContainer: {
-    backgroundColor: '#151718',
   },
   errorText: {
     marginTop: 12,
@@ -548,9 +762,6 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#f8f9fa',
   },
-  darkEmptyContainer: {
-    backgroundColor: '#151718',
-  },
   emptyText: {
     marginTop: 12,
     fontSize: 18,
@@ -558,9 +769,8 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   emptySubText: {
-    fontSize: 14,
-    color: '#999',
     marginTop: 8,
-    textAlign: 'center',
+    fontSize: 16,
+    color: '#999',
   },
 });
